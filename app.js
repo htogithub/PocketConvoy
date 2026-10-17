@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '0.11.0';
+const APP_VERSION = '0.12.0';
 /* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -373,9 +373,9 @@ const CHAT_BOT = {
   de: ['Halten wir in Gruyères zum Essen an?', 'Braucht jemand Benzin?', 'Ich mache Musik an, Wünsche?', 'Schaut euch diesen Aussichtspunkt an, da könnten wir anhalten: {link}', 'Der Parkplatz, von dem ich gesprochen habe: {link}'],
 };
 const CHAT_REPLY = {
-  fr: ['Bien reçu !', 'OK, ça marche.', 'Super, merci !', 'Ça me va.'], frLink: 'Merci pour le lien !',
-  en: ['Got it!', 'OK, sounds good.', 'Great, thanks!', 'Works for me.'], enLink: 'Thanks for the link!',
-  de: ['Verstanden!', 'OK, passt.', 'Super, danke!', 'Passt für mich.'], deLink: 'Danke für den Link!',
+  fr: ['Bien reçu !', 'OK, ça marche.', 'Super, merci !', 'Ça me va.'], frLink: 'Merci pour le lien !', frPos: 'Bien reçu, je vois où tu es.',
+  en: ['Got it!', 'OK, sounds good.', 'Great, thanks!', 'Works for me.'], enLink: 'Thanks for the link!', enPos: 'Got it, I can see where you are.',
+  de: ['Verstanden!', 'OK, passt.', 'Super, danke!', 'Passt für mich.'], deLink: 'Danke für den Link!', dePos: 'Danke, ich sehe, wo du bist.',
 };
 
 /* ---------- utilitaires ---------- */
@@ -1429,14 +1429,18 @@ function deletePin(id) {
 
 /* ---------- chat (vidé à chaque nouveau convoi) ---------- */
 function linkify(text) {
-  return esc(text).replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, m => {
-    let url = m, tail = '';
+  const re = /(https?:\/\/[^\s<]+|www\.[^\s<]+)/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(text))) {
+    let url = m[0], tail = '';
     while (/[.,;:!?)\]]$/.test(url)) { tail = url.slice(-1) + tail; url = url.slice(0, -1); }
     const href = /^https?:/.test(url) ? url : 'https://' + url;
     let shown = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
     if (shown.length > 34) shown = shown.slice(0, 32) + '…';
-    return `<a href="${href}" target="_blank" rel="noopener">${shown}</a>${tail}`;
-  });
+    out += esc(text.slice(last, m.index)) + `<a href="${esc(href)}" target="_blank" rel="noopener">${esc(shown)}</a>` + esc(tail);
+    last = m.index + m[0].length;
+  }
+  return out + esc(text.slice(last));
 }
 function updateChatBadge() {
   const b = $('#chatBadge');
@@ -1464,7 +1468,13 @@ function sendChat(text) {
 }
 function shareMyPosition() {
   if (!S.pos) return;
-  sendChat(t('myPosition') + ' ' + OSM_LINK(S.pos.lat, S.pos.lng));
+  const la = S.pos.lat.toFixed(5), ln = S.pos.lng.toFixed(5), sep = prefs.lang === 'fr' ? ' : ' : ': ';
+  sendChat([
+    t('myPosition'),
+    'Google Maps' + sep + `https://www.google.com/maps/search/?api=1&query=${la},${ln}`,
+    'OpenStreetMap' + sep + OSM_LINK(S.pos.lat, S.pos.lng),
+    'Waze' + sep + `https://waze.com/ul?ll=${la},${ln}&navigate=yes`,
+  ].join('\n'));
 }
 
 /* ---------- talkie (démo : écho de ta voix) ---------- */
@@ -2110,7 +2120,7 @@ function botReply(text) {
   if (!S.active) return;
   const c = pickBot(); if (!c) return;
   const R = CHAT_REPLY, L = R[prefs.lang] ? prefs.lang : 'fr';
-  const reply = /https?:\/\/|www\./.test(text) ? R[L + 'Link'] : R[L][Math.floor(Math.random() * R[L].length)];
+  const reply = text.startsWith(t('myPosition')) ? R[L + 'Pos'] : /https?:\/\/|www\./.test(text) ? R[L + 'Link'] : R[L][Math.floor(Math.random() * R[L].length)];
   H.chat({ id: rid(), by: c.id, text: reply, at: clock() });
 }
 function pickBot(filter) {
