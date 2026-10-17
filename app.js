@@ -595,6 +595,7 @@ function iosTick() {
 const HAPTIC = {
   tap: { cat: 'ui', vib: [10], ticks: 1 },
   select: { cat: 'ui', vib: [16], ticks: 1 },
+  drop: { cat: 'ui', vib: [22, 50, 22], ticks: 2 },
   talk: { cat: 'talk', vib: [24], ticks: 1 },
   pin: { cat: 'alerts', vib: [18, 60, 18], ticks: 2 },
   alert: { cat: 'alerts', vib: [40, 70, 40], ticks: 2 },
@@ -854,16 +855,29 @@ function initMap() {
   m.on('dragstart', () => setFollow(false));
   m.on('rotate', () => { for (const mm of S.members.values()) updateCone(mm); });
   m.on('click', onMapClick);
-  let lpT = null, lpPt = null;
-  const lpCancel = () => { clearTimeout(lpT); lpT = null; };
+  let lpT = null, lpPt = null, lpReady = null;
+  const ring = $('#lpRing');
+  const lpCancel = () => { clearTimeout(lpT); lpT = null; lpReady = null; ring.hidden = true; };
   m.on('touchstart', e => {
     lpCancel();
     if (!e.originalEvent || e.originalEvent.touches.length !== 1) return;
     lpPt = e.point; const ll = e.lngLat;
-    lpT = setTimeout(() => { lpT = null; haptic('select'); openPinNew(ll.lat, ll.lng); }, 550);
+    lpT = setTimeout(() => {
+      lpT = null; lpReady = ll;
+      ring.style.left = lpPt.x + 'px'; ring.style.top = lpPt.y + 'px'; ring.hidden = false;
+      if (!IS_IOS) haptic('drop');
+    }, 500);
   });
-  m.on('touchmove', e => { if (lpT && lpPt && Math.hypot(e.point.x - lpPt.x, e.point.y - lpPt.y) > 10) lpCancel(); });
-  m.on('touchend', lpCancel); m.on('touchcancel', lpCancel); m.on('movestart', lpCancel);
+  m.on('touchmove', e => { if ((lpT || lpReady) && lpPt && Math.hypot(e.point.x - lpPt.x, e.point.y - lpPt.y) > 12) lpCancel(); });
+  m.on('touchend', () => {
+    if (!lpReady) { lpCancel(); return; }
+    const ll = lpReady;
+    lpCancel();
+    if (IS_IOS) haptic('drop');
+    S.ignoreClickUntil = Date.now() + 500;
+    openPinNew(ll.lat, ll.lng);
+  });
+  m.on('touchcancel', lpCancel); m.on('movestart', lpCancel);
   m.on('contextmenu', e => openPinNew(e.lngLat.lat, e.lngLat.lng));
   m.on('error', e => console.warn('carte', e && e.error && e.error.message));
   S.map = m;
@@ -1283,7 +1297,7 @@ function savePin() {
   S.pinDraft = null;
   H.pin(pin);
   closeSheets();
-  sfx('sent'); haptic('select');
+  sfx('sent'); haptic('drop');
   toast(t('pinAdded'), 'ok', 3500);
   if (!isLeader()) setTimeout(() => botAcceptPin(pin.id), 6000);
 }
@@ -2089,6 +2103,9 @@ function closeTrip() {
 
 /* ---------- branchements ---------- */
 function bind() {
+  document.addEventListener('click', e => {
+    if (Date.now() < (S.ignoreClickUntil || 0)) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
   $('#swatches').addEventListener('click', e => {
     const b = e.target.closest('.swatch');
     if (!b) return;
@@ -2265,7 +2282,6 @@ function bind() {
 applyTheme();
 buildGauge();
 bind();
-setTimeout(() => { const sp = $('#splash'); if (sp) sp.remove(); }, 2400);
 renderHome();
 applyLang();
 setFollow(true, true);
