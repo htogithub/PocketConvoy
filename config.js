@@ -8,7 +8,13 @@ window.CONVOY_CONFIG = {
   // Serveurs qui relient les téléphones pour le talkie. En wifi le STUN suffit ;
   // en 4G/5G il faut un relais TURN : colle ici la liste « iceServers » de ton compte Metered (Open Relay).
   iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    // { urls: 'turn:....', username: '...', credential: '...' },
-  ],
-};
+  { urls: 'stun:stun.l.google.com:19302' },
+  {
+    urls: [
+      'turn:free.expressturn.com:3478?transport=udp',
+      'turn:free.expressturn.com:3478?transport=tcp',
+    ],
+    username: '000000002107638886',
+    credential: '0qD7tUcM2OBgepiEz/FQgwpCeYk=',
+  },
+],
