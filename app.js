@@ -91,7 +91,7 @@ const I18N = {
   fr: {
     tagline: 'Rouler ensemble, sans se perdre',
     demoBadge: 'Trois voitures sont simulées sur ton téléphone pour tester la carte, le guidage, les alertes et le talkie.',
-    nickname: 'Ton pseudo', nicknamePh: 'Nitsu', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
+    nickname: 'Ton pseudo', nicknamePh: 'Pseudo', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
     posLabel: 'Ta position', posSim: 'Trajet simulé', posGps: 'GPS réel', leadLabel: 'Leader du convoi', leadMe: 'Moi', leadFriend: 'Un ami',
     startDemo: 'Lancer la démo', history: 'Historique', settings: 'Réglages',
     homeNote: 'Trajet simulé : ta voiture roule toute seule de Lausanne à Gruyères. GPS réel : ta vraie position, avec les autres voitures autour de toi.',
@@ -182,7 +182,7 @@ const I18N = {
   en: {
     tagline: 'Drive together, never lose each other',
     demoBadge: 'Three cars are simulated on your phone so you can test the map, guidance, alerts and walkie-talkie.',
-    nickname: 'Your nickname', nicknamePh: 'Nitsu', colour: 'Your colour on the map', colourAria: 'Colour',
+    nickname: 'Your nickname', nicknamePh: 'Nickname', colour: 'Your colour on the map', colourAria: 'Colour',
     posLabel: 'Your position', posSim: 'Simulated drive', posGps: 'Real GPS', leadLabel: 'Convoy leader', leadMe: 'Me', leadFriend: 'A friend',
     startDemo: 'Start the demo', history: 'History', settings: 'Settings',
     homeNote: 'Simulated drive: your car drives itself from Lausanne to Gruyères. Real GPS: your real position, with the other cars around you.',
@@ -273,7 +273,7 @@ const I18N = {
   de: {
     tagline: 'Gemeinsam fahren, ohne sich zu verlieren',
     demoBadge: 'Drei Autos werden auf deinem Handy simuliert, damit du Karte, Navigation, Warnungen und Funkgerät testen kannst.',
-    nickname: 'Dein Name', nicknamePh: 'Nitsu', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
+    nickname: 'Dein Name', nicknamePh: 'Name', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
     posLabel: 'Deine Position', posSim: 'Simulierte Fahrt', posGps: 'Echtes GPS', leadLabel: 'Konvoiführer', leadMe: 'Ich', leadFriend: 'Ein Freund',
     startDemo: 'Demo starten', history: 'Verlauf', settings: 'Einstellungen',
     homeNote: 'Simulierte Fahrt: Dein Auto fährt von selbst von Lausanne nach Gruyères. Echtes GPS: deine echte Position, mit den anderen Autos um dich herum.',
