@@ -1,8 +1,14 @@
 'use strict';
-const APP_VERSION = '0.13.0';
+const APP_VERSION = '1.0.0';
 /* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
+/* connexion entre les téléphones : Supabase Realtime (positions, messages) et WebRTC (talkie), réglés dans config.js */
+const NET = Object.assign({ supabaseUrl: '', supabaseAnonKey: '', iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }, window.CONVOY_CONFIG || {});
+const NET_EVENTS = ['pos', 'talk', 'msg', 'plan', 'pin', 'pinDel', 'chat', 'rtc', 'hello', 'state', 'leader', 'end'];
+function configOk() {
+  return /^https:\/\//.test(NET.supabaseUrl) && NET.supabaseAnonKey && NET.supabaseAnonKey.length > 20 && !/X{4}/.test(NET.supabaseUrl + NET.supabaseAnonKey);
+}
 /* fond de carte : tuiles OpenFreeMap restylées aux couleurs de l'app (CARTO en secours) */
 const MAP_BASE_URL = 'https://tiles.openfreemap.org/styles/positron';
 const FALLBACK_STYLES = {
@@ -84,7 +90,7 @@ const BOTS = [
 const I18N = {
   fr: {
     tagline: 'Rouler ensemble, sans se perdre',
-    demoBadge: 'Version démo : trois voitures sont simulées sur ton téléphone pour tester la carte, le guidage, les alertes et le talkie.',
+    demoBadge: 'Trois voitures sont simulées sur ton téléphone pour tester la carte, le guidage, les alertes et le talkie.',
     nickname: 'Ton pseudo', nicknamePh: 'Nitsu', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
     posLabel: 'Ta position', posSim: 'Trajet simulé', posGps: 'GPS réel', leadLabel: 'Leader du convoi', leadMe: 'Moi', leadFriend: 'Un ami',
     startDemo: 'Lancer la démo', history: 'Historique', settings: 'Réglages',
@@ -159,7 +165,15 @@ const I18N = {
     pinInRoute: 'Ce pin fait partie du parcours.', pinLeaderNote: 'Le leader peut l’ajouter au parcours.', pinAccepted: '{name} a ajouté ton pin au parcours', pinRemoved: 'Pin supprimé',
     pin_view: 'Point de vue', pin_food: 'Restaurant', pin_fuel: 'Station-service', pin_parking: 'Parking', pin_danger: 'Danger', pin_other: 'Autre',
     sc_pin: 'Un ami ajoute un pin', scd_pin: 'Repère partagé sur la carte',
-    credits: 'Crédits', version: 'Version {v}, démo',
+    credits: 'Crédits', version: 'Version {v}',
+    create: 'Créer un convoi', orJoin: 'ou rejoindre avec un code', join: 'Rejoindre', errCode: 'Le code du convoi fait 6 caractères.',
+    cfgWarn: 'Pour rouler avec tes amis, ajoute l’URL et la clé de ton projet Supabase dans config.js. La démo fonctionne sans.',
+    errLive: 'La connexion au serveur n’a pas pu se charger. Vérifie ta connexion.', demoTitleHome: 'Essayer sans amis',
+    invite: 'Inviter des amis', codeLabel: 'Code du convoi', shareLink: 'Partager le lien d’invitation',
+    shareText: 'Rejoins mon convoi sur PocketConvoy avec le code {code}', linkCopied: 'Lien d’invitation copié',
+    created: 'Convoi créé. Invite tes amis depuis Convoi, code {code}.', connLost: 'Connexion au convoi perdue, reconnexion…',
+    waiting: 'En attente des autres voitures. Code {code}', endAll: 'Terminer pour tout le convoi', endedAll: '{name} a terminé le trajet pour tout le convoi',
+    audioOk: 'Talkie connecté', audioFail: 'Talkie en échec', audioWait: 'Talkie en connexion', tapForSound: 'Touche l’écran pour entendre le talkie de tes amis.',
     chat: 'Chat', chatPh: 'Message ou lien', chatEmpty: 'Aucun message pour l’instant. Le chat repart à zéro à chaque nouveau convoi.',
     chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', demoPanel: 'Démo : scénarios et vitesse',
     sc_chat: 'Un ami écrit dans le chat', scd_chat: 'Message, parfois avec un lien',
@@ -167,7 +181,7 @@ const I18N = {
   },
   en: {
     tagline: 'Drive together, never lose each other',
-    demoBadge: 'Demo version: three cars are simulated on your phone so you can test the map, guidance, alerts and walkie-talkie.',
+    demoBadge: 'Three cars are simulated on your phone so you can test the map, guidance, alerts and walkie-talkie.',
     nickname: 'Your nickname', nicknamePh: 'Nitsu', colour: 'Your colour on the map', colourAria: 'Colour',
     posLabel: 'Your position', posSim: 'Simulated drive', posGps: 'Real GPS', leadLabel: 'Convoy leader', leadMe: 'Me', leadFriend: 'A friend',
     startDemo: 'Start the demo', history: 'History', settings: 'Settings',
@@ -242,7 +256,15 @@ const I18N = {
     pinInRoute: 'This pin is part of the route.', pinLeaderNote: 'The leader can add it to the route.', pinAccepted: '{name} added your pin to the route', pinRemoved: 'Pin deleted',
     pin_view: 'Viewpoint', pin_food: 'Restaurant', pin_fuel: 'Fuel station', pin_parking: 'Parking', pin_danger: 'Hazard', pin_other: 'Other',
     sc_pin: 'A friend drops a pin', scd_pin: 'Shared marker on the map',
-    credits: 'Credits', version: 'Version {v}, demo',
+    credits: 'Credits', version: 'Version {v}',
+    create: 'Create a convoy', orJoin: 'or join with a code', join: 'Join', errCode: 'The convoy code has 6 characters.',
+    cfgWarn: 'To drive with your friends, add your Supabase project URL and key to config.js. The demo works without it.',
+    errLive: 'The server connection could not load. Check your connection.', demoTitleHome: 'Try it without friends',
+    invite: 'Invite friends', codeLabel: 'Convoy code', shareLink: 'Share the invite link',
+    shareText: 'Join my convoy on PocketConvoy with the code {code}', linkCopied: 'Invite link copied',
+    created: 'Convoy created. Invite your friends from Convoy, code {code}.', connLost: 'Lost connection to the convoy, reconnecting…',
+    waiting: 'Waiting for the other cars. Code {code}', endAll: 'End for the whole convoy', endedAll: '{name} ended the trip for the whole convoy',
+    audioOk: 'Walkie-talkie connected', audioFail: 'Walkie-talkie failed', audioWait: 'Walkie-talkie connecting', tapForSound: 'Tap the screen to hear your friends on the walkie-talkie.',
     chat: 'Chat', chatPh: 'Message or link', chatEmpty: 'No messages yet. The chat starts fresh with every new convoy.',
     chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', demoPanel: 'Demo: scenarios and speed',
     sc_chat: 'A friend writes in the chat', scd_chat: 'Message, sometimes with a link',
@@ -250,7 +272,7 @@ const I18N = {
   },
   de: {
     tagline: 'Gemeinsam fahren, ohne sich zu verlieren',
-    demoBadge: 'Demoversion: Drei Autos werden auf deinem Handy simuliert, damit du Karte, Navigation, Warnungen und Funkgerät testen kannst.',
+    demoBadge: 'Drei Autos werden auf deinem Handy simuliert, damit du Karte, Navigation, Warnungen und Funkgerät testen kannst.',
     nickname: 'Dein Name', nicknamePh: 'Nitsu', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
     posLabel: 'Deine Position', posSim: 'Simulierte Fahrt', posGps: 'Echtes GPS', leadLabel: 'Konvoiführer', leadMe: 'Ich', leadFriend: 'Ein Freund',
     startDemo: 'Demo starten', history: 'Verlauf', settings: 'Einstellungen',
@@ -325,7 +347,15 @@ const I18N = {
     pinInRoute: 'Dieser Pin ist Teil der Route.', pinLeaderNote: 'Der Konvoiführer kann ihn zur Route hinzufügen.', pinAccepted: '{name} hat deinen Pin zur Route hinzugefügt', pinRemoved: 'Pin gelöscht',
     pin_view: 'Aussichtspunkt', pin_food: 'Restaurant', pin_fuel: 'Tankstelle', pin_parking: 'Parkplatz', pin_danger: 'Gefahr', pin_other: 'Anderes',
     sc_pin: 'Ein Freund setzt einen Pin', scd_pin: 'Gemeinsame Markierung auf der Karte',
-    credits: 'Quellen', version: 'Version {v}, Demo',
+    credits: 'Quellen', version: 'Version {v}',
+    create: 'Konvoi erstellen', orJoin: 'oder mit einem Code beitreten', join: 'Beitreten', errCode: 'Der Konvoi-Code hat 6 Zeichen.',
+    cfgWarn: 'Um mit Freunden zu fahren, trage die URL und den Schlüssel deines Supabase-Projekts in config.js ein. Die Demo funktioniert auch ohne.',
+    errLive: 'Die Serververbindung konnte nicht geladen werden. Prüfe deine Verbindung.', demoTitleHome: 'Ohne Freunde ausprobieren',
+    invite: 'Freunde einladen', codeLabel: 'Konvoi-Code', shareLink: 'Einladungslink teilen',
+    shareText: 'Tritt meinem Konvoi auf PocketConvoy bei, Code {code}', linkCopied: 'Einladungslink kopiert',
+    created: 'Konvoi erstellt. Lade deine Freunde unter Konvoi ein, Code {code}.', connLost: 'Verbindung zum Konvoi verloren, neuer Versuch…',
+    waiting: 'Warte auf die anderen Autos. Code {code}', endAll: 'Für den ganzen Konvoi beenden', endedAll: '{name} hat die Fahrt für den ganzen Konvoi beendet',
+    audioOk: 'Funkgerät verbunden', audioFail: 'Funkgerät-Fehler', audioWait: 'Funkgerät verbindet', tapForSound: 'Tippe auf den Bildschirm, um deine Freunde im Funkgerät zu hören.',
     chat: 'Chat', chatPh: 'Nachricht oder Link', chatEmpty: 'Noch keine Nachrichten. Der Chat beginnt bei jedem neuen Konvoi von vorn.',
     chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', demoPanel: 'Demo: Szenarien und Tempo',
     sc_chat: 'Ein Freund schreibt im Chat', scd_chat: 'Nachricht, manchmal mit Link',
@@ -520,9 +550,11 @@ const S = {
   map: null, wpMarkers: [], pick: false, sheet: null,
   timers: [], stripT: null, spTarget: 0, spDisp: 0,
   pins: new Map(), pinMarkers: [], pinDraft: null, pinOpen: null,
+  live: false, code: null, sb: null, channel: null, conn: false, firstSync: true, joinTs: 0, online: new Set(), joinedAt: {},
+  leaderSeq: 0, leaderMissing: 0, lastSentT: 0, lastSent: null, audioHint: false,
   chat: [], chatUnread: 0,
 };
-const clock = () => S.simT;
+const clock = () => (S.live ? Date.now() : S.simT);
 
 function member(id) {
   let m = S.members.get(id);
@@ -643,13 +675,14 @@ function setAudioSession(type) {
 }
 function unlockAudio() {
   try {
-    if (navigator.audioSession) { if (!REC.stream) setAudioSession('playback'); }
+    if (navigator.audioSession) { if (!REC.stream && !RTC.stream) setAudioSession('playback'); }
     else if (IS_IOS) {
       if (!silentEl) { silentEl = new Audio(SILENT_WAV); silentEl.loop = true; silentEl.setAttribute('playsinline', ''); }
       if (silentEl.paused) silentEl.play().catch(() => {});
     }
     if (!S.ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) S.ac = new AC(); }
     if (S.ac && S.ac.state !== 'running') S.ac.resume().catch(() => {});
+    for (const p of RTC.peers.values()) if (p.audio && p.audio.paused) p.audio.play().catch(() => {});
   } catch (e) { /* ignoré */ }
 }
 function unlockSpeech() {
@@ -736,25 +769,38 @@ function renderHome() {
   $('#name').value = me.name;
   $('#swatches').innerHTML = COLORS.map(c =>
     `<button class="swatch" style="--c:${c}" data-c="${c}" aria-label="${esc(t('colourAria'))}" aria-pressed="${c === me.color}"></button>`).join('');
+  const c = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (c) $('#code').value = c.slice(0, 6);
+  $('#cfgWarn').hidden = configOk();
   homeErr('');
   syncSegs();
 }
+function newCode() {
+  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let out = '';
+  for (const b of crypto.getRandomValues(new Uint8Array(6))) out += A[b % A.length];
+  return out;
+}
 
-/* ---------- démarrage et fin de la démo ---------- */
-function start() {
+/* ---------- démarrage : démo ou convoi réel ---------- */
+function start(opts) {
+  opts = opts || {};
   const name = $('#name').value.trim();
   if (!name) { homeErr(t('errName')); $('#name').focus(); return; }
   if (typeof maplibregl === 'undefined') { homeErr(t('errLibs')); return; }
+  if (opts.live && typeof supabase === 'undefined') { homeErr(t('errLive')); return; }
   me.name = name.slice(0, 16);
   store.set('name', me.name); store.set('color', me.color);
   homeErr('');
   unlockAudio(); unlockSpeech();
 
   S.active = true; S.simT = Date.now();
+  S.live = !!opts.live; S.code = opts.code || null;
   S.chat = []; S.chatUnread = 0; updateChatBadge();
   S.trip = { id: 't' + Date.now(), start: clock(), dist: 0, moving: 0, max: 0, last: null, tracks: {}, names: {}, colors: {}, dest: '' };
   S.plan = { v: 0, wps: [] }; S.passed = new Set(); S.arrived = false; S.route = null;
-  S.leaderId = prefs.demoLeader === 'me' ? me.id : BOTS[0].id;
+  if (S.live) { S.leaderId = opts.creating ? me.id : null; S.leaderSeq = opts.creating ? 1 : 0; }
+  else S.leaderId = prefs.demoLeader === 'me' ? me.id : BOTS[0].id;
   Object.assign(member(me.id), { name: me.name, color: me.color, online: true });
 
   closeSheets();
@@ -764,8 +810,18 @@ function start() {
   setFollow(true);
   keepAwake();
   updatePTT();
-  simInit();
-  if (SIM.mode === 'gps') startGeo();
+  if (S.live) {
+    SIM.mode = 'live';
+    S.firstSync = true; S.joinTs = Date.now(); S.online = new Set([me.id]); S.joinedAt = {};
+    history.replaceState(null, '', location.pathname + '?c=' + S.code);
+    startGeo();
+    askMicOnce();
+    connect();
+    if (opts.creating) setTimeout(() => toast(t('created', { code: S.code }), 'ok', 8000), 500);
+  } else {
+    simInit();
+    if (SIM.mode === 'gps') startGeo();
+  }
   renderStrip();
   renderWaypoints();
   S.timers.push(setInterval(tick, 3000));
@@ -773,6 +829,7 @@ function start() {
 function leave() {
   talkStop(true);
   simStop();
+  disconnect();
   stopGeo();
   if (S.wake) { S.wake.release().catch(() => {}); S.wake = null; }
   S.timers.forEach(clearInterval); S.timers = [];
@@ -783,7 +840,9 @@ function leave() {
   S.chat = []; S.chatUnread = 0; updateChatBadge();
   $('#alerts').innerHTML = '';
   Object.assign(S, { active: false, trip: null, route: null, plan: { v: 0, wps: [] }, passed: new Set(), leaderId: null,
-    pos: null, manual: '', arrived: false, alerts: { lag: {}, leaderStop: false }, pick: false, stoppedSince: null });
+    pos: null, manual: '', arrived: false, alerts: { lag: {}, leaderStop: false }, pick: false, stoppedSince: null,
+    live: false, code: null, leaderSeq: 0, leaderMissing: 0, lastSentT: 0, lastSent: null, audioHint: false });
+  if (location.search) history.replaceState(null, '', location.pathname);
   renderRoute(); closeSheets();
   $('#navCard').hidden = true; $('#navEta').hidden = true; $('#talkBar').hidden = true; $('#toasts').innerHTML = ''; $('#sos').classList.remove('on');
   show('home'); renderHome();
@@ -826,9 +885,11 @@ const H = {
     if (d.by && d.by !== me.id) toast(t('planChanged', { name: member(d.by).name }), 'info', 4500);
   },
   pin(d) {
-    S.pins.set(d.id, Object.assign({ inRoute: false }, d));
+    if (!d.id) return;
+    const known = S.pins.has(d.id);
+    S.pins.set(d.id, Object.assign({ inRoute: false }, S.pins.get(d.id) || {}, d));
     renderPins();
-    if (d.by !== me.id) { toast(t('pinFrom', { name: member(d.by).name, label: pinLabel(d) }), 'info', 5000); sfx('pin'); haptic('pin'); }
+    if (d.by !== me.id && !known && !d.upd) { toast(t('pinFrom', { name: member(d.by).name, label: pinLabel(d) }), 'info', 5000); sfx('pin'); haptic('pin'); }
     if (S.sheet === 'route') renderRouteSheet();
   },
   chat(d) {
@@ -865,8 +926,13 @@ const H = {
 };
 
 /* ---------- leader ---------- */
-function setLeader(id, quiet) {
+function setLeader(id, quiet, seq) {
   const was = S.leaderId;
+  if (seq != null) {
+    if (seq < S.leaderSeq) return;
+    if (seq === S.leaderSeq && was && id >= was) return;
+    S.leaderSeq = seq; S.leaderMissing = 0;
+  }
   if (was === id) return;
   S.leaderId = id;
   if (!quiet) {
@@ -878,7 +944,13 @@ function setLeader(id, quiet) {
   renderStrip();
   if (S.sheet === 'route') renderRouteSheet();
   if (S.sheet === 'members') renderMembers();
-  if (id !== me.id && !S.plan.wps.length) setTimeout(botSetPlan, 2500);
+  if (!S.live && id !== me.id && !S.plan.wps.length) setTimeout(botSetPlan, 2500);
+}
+function giveLeader(id) {
+  if (!S.live) { setLeader(id); return; }
+  const seq = S.leaderSeq + 1;
+  setLeader(id, false, seq);
+  send('leader', { id, seq });
 }
 
 /* ---------- position (GPS réel ou trajet simulé) ---------- */
@@ -908,6 +980,7 @@ function onFix(p) {
   Object.assign(self, { lat: cur[0], lng: cur[1], spd: S.pos.spd * 3.6, hdg, st: myStatus(), t: now, online: true });
   recordTrack(me.id, cur[0], cur[1]);
   moveTo(self, cur[0], cur[1], S.pos.spd);
+  maybeSendPos(false);
   updateMarker(self);
   if (S.follow) followCamera();
   checkWaypoints();
@@ -1168,6 +1241,7 @@ const pendingWps = () => S.plan.wps.filter(w => !S.passed.has(w.id));
 
 function setPlan(wps) {
   S.plan = { v: S.plan.v + 1, wps };
+  send('plan', { plan: S.plan, by: me.id });
   onPlanChanged();
 }
 function onPlanChanged() {
@@ -1472,20 +1546,23 @@ function savePin() {
   const pin = { id: rid(), lat: dr.lat, lng: dr.lng, type: dr.type, label, by: me.id, at: clock() };
   S.pinDraft = null;
   H.pin(pin);
+  send('pin', pin);
   closeSheets();
   sfx('sent'); haptic('drop');
   toast(t('pinAdded'), 'ok', 3500);
-  if (!isLeader()) setTimeout(() => botAcceptPin(pin.id), 6000);
+  if (!S.live && !isLeader()) setTimeout(() => botAcceptPin(pin.id), 6000);
 }
 function pinToRoute(id, asDest) {
   const p = S.pins.get(id);
   if (!p || !isLeader()) return;
   p.inRoute = true;
   addWp({ id: rid(), lat: p.lat, lng: p.lng, label: pinLabel(p) }, asDest);
+  send('pin', Object.assign({}, p, { upd: true }));
   renderPins();
 }
 function deletePin(id) {
   H.pinDel({ id });
+  send('pinDel', { id });
   closeSheets();
   toast(t('pinRemoved'), 'info', 3000);
 }
@@ -1525,9 +1602,11 @@ function renderChat() {
 function sendChat(text) {
   text = String(text || '').trim();
   if (!text || !S.active) return;
-  H.chat({ id: rid(), by: me.id, text, at: clock() });
+  const msg = { id: rid(), by: me.id, text, at: clock() };
+  H.chat(msg);
+  send('chat', msg);
   sfx('sent'); haptic('select');
-  if (Math.random() < 0.75) setTimeout(() => botReply(text), rand(1800, 4200));
+  if (!S.live && Math.random() < 0.75) setTimeout(() => botReply(text), rand(1800, 4200));
 }
 function shareMyPosition() {
   if (!S.pos) return;
@@ -1543,6 +1622,7 @@ function shareMyPosition() {
 /* ---------- talkie (démo : écho de ta voix) ---------- */
 const REC = { stream: null, rec: null, chunks: [], token: 0 };
 async function talkStart() {
+  if (S.live) return talkStartLive();
   if (S.talking || !S.active) return;
   S.talking = true;
   const token = ++REC.token;
@@ -1569,6 +1649,7 @@ async function talkStart() {
   }
 }
 function talkStop(silent) {
+  if (S.live) return talkStopLive(silent);
   if (!S.talking) return;
   S.talking = false;
   clearTimeout(S.talkTimer);
@@ -1633,6 +1714,8 @@ function sendQuick(kind) {
   if (q.status !== null) S.manual = q.status;
   S.movingSince = null;
   const self = member(me.id); self.st = myStatus(); updateMarker(self);
+  send('msg', { id: me.id, k: kind, la: S.pos ? +S.pos.lat.toFixed(5) : null, ln: S.pos ? +S.pos.lng.toFixed(5) : null });
+  maybeSendPos(true);
   closeSheets();
   sfx('sent'); haptic('select');
   toast(t('sent', { text: t('q_' + kind) }), 'ok', 3000);
@@ -1664,7 +1747,7 @@ function renderStrip() {
   const el = $('#strip');
   if (!S.active) { el.innerHTML = ''; return; }
   const others = sortedOthers();
-  if (!others.length) { el.innerHTML = `<div class="mchip glass wait">${esc(t('waitingDemo'))}</div>`; return; }
+  if (!others.length) { el.innerHTML = `<div class="mchip glass wait">${esc(S.live ? t('waiting', { code: S.code }) : t('waitingDemo'))}</div>`; return; }
   el.innerHTML = others.map(m => `<button class="mchip glass${m.online && !m.stale ? '' : ' off'}" data-id="${esc(m.id)}">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
     <span style="min-width:0"><span class="nm">${esc(m.name)}${m.id === S.leaderId ? '<i class="lead-tag" aria-label="' + esc(t('leader')) + '"></i>' : ''}</span><span class="meta">${esc(memberMeta(m))}</span></span>
@@ -1673,11 +1756,17 @@ function renderStrip() {
 function renderMembers() {
   const list = [member(me.id), ...sortedOthers()];
   const lead = isLeader();
-  $('#membersList').innerHTML = list.map(m => `<div class="item">
+  const audio = m => {
+    const p = RTC.peers.get(m.id), st = p && p.pc.connectionState;
+    return st === 'connected' ? t('audioOk') : st === 'failed' ? t('audioFail') : m.online ? t('audioWait') : '';
+  };
+  const invite = S.live ? `<div class="invite"><div><span class="field-label">${esc(t('codeLabel'))}</span><div class="code-big">${esc(S.code)}</div></div>
+    <button class="btn btn-primary" id="btnInvite">${esc(t('shareLink'))}</button></div>` : '';
+  $('#membersList').innerHTML = invite + list.map(m => `<div class="item">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
     <div class="grow"><div class="t">${esc(m.name)}${m.id === me.id ? esc(t('you')) : ''}${m.id === S.leaderId ? '<i class="lead-tag"></i>' : ''}</div>
     <div class="s">${esc(m.id === me.id ? statusLabel(myStatus()) + ', ' + Math.round(m.spd || 0) + ' km/h' : memberMeta(m))}</div>
-    ${m.id !== me.id ? `<div class="s">${esc(t('simulated'))}</div>` : ''}</div>
+    ${m.id !== me.id ? `<div class="s">${esc(S.live ? audio(m) : t('simulated'))}</div>` : ''}</div>
     ${m.lat != null ? `<button class="mini" data-see="${esc(m.id)}">${esc(t('see'))}</button>` : ''}
     ${lead && m.id !== me.id && m.online ? `<button class="mini" data-lead="${esc(m.id)}">${esc(t('makeLeader'))}</button>` : ''}
   </div>`).join('') + `<p class="s" style="margin-top:12px">${esc(t('currentLeader', { name: leaderName() }))}</p>`;
@@ -1715,6 +1804,7 @@ function renderEnd() {
   $('#endBody').innerHTML = bigStats(rows[0], T ? clock() - T.start : 0)
     + (rows.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(rows)}</div>` : '')
     + `<button class="btn btn-primary" id="endSave">${esc(t('saveQuit'))}</button>`
+    + (S.live && isLeader() && S.online.size > 1 ? `<button class="btn btn-ghost" id="endAll">${esc(t('endAll'))}</button>` : '')
     + `<button class="btn btn-ghost" data-close>${esc(t('keepDriving'))}</button>`;
 }
 async function finish() {
@@ -1762,6 +1852,7 @@ function tick() {
       } else { L.stopSince = null; S.alerts.leaderStop = false; }
     }
   }
+  if (S.live) { checkLeader(); maybeSendPos(false); }
   renderStrip();
   if (S.sheet === 'members') renderMembers();
   if (S.route) updateNavSign();
@@ -1881,7 +1972,7 @@ function syncSegs() {
   $('#accentField').hidden = prefs.theme === 'red';
   $('#themeNote').textContent = t('thn_' + prefs.theme);
   $('#sessOnly').hidden = !S.active;
-  $('#btnDemoPanel').hidden = !S.active;
+  $('#btnDemoPanel').hidden = !S.active || S.live;
   $('#creditsText').innerHTML = t('creditsHtml');
   $$('#creditsText a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
   $('#versionText').textContent = t('version', { v: APP_VERSION });
@@ -2253,6 +2344,256 @@ function scenario(k, auto) {
   }
 }
 
+/* ---------- convoi réel : Supabase Realtime + WebRTC ---------- */
+function connect() {
+  if (!S.sb) S.sb = supabase.createClient(NET.supabaseUrl, NET.supabaseAnonKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { params: { eventsPerSecond: 20 } },
+  });
+  const ch = S.sb.channel('pocketconvoy:' + S.code, { config: { broadcast: { self: false, ack: false }, presence: { key: me.id } } });
+  for (const ev of NET_EVENTS) ch.on('broadcast', { event: ev }, ({ payload }) => { try { H[ev](payload || {}); } catch (e) { console.warn(ev, e); } });
+  ch.on('presence', { event: 'sync' }, onPresence);
+  ch.subscribe(async status => {
+    if (status === 'SUBSCRIBED') {
+      S.conn = true;
+      try { await ch.track({ n: me.name, c: me.color, j: S.joinTs }); } catch (e) { /* ignoré */ }
+      send('hello', { id: me.id });
+      maybeSendPos(true);
+    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+      if (S.conn && S.active) toast(t('connLost'), 'warn', 4000);
+      S.conn = false;
+    }
+  });
+  S.channel = ch;
+}
+function disconnect() {
+  for (const id of [...RTC.peers.keys()]) closePeer(id);
+  try { if (S.channel && S.sb) S.sb.removeChannel(S.channel); } catch (e) { /* ignoré */ }
+  S.channel = null; S.conn = false; S.online = new Set();
+}
+function reconnect() {
+  if (!S.live) return;
+  try { if (S.channel) S.sb.removeChannel(S.channel); } catch (e) { /* ignoré */ }
+  S.channel = null; S.firstSync = true;
+  connect();
+}
+function send(event, payload) {
+  if (!S.live || !S.channel) return;
+  try { S.channel.send({ type: 'broadcast', event, payload }).catch(() => {}); } catch (e) { /* ignoré */ }
+}
+function maybeSendPos(force) {
+  const p = S.pos;
+  if (!S.live || !S.channel || !p) return;
+  const now = Date.now();
+  const moved = S.lastSent ? hav([S.lastSent.lat, S.lastSent.lng], [p.lat, p.lng]) : 1e9;
+  if (!force && !(now - S.lastSentT > 2000 && moved > 5) && now - S.lastSentT < 10000) return;
+  const T = S.trip || {};
+  send('pos', {
+    id: me.id, n: me.name, c: me.color, la: +p.lat.toFixed(6), ln: +p.lng.toFixed(6),
+    s: Math.round(p.spd * 3.6), h: p.hdg == null ? null : Math.round(p.hdg), st: myStatus(),
+    d: Math.round(T.dist || 0), mv: Math.round(T.moving || 0), mx: +(T.max || 0).toFixed(1),
+  });
+  S.lastSentT = now; S.lastSent = { lat: p.lat, lng: p.lng };
+}
+function onPresence() {
+  if (!S.channel) return;
+  const st = S.channel.presenceState();
+  const ids = new Set([me.id]);
+  for (const [key, metas] of Object.entries(st)) {
+    const meta = metas[metas.length - 1] || {};
+    ids.add(key);
+    S.joinedAt[key] = meta.j || 0;
+    if (key !== me.id) { const m = member(key); if (meta.n) m.name = meta.n; if (meta.c) m.color = meta.c; }
+  }
+  for (const id of ids) {
+    if (id === me.id || S.online.has(id)) continue;
+    const m = member(id);
+    m.online = true; m.stale = false;
+    if (!S.firstSync) { toast(t('joined', { name: m.name }), 'ok', 3500); sfx('info'); }
+    if (me.id < id) callPeer(id);
+    updateMarker(m);
+  }
+  for (const id of S.online) {
+    if (id === me.id || ids.has(id)) continue;
+    const m = member(id);
+    m.online = false; m.talking = false;
+    closePeer(id);
+    toast(t('leftConvoy', { name: m.name }), 'warn', 5000);
+    updateMarker(m); updateTalkBar();
+  }
+  S.online = ids;
+  S.firstSync = false;
+  renderStrip();
+  if (S.sheet === 'members') renderMembers();
+}
+function checkLeader() {
+  if (!S.conn) return;
+  if (S.leaderId && S.online.has(S.leaderId)) { S.leaderMissing = 0; return; }
+  if (!S.leaderMissing) { S.leaderMissing = Date.now(); return; }
+  if (Date.now() - S.leaderMissing < (S.leaderId ? 15000 : 5000)) return;
+  const cand = [...S.online].sort((a, b) => (S.joinedAt[a] || S.joinTs) - (S.joinedAt[b] || S.joinTs) || (a < b ? -1 : 1))[0];
+  S.leaderMissing = 0;
+  if (cand === me.id) { const seq = S.leaderSeq + 1; setLeader(me.id, false, seq); send('leader', { id: me.id, seq }); }
+}
+Object.assign(H, {
+  rtc(d) { onRtc(d); },
+  hello(d) {
+    if (!d.id || d.id === me.id) return;
+    if (S.leaderId) send('state', { to: d.id, leaderId: S.leaderId, leaderSeq: S.leaderSeq, plan: S.plan, pins: [...S.pins.values()], chat: S.chat.slice(-30) });
+    maybeSendPos(true);
+  },
+  state(d) {
+    if (d.to !== me.id) return;
+    if (d.leaderId) setLeader(d.leaderId, true, d.leaderSeq || 0);
+    if (d.plan && d.plan.v > S.plan.v) { S.plan = d.plan; onPlanChanged(); }
+    for (const p of d.pins || []) if (!S.pins.has(p.id)) H.pin(Object.assign({}, p, { upd: true }));
+    if (!S.chat.length && Array.isArray(d.chat) && d.chat.length) { S.chat = d.chat.slice(-30); if (S.sheet === 'chat') renderChat(); }
+  },
+  leader(d) { if (d.id) setLeader(d.id, false, d.seq || 0); },
+  end(d) {
+    if (!d.by || d.by === me.id) return;
+    toast(t('endedAll', { name: member(d.by).name }), 'info', 7000);
+    openSheet('end');
+  },
+});
+async function shareInvite() {
+  if (!S.code) return;
+  const url = location.origin + location.pathname + '?c=' + S.code;
+  const text = t('shareText', { code: S.code });
+  if (navigator.share) { try { await navigator.share({ title: 'PocketConvoy', text, url }); } catch (e) { /* annulé */ } return; }
+  try { await navigator.clipboard.writeText(text + ' ' + url); toast(t('linkCopied'), 'ok', 3000); } catch (e) { toast(S.code, 'info', 6000); }
+}
+
+/* talkie en direct : une liaison audio avec chaque voiture ; le micro n'est branché que pendant l'appui */
+const RTC = { peers: new Map(), pending: new Map(), stream: null, track: null, token: 0 };
+async function askMicOnce() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  try {
+    setAudioSession('play-and-record');
+    const st = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    st.getTracks().forEach(x => x.stop());
+    S.micOk = true;
+  } catch (e) { S.micOk = false; toast(t('micDenied'), 'warn', 8000); }
+  setAudioSession('playback');
+  updatePTT();
+}
+function rtcSend(to, d) { send('rtc', { from: me.id, to, d }); }
+const audioTr = pc => pc.getTransceivers().find(x => x.receiver && x.receiver.track && x.receiver.track.kind === 'audio');
+function newPC(id) {
+  closePeer(id);
+  const pc = new RTCPeerConnection({ iceServers: NET.iceServers });
+  const p = { id, pc, audio: null };
+  RTC.peers.set(id, p);
+  pc.onicecandidate = e => { if (e.candidate) rtcSend(id, { cand: e.candidate.toJSON() }); };
+  pc.ontrack = e => playRemote(p, (e.streams && e.streams[0]) || new MediaStream([e.track]));
+  pc.onconnectionstatechange = () => {
+    const st = pc.connectionState;
+    if (st === 'failed') setTimeout(() => { if (RTC.peers.get(id) === p && S.online.has(id)) resetPeer(id); }, 2000);
+    if (st === 'disconnected') setTimeout(() => { if (RTC.peers.get(id) === p && pc.connectionState === 'disconnected' && S.online.has(id)) resetPeer(id); }, 8000);
+    if (S.sheet === 'members') renderMembers();
+  };
+  return p;
+}
+function playRemote(p, stream) {
+  if (!p.audio) {
+    p.audio = document.createElement('audio');
+    p.audio.autoplay = true;
+    p.audio.setAttribute('playsinline', '');
+    document.body.appendChild(p.audio);
+  }
+  p.audio.srcObject = stream;
+  p.audio.play().catch(() => { if (!S.audioHint) { S.audioHint = true; toast(t('tapForSound'), 'info', 6000); } });
+}
+async function callPeer(id) {
+  const p = newPC(id);
+  try {
+    const tr = p.pc.addTransceiver('audio', { direction: 'sendrecv' });
+    if (RTC.track) await tr.sender.replaceTrack(RTC.track);
+    await p.pc.setLocalDescription(await p.pc.createOffer());
+    const d = p.pc.localDescription;
+    rtcSend(id, { sdp: { type: d.type, sdp: d.sdp } });
+  } catch (e) { console.warn('offre', e); }
+}
+async function onRtc({ from, to, d }) {
+  if (to !== me.id || !from || !d || !S.live) return;
+  try {
+    if (d.reset) { closePeer(from); if (me.id < from) setTimeout(() => callPeer(from), 400); return; }
+    if (d.sdp && d.sdp.type === 'offer') {
+      const p = newPC(from);
+      await p.pc.setRemoteDescription(d.sdp);
+      const tr = audioTr(p.pc);
+      if (tr) { tr.direction = 'sendrecv'; if (RTC.track) await tr.sender.replaceTrack(RTC.track); }
+      await p.pc.setLocalDescription(await p.pc.createAnswer());
+      const ld = p.pc.localDescription;
+      rtcSend(from, { sdp: { type: ld.type, sdp: ld.sdp } });
+      flushCands(from);
+    } else if (d.sdp && d.sdp.type === 'answer') {
+      const p = RTC.peers.get(from);
+      if (p && p.pc.signalingState === 'have-local-offer') { await p.pc.setRemoteDescription(d.sdp); flushCands(from); }
+    } else if (d.cand) {
+      const p = RTC.peers.get(from);
+      if (p && p.pc.remoteDescription) await p.pc.addIceCandidate(d.cand).catch(() => {});
+      else { const q = RTC.pending.get(from) || []; q.push(d.cand); RTC.pending.set(from, q); }
+    }
+  } catch (e) { console.warn('rtc', e); }
+}
+function flushCands(id) {
+  const p = RTC.peers.get(id), q = RTC.pending.get(id);
+  RTC.pending.delete(id);
+  if (p && q) q.forEach(c => p.pc.addIceCandidate(c).catch(() => {}));
+}
+function closePeer(id) {
+  const p = RTC.peers.get(id);
+  if (p) { try { p.pc.close(); } catch (e) { /* ignoré */ } if (p.audio) p.audio.remove(); RTC.peers.delete(id); }
+  RTC.pending.delete(id);
+}
+function resetPeer(id) {
+  closePeer(id);
+  if (me.id < id) callPeer(id); else rtcSend(id, { reset: true });
+}
+function checkPeers() {
+  for (const id of S.online) {
+    if (id === me.id) continue;
+    const p = RTC.peers.get(id), st = p && p.pc.connectionState;
+    if (!p ? me.id < id : ['failed', 'closed', 'disconnected'].includes(st)) resetPeer(id);
+  }
+}
+async function talkStartLive() {
+  if (S.talking || !S.active) return;
+  S.talking = true;
+  const token = ++RTC.token;
+  sfx('talkStart'); haptic('talk');
+  clearTimeout(S.talkTimer);
+  S.talkTimer = setTimeout(() => talkStop(), 60000);
+  updatePTT();
+  try {
+    setAudioSession('play-and-record');
+    const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
+    S.micOk = true;
+    if (!S.talking || token !== RTC.token) { st.getTracks().forEach(x => x.stop()); setAudioSession('playback'); return; }
+    RTC.stream = st; RTC.track = st.getAudioTracks()[0];
+    for (const p of RTC.peers.values()) { const tr = audioTr(p.pc); if (tr) tr.sender.replaceTrack(RTC.track).catch(() => {}); }
+    send('talk', { id: me.id, on: true });
+  } catch (e) {
+    S.micOk = false; S.talking = false; clearTimeout(S.talkTimer); updatePTT();
+    setAudioSession('playback');
+    toast(t('micDenied'), 'warn', 8000);
+  }
+}
+function talkStopLive(silent) {
+  if (!S.talking) return;
+  S.talking = false;
+  RTC.token++;
+  clearTimeout(S.talkTimer);
+  for (const p of RTC.peers.values()) { const tr = audioTr(p.pc); if (tr) tr.sender.replaceTrack(null).catch(() => {}); }
+  if (RTC.stream) RTC.stream.getTracks().forEach(x => x.stop());
+  RTC.stream = null; RTC.track = null;
+  setAudioSession('playback');
+  send('talk', { id: me.id, on: false });
+  if (!silent) { sfx('talkEnd'); haptic('talk'); }
+  updatePTT();
+}
+
 /* ---------- historique et replay ---------- */
 let RP = null;
 async function openHistory() {
@@ -2369,8 +2710,17 @@ function bind() {
     me.color = b.dataset.c; store.set('color', me.color);
     $$('.swatch').forEach(s => s.setAttribute('aria-pressed', String(s === b)));
   });
-  $('#btnStart').addEventListener('click', start);
-  $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); start(); } });
+  $('#btnStart').addEventListener('click', () => start());
+  $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+  $('#btnCreate').addEventListener('click', () => { if (!configOk()) { homeErr(t('cfgWarn')); return; } start({ live: true, creating: true, code: newCode() }); });
+  $('#btnJoin').addEventListener('click', () => {
+    if (!configOk()) { homeErr(t('cfgWarn')); return; }
+    const c = $('#code').value.trim().toUpperCase();
+    if (c.length !== 6) { homeErr(t('errCode')); $('#code').focus(); return; }
+    start({ live: true, code: c });
+  });
+  $('#code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); });
+  $('#code').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); $('#btnJoin').click(); } });
   $('#btnHistory').addEventListener('click', () => openHistory());
   $('#btnHomeSettings').addEventListener('click', () => openSheet('settings'));
   $('#btnDemoPanel').addEventListener('click', () => openSheet('demo'));
@@ -2396,7 +2746,7 @@ function bind() {
     if (e.target.closest('[data-close]')) closeSheets();
   });
 
-  $('#main').addEventListener('pointerdown', () => { if (S.ac && S.ac.state !== 'running') unlockAudio(); }, { capture: true });
+  $('#main').addEventListener('pointerdown', () => { if ((S.ac && S.ac.state !== 'running') || [...RTC.peers.values()].some(p => p.audio && p.audio.paused)) unlockAudio(); }, { capture: true });
   $('#viewTabs').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
   $('#btnLocate').addEventListener('click', () => { if (S.follow) { setFollow(false); fitConvoy(); } else setFollow(true); });
   $('#navCard').addEventListener('click', () => openSheet(S.arrived ? 'end' : 'route'));
@@ -2520,14 +2870,18 @@ function bind() {
 
   $('#strip').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) focusMember(b.dataset.id); });
   $('#membersList').addEventListener('click', e => {
+    if (e.target.closest('#btnInvite')) { shareInvite(); return; }
     const s = e.target.closest('[data-see]'), l = e.target.closest('[data-lead]');
     if (s) focusMember(s.dataset.see);
-    if (l && isLeader()) { setLeader(l.dataset.lead); renderMembers(); }
+    if (l && isLeader()) { giveLeader(l.dataset.lead); renderMembers(); }
   });
 
   $('#btnEndOpen').addEventListener('click', () => openSheet('end'));
   $('#btnQuit').addEventListener('click', () => { if (confirm(t('confirmQuit'))) leave(); });
-  $('#endBody').addEventListener('click', e => { if (e.target.closest('#endSave')) finish(); });
+  $('#endBody').addEventListener('click', e => {
+    if (e.target.closest('#endSave')) finish();
+    if (e.target.closest('#endAll')) { send('end', { by: me.id }); finish(); }
+  });
 
   $('#histBack').addEventListener('click', () => { show('home'); renderHome(); });
   $('#histList').addEventListener('click', e => { const b = e.target.closest('[data-trip]'); if (b) openTrip(b.dataset.trip); });
@@ -2555,7 +2909,11 @@ function bind() {
 
   document.addEventListener('visibilitychange', () => {
     if (!S.active) return;
-    if (document.visibilityState === 'visible') { keepAwake(); unlockAudio(); if (SIM.mode === 'gps') startGeo(); SIM.lastReal = performance.now(); }
+    if (document.visibilityState === 'visible') {
+      keepAwake(); unlockAudio(); SIM.lastReal = performance.now();
+      if (S.live || SIM.mode === 'gps') startGeo();
+      if (S.live) { if (!S.conn) reconnect(); setTimeout(checkPeers, 1500); maybeSendPos(true); }
+    }
     else talkStop(true);
   });
 }

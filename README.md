@@ -2,7 +2,13 @@
 
 A mobile-first web app that keeps a group of cars together on a road trip: live map of every car, push-to-talk walkie-talkie, a shared route set by the convoy leader, quick alerts, a speedometer and trip statistics with replay.
 
-This is the demo version. The other cars of the convoy are simulated on the phone, so the whole app can be tested alone, without any server or account. Real-time sync between phones will be added once the behaviour is validated.
+Create a convoy, share the invite link or the 6-character code, and every phone sees the others in real time. A demo mode simulates three cars on the phone so the app can also be tested alone.
+
+## Setup
+
+1. In a Supabase project, copy the project URL and the legacy anon key into `config.js`. Realtime public channels must be allowed, which is the default. No database table is needed.
+2. For the walkie-talkie on mobile data, create a free Metered account (Open Relay TURN) and paste its `iceServers` list into `config.js`.
+3. Push the files to the repository and enable GitHub Pages.
 
 ## Demo
 

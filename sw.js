@@ -1,11 +1,11 @@
 /* PocketConvoy service worker: app shell offline, always fresh when online */
-const CACHE = 'pocketconvoy-0.13.0';
-const SHELL = ['./', './index.html', './app.js', './manifest.webmanifest',
+const CACHE = 'pocketconvoy-1.0.0';
+const SHELL = ['./', './index.html', './app.js', './config.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys()

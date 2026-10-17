@@ -74,6 +74,18 @@ svg{display:block}
 .btn-ghost{border:1px solid var(--line-2);color:var(--text)}
 .btn-danger{color:var(--danger)}
 .home-row{display:flex;gap:10px}
+.divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px}
+.divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
+.join-row{display:flex;gap:10px}
+.join-row .text{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.2em;font-weight:700;text-align:center}
+.join-row .btn{width:auto;flex:none}
+.warn-note{border-left:3px solid var(--accent);padding-left:12px}
+.demo-box{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:22px;margin-top:6px}
+.demo-head{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
+.demo-head .dot{background:var(--accent)}
+.invite{display:flex;flex-direction:column;gap:12px;padding:4px 0 16px;border-bottom:1px solid var(--line);margin-bottom:4px}
+.invite .btn{min-height:48px;font-size:15px}
+.code-big{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.14em;font-variant-numeric:tabular-nums}
 .note{font-size:14px;color:var(--muted);margin:0}
 .err{color:var(--danger);font-size:14px;margin:-10px 0 0}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
@@ -369,8 +381,6 @@ setTimeout(out,6000);})();</script>
       <div><h1>PocketConvoy</h1><p data-i18n="tagline">Rouler ensemble, sans se perdre</p></div>
     </header>
 
-    <div class="demo-note"><span class="dot"></span><span data-i18n="demoBadge">Version démo</span></div>
-
     <label class="field">
       <span class="field-label" data-i18n="nickname">Ton pseudo</span>
       <input id="name" class="text" maxlength="16" autocomplete="nickname" placeholder="Nitsu" data-i18n-ph="nicknamePh">
@@ -379,22 +389,34 @@ setTimeout(out,6000);})();</script>
       <span class="field-label" data-i18n="colour">Ta couleur sur la carte</span>
       <div class="swatches" id="swatches"></div>
     </div>
-    <div class="field">
-      <span class="field-label" data-i18n="posLabel">Position</span>
-      <div class="seg" data-pref="demoPos"><button data-v="sim" data-i18n="posSim">Trajet simulé</button><button data-v="gps" data-i18n="posGps">GPS réel</button></div>
-    </div>
-    <div class="field">
-      <span class="field-label" data-i18n="leadLabel">Leader du convoi</span>
-      <div class="seg" data-pref="demoLeader"><button data-v="me" data-i18n="leadMe">Moi</button><button data-v="friend" data-i18n="leadFriend">Un ami</button></div>
-    </div>
     <p class="err" id="homeErr" hidden></p>
 
-    <button class="btn btn-primary" id="btnStart" data-i18n="startDemo">Lancer la démo</button>
+    <button class="btn btn-primary" id="btnCreate" data-i18n="create">Créer un convoi</button>
+    <div class="divider" data-i18n="orJoin">ou rejoindre avec un code</div>
+    <div class="join-row">
+      <input id="code" class="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" enterkeyhint="go">
+      <button class="btn btn-ghost" id="btnJoin" data-i18n="join">Rejoindre</button>
+    </div>
+    <p class="note warn-note" id="cfgWarn" hidden data-i18n="cfgWarn"></p>
     <div class="home-row">
       <button class="btn btn-ghost" id="btnHistory" data-i18n="history">Historique</button>
       <button class="btn btn-ghost" id="btnHomeSettings" data-i18n="settings">Réglages</button>
     </div>
-    <p class="note" data-i18n="homeNote">Pendant un vrai trajet, garde l’app ouverte au premier plan.</p>
+
+    <div class="demo-box">
+      <div class="demo-head"><span class="dot"></span><span data-i18n="demoTitleHome">Essayer sans amis</span></div>
+      <p class="note" data-i18n="demoBadge"></p>
+      <div class="field">
+        <span class="field-label" data-i18n="posLabel">Position</span>
+        <div class="seg" data-pref="demoPos"><button data-v="sim" data-i18n="posSim">Trajet simulé</button><button data-v="gps" data-i18n="posGps">GPS réel</button></div>
+      </div>
+      <div class="field">
+        <span class="field-label" data-i18n="leadLabel">Leader du convoi</span>
+        <div class="seg" data-pref="demoLeader"><button data-v="me" data-i18n="leadMe">Moi</button><button data-v="friend" data-i18n="leadFriend">Un ami</button></div>
+      </div>
+      <button class="btn btn-ghost" id="btnStart" data-i18n="startDemo">Lancer la démo</button>
+      <p class="note" data-i18n="homeNote"></p>
+    </div>
   </div>
 </section>
 
@@ -597,6 +619,8 @@ setTimeout(out,6000);})();</script>
 </div>
 
 <script defer src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script defer src="config.js"></script>
 <script defer src="app.js"></script>
 </body>
 </html>
