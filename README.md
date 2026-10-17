@@ -1,48 +1,35 @@
 # PocketConvoy
 
-A mobile-first web app that keeps a group of cars together on a road trip. Every car sees the others on a live map, talks through a push-to-talk walkie-talkie, follows the same route set by the convoy leader, and gets trip statistics with a replay at the end.
+A mobile-first web app that keeps a group of cars together on a road trip: live map of every car, push-to-talk walkie-talkie, a shared route set by the convoy leader, quick alerts, a speedometer and trip statistics with replay.
+
+This is the demo version. The other cars of the convoy are simulated on the phone, so the whole app can be tested alone, without any server or account. Real-time sync between phones will be added once the behaviour is validated.
+
+## Demo
+
+- Simulated drive: your car drives itself along a real road route from Lausanne to Gruyères, with a stop in Vevey. Simulation speed can be set from pause to ten times faster.
+- Real GPS: your real position is used, and the simulated cars stay around you and follow you once a destination is set.
+- You or a simulated friend can be the convoy leader. The leader sets the destination and the stops.
+- Scenarios to trigger on demand: a friend talks, a friend sends an alert, a car falls behind, the leader stops, a breakdown, a car loses signal, a car leaves the convoy, a leader change. Random talk and alerts can also happen on their own.
+- The walkie-talkie works in echo mode: what you say is played back when you release the button. Simulated friends speak with the phone's synthetic voice.
 
 ## Features
 
-- Live map of every car with speed and status, refreshed every few seconds. Night map by default, day map in settings.
-- Speedometer tab: 0 to 300 km/h gauge with heading, plus live trip distance, driving time, average and top speed, altitude and distance to the leader. Route guidance, walkie-talkie and alerts stay on screen.
-- Walkie-talkie between all cars, peer to peer. Hold to talk or tap to toggle, with start and end tones. An open microphone is cut after 60 seconds.
-- Shared route: the leader picks a destination and stops (address search or tap on the map) and can change them while driving. Each phone computes its own turn-by-turn route through the same points and reroutes when it leaves the line.
-- Leader role can be handed over, and is reassigned automatically if the leader drops out.
-- Convoy alerts: a car falling too far behind the leader, the leader stopped, quick messages (pause, fuel, lost, slow down, all good) and a full-screen breakdown alert.
-- Trip statistics: distance, driving time, average and top speed, and a table of the whole convoy.
-- Trip history stored on the phone, with an animated replay of every car.
+- Live map with every car's speed and status. Dark and light map styles.
+- Turn-by-turn guidance on screen, rerouting when you leave the route.
+- Convoy alerts: a car too far from the leader, the leader stopped, quick messages (break, fuel, lost, slow down, all good) and a full-screen breakdown alert.
+- Speedometer view, 0 to 300 km/h, with heading and live trip figures.
+- Trip statistics and a convoy table at the end of the trip; trips are saved on the device with an animated replay of every car.
+- French and English interface.
+- Four themes (Graphite, Light, OLED, Red night) and five accent colours.
 - Installable on the iPhone home screen, opens full screen.
-- French and English interface, switchable in settings.
-- Five themes: Motorway (green), Main road (blue), AMOLED (pure black), Light, and Night vision (all red, to keep night vision while driving in the dark).
 
-## How it works
+## Services used
 
-The app is a static site served by GitHub Pages. It relies on:
-
-- Supabase Realtime (broadcast and presence) for positions, alerts and WebRTC signalling. No database tables are used and nothing is stored on the server.
-- A WebRTC mesh for audio, suited to about six cars. A TURN relay is needed for phones on mobile data.
-- MapLibre GL JS with CARTO basemaps built on OpenStreetMap data.
-- The public OSRM server for routing and Photon for address search, both without keys.
-- IndexedDB for the local trip history.
-
-## Setup
-
-1. In a Supabase project, copy the project URL and the legacy anon key into `config.js`. Realtime public channels must be allowed, which is the default.
-2. Create a free Metered account (Open Relay TURN) and paste the provided `iceServers` list into `config.js`.
-3. Push the files to the repository and enable GitHub Pages on the main branch, root folder.
-4. On iPhone, open the page in Safari, then Share, Add to Home Screen. Allow location and microphone on first launch.
-
-## Limitations
-
-- iOS pauses web apps in the background. Keep the app open with the screen on; the app asks the screen to stay awake.
-- Web apps cannot run on CarPlay or Android Auto. Voice goes through the car speakers over Bluetooth.
-- The public OSRM server is a shared demo service without guarantees.
+All free and without keys: MapLibre GL JS with CARTO basemaps built on OpenStreetMap data, the public OSRM server for routing and Photon for address search.
 
 ## Files
 
 - `index.html`: layout and styles
-- `app.js`: application logic
-- `config.js`: Supabase and TURN settings
+- `app.js`: application logic and convoy simulation
 - `sw.js`: offline app shell
 - `manifest.webmanifest` and `icons/`: home screen install

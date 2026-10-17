@@ -1,19 +1,14 @@
 'use strict';
-/* PocketConvoy : convoi routier entre amis (PWA) */
+/* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
-const CFG = Object.assign({
-  supabaseUrl: '',
-  supabaseAnonKey: '',
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
-  routingUrl: 'https://router.project-osrm.org',
-  geocodeUrl: 'https://photon.komoot.io',
-}, window.CONVOY_CONFIG || {});
-
+const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
 const STYLES = {
   night: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
-  day: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+  day: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
 };
-const COLORS = ['#3D8BFD', '#E5484D', '#30A46C', '#F76B15', '#8E4EC6', '#E93D82', '#12A594', '#FFE629'];
+const COLORS = ['#4C9EFF', '#FF4D6D', '#2BD9A0', '#FFC53D', '#B07CFF', '#00C2FF', '#FF8A3D', '#E8E8E8'];
+const ACCENTS = { orange: '#FF5B1F', yellow: '#FFD60A', lime: '#B6F23A', cyan: '#00D1FF', magenta: '#FF2E88' };
+const THEMES = { graphite: { map: 'night', meta: '#0F0F10' }, light: { map: 'day', meta: '#F4F4F2' }, oled: { map: 'night', meta: '#000000' }, red: { map: 'night', meta: '#050000' } };
 const STATUSES = ['route', 'arret', 'pause', 'essence', 'perdu', 'panne'];
 const QUICK = {
   pause:    { status: 'pause', sound: 'msg', kind: 'info' },
@@ -27,48 +22,46 @@ const SOUNDS = {
   start: [880, 1320], end: [1320, 880], rxStart: [1250, 1650], rxEnd: [1650, 1050],
   msg: [660, 990], warn: [990, 740, 990, 740], sos: [1100, 760, 1100, 760, 1100, 760],
 };
-const THEMES = {
-  motorway: { map: 'night', meta: '#121B23', prev: ['#121B23', '#0E7A4B', '#F4A62A', '#FFFFFF'] },
-  main:     { map: 'night', meta: '#121B23', prev: ['#121B23', '#1F5FAF', '#F4A62A', '#FFFFFF'] },
-  amoled:   { map: 'night', meta: '#000000', prev: ['#000000', '#0E7A4B', '#F4A62A', '#FFFFFF'] },
-  light:    { map: 'day',   meta: '#EEF2F4', prev: ['#EEF2F4', '#0E7A4B', '#E8940F', '#FFFFFF'] },
-  red:      { map: 'night', meta: '#070000', prev: ['#070000', '#3E0805', '#B3261E', '#FF7A6A'] },
-};
+/* démo : départ de Lausanne, étape à Vevey, arrivée à Gruyères */
+const DEMO_START = [46.5167, 6.6291];
+const DEMO_PLAN = [{ lat: 46.4628, lng: 6.8419, label: 'Vevey' }, { lat: 46.5840, lng: 7.0820, label: 'Gruyères' }];
+const BOTS = [
+  { id: 'bot-lea', name: 'Léa', color: '#FF4D6D', pitch: 1.15 },
+  { id: 'bot-marco', name: 'Marco', color: '#2BD9A0', pitch: 0.85 },
+  { id: 'bot-ines', name: 'Inès', color: '#B07CFF', pitch: 1.05 },
+];
 
 /* ---------- textes FR / EN ---------- */
 const I18N = {
   fr: {
-    tagline: 'Rouler ensemble, sans se perdre', resumeTitle: 'Trajet en cours', resume: 'Reprendre', resumeEnd: 'Terminer',
-    nickname: 'Ton pseudo', nicknamePh: 'Par exemple Nitsu', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
-    create: 'Créer un convoi', orJoin: 'ou rejoindre avec un code', join: 'Rejoindre', history: 'Historique des trajets', settings: 'Réglages',
-    cfgWarn: '<b>Configuration manquante.</b> Ajoute l’URL et la clé publique de ton projet Supabase dans le fichier config.js du dépôt.',
-    homeNote: 'Pendant le trajet, garde l’app ouverte au premier plan sur un support. Sur iPhone, verrouiller l’écran ou ouvrir une autre app coupe le partage de position et le talkie.',
-    tabMap: 'Carte', tabSpeed: 'Compteur', viewAria: 'Vue', shareAria: 'Partager le code du convoi', soundOn: 'Activer le son',
-    pickHint: 'Touche la carte pour placer l’étape', cancel: 'Annuler',
+    tagline: 'Rouler ensemble, sans se perdre',
+    demoBadge: 'Version démo : trois voitures sont simulées sur ton téléphone pour tester la carte, le guidage, les alertes et le talkie.',
+    nickname: 'Ton pseudo', nicknamePh: 'Nitsu', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
+    posLabel: 'Ta position', posSim: 'Trajet simulé', posGps: 'GPS réel', leadLabel: 'Leader du convoi', leadMe: 'Moi', leadFriend: 'Un ami',
+    startDemo: 'Lancer la démo', history: 'Historique', settings: 'Réglages',
+    homeNote: 'Trajet simulé : ta voiture roule toute seule de Lausanne à Gruyères. GPS réel : ta vraie position, avec les autres voitures autour de toi.',
+    tabMap: 'Carte', tabSpeed: 'Compteur', viewAria: 'Vue', demo: 'Démo', pickHint: 'Touche la carte pour placer l’étape', cancel: 'Annuler',
     toolRoute: 'Parcours', toolAlerts: 'Alertes', toolConvoy: 'Convoi', toolSettings: 'Réglages', ptt: 'Talkie-walkie', close: 'Fermer', back: 'Retour',
     route: 'Parcours', searchPh: 'Adresse ou lieu', pickBtn: 'Placer une étape sur la carte',
     quickTitle: 'Alertes rapides', qPause: 'Pause', qFuel: 'Essence', qSlow: 'Ralentissez', qLost: 'Je suis perdu', qOk: 'Tout va bien, je repars',
     qSos: 'Panne ou urgence', qSosConfirm: 'Toucher encore pour confirmer',
     quickNote: 'Chaque alerte part à tout le convoi avec un son. Une panne s’affiche en plein écran chez les autres.',
-    convoy: 'Convoi', lang: 'Langue', theme: 'Thème', talkBtn: 'Bouton du talkie', hold: 'Maintenir appuyé', toggle: 'Appui pour basculer',
-    map: 'Carte', night: 'Nuit', day: 'Jour', lagAlert: 'Alerte quand une voiture est loin du leader',
-    shareCode: 'Partager le code du convoi', endTrip: 'Terminer le trajet', quit: 'Quitter sans enregistrer', yourTrip: 'Ton trajet',
+    convoy: 'Convoi', lang: 'Langue', theme: 'Thème', accent: 'Couleur d’accent', talkBtn: 'Bouton du talkie', hold: 'Maintenir', toggle: 'Appui simple',
+    map: 'Carte', night: 'Sombre', day: 'Claire', lagAlert: 'Alerte quand une voiture est loin du leader',
+    endTrip: 'Terminer le trajet', quit: 'Quitter sans enregistrer', yourTrip: 'Ton trajet',
+    th_graphite: 'Graphite', th_light: 'Clair', th_oled: 'OLED', th_red: 'Nuit rouge',
+    thn_graphite: 'Gris neutres, une seule couleur vive pour l’essentiel.', thn_light: 'Pour rouler en plein jour.',
+    thn_oled: 'Noir pur : moins d’éblouissement et de batterie sur les écrans OLED.', thn_red: 'Tout en rouge sombre pour garder les yeux habitués à la nuit. L’accent est fixé au rouge.',
     sosHas: '{name} a un problème', sosSub: 'Panne ou urgence signalée', sosShow: 'Voir sur la carte', sosOk: 'J’ai vu', sosDist: 'À {d} de toi',
     play: 'Lecture', pause: 'Pause', replayAria: 'Position dans le trajet', gaugeAria: 'Compteur de vitesse',
-    th_motorway: 'Autoroute', th_main: 'Route principale', th_amoled: 'AMOLED', th_light: 'Clair', th_red: 'Vision de nuit',
-    thn_motorway: 'Vert des panneaux d’autoroute, sur fond sombre.', thn_main: 'Bleu des panneaux de route principale.',
-    thn_amoled: 'Noir pur : moins d’éblouissement et de batterie sur les écrans OLED.', thn_light: 'Pour rouler en plein jour, avec la carte claire.',
-    thn_red: 'Tout en rouge sombre pour garder les yeux habitués à la nuit.',
     st_route: 'En route', st_arret: 'À l’arrêt', st_pause: 'En pause', st_essence: 'À la pompe', st_perdu: 'Perdu', st_panne: 'En panne',
     q_pause: 'Je fais une pause', q_essence: 'Je m’arrête faire le plein', q_perdu: 'Je suis perdu', q_ralentir: 'Attention, ralentissez',
     q_ok: 'Tout va bien, je repars', q_sos: 'Panne ou urgence', msgFrom: '{name} : {text}',
-    errName: 'Choisis un pseudo pour que les autres te reconnaissent.', errCfg: 'Ajoute ton URL et ta clé Supabase dans config.js, puis recharge la page.',
-    errLibs: 'Les bibliothèques n’ont pas pu se charger. Vérifie ta connexion.', errCode: 'Le code du convoi fait 6 caractères.',
-    tooShort: 'Trajet trop court : il n’a pas été enregistré.', resumeText: 'Convoi {code}, parti à {time}. {dist} parcourus.',
-    created: 'Convoi créé. Partage le code {code} avec les autres voitures.',
-    micDenied: 'Micro refusé : tu entends les autres mais tu ne peux pas parler. Autorise le micro, puis touche le bouton du talkie.',
-    planChanged: '{name} a modifié le parcours', endedAll: '{name} a terminé le trajet pour tout le convoi', joined: '{name} a rejoint le convoi',
-    leftConvoy: '{name} n’est plus connecté', youLeader: 'Tu es maintenant le leader du convoi', newLeader: '{name} est le nouveau leader',
+    errName: 'Choisis un pseudo pour que les autres te reconnaissent.', errLibs: 'La carte n’a pas pu se charger. Vérifie ta connexion.',
+    tooShort: 'Trajet trop court : il n’a pas été enregistré.',
+    micDenied: 'Micro refusé. Autorise le micro pour Safari dans les réglages de l’iPhone pour tester le talkie.',
+    planChanged: '{name} a modifié le parcours', joined: '{name} a rejoint le convoi', leftConvoy: '{name} n’est plus connecté',
+    youLeader: 'Tu es maintenant le leader du convoi', newLeader: '{name} est le nouveau leader',
     noGps: 'Pas de GPS disponible sur cet appareil.', geoDenied: 'Position refusée. Autorise la localisation pour Safari dans Réglages, Confidentialité, Service de localisation.',
     routeFail: 'Itinéraire indisponible pour le moment. Nouvel essai bientôt.', arrivedToast: 'Arrivée à destination. Termine le trajet pour voir tes stats.',
     stopReached: 'Étape atteinte : {label}', arrived: 'Vous êtes arrivés', tapStats: 'Touchez pour voir les stats du trajet',
@@ -79,54 +72,63 @@ const I18N = {
     yourRoute: ' Ton itinéraire : {dist}.', destSent: 'Destination envoyée au convoi', stopSent: 'Étape envoyée au convoi',
     noResult: 'Aucun résultat. Essaie avec la ville ou une adresse plus précise.', searchFail: 'Recherche impossible. Vérifie ta connexion.',
     asStop: 'Étape', asDest: 'Destination', mapPoint: 'Point choisi sur la carte', noName: 'Lieu sans nom',
-    micOn: 'Activer le micro', live: 'En direct', holdTalk: 'Maintenir pour parler', tapStop: 'Toucher pour couper', tapTalk: 'Toucher pour parler',
-    talks1: '{name} parle', talksN: '{names} parlent', and: ' et ', sent: 'Envoyé au convoi : {text}',
-    offline: 'Hors ligne', lostSignal: 'Signal perdu', at: 'à {d}', waiting: 'En attente des autres voitures. Code', leader: 'Leader',
-    micReady: 'Micro prêt', micOff: 'Micro inactif', audioOk: 'Audio connecté', audioFail: 'Audio en échec', audioWait: 'Audio en connexion',
-    you: ' (toi)', see: 'Voir', makeLeader: 'Leader', currentLeader: 'Leader actuel : {name}. Le leader choisit la destination et les étapes.',
+    micOn: 'Micro refusé', live: 'En direct', holdTalk: 'Maintenir pour parler', tapStop: 'Toucher pour couper', tapTalk: 'Toucher pour parler',
+    talks1: '{name} parle', talksN: '{names} parlent', and: ' et ', echo: 'Écho de ta voix', sent: 'Envoyé au convoi : {text}',
+    offline: 'Hors ligne', lostSignal: 'Signal perdu', at: 'à {d}', waitingDemo: 'Les voitures simulées arrivent…', leader: 'Leader',
+    simulated: 'Voiture simulée', you: ' (toi)', see: 'Voir', makeLeader: 'Nommer leader', currentLeader: 'Leader actuel : {name}. Le leader choisit la destination et les étapes.',
     youShort: 'toi', nobody: 'personne', car: 'Voiture', distance: 'Distance', driving: 'Conduite', avgShort: 'Moy.', max: 'Max',
     rankTitle: 'Le convoi, classé par distance', drivingOf: 'Temps de conduite sur {t}', drivingTime: 'Temps de conduite',
-    avgMoving: 'Vitesse moyenne en roulant', maxSpeed: 'Vitesse max', saveQuit: 'Enregistrer et quitter', endAll: 'Terminer pour tout le convoi',
-    keepDriving: 'Continuer à rouler', lagYou: 'Tu es à {d} du leader', lagOther: '{name} est à {d} du leader', leaderStopped: 'Le leader {name} est à l’arrêt',
-    heading: 'Cap {d}', itsYou: 'C’est toi', average: 'Moyenne', gapLeader: 'Écart au leader', altitude: 'Altitude',
-    shareText: 'Rejoins mon convoi sur PocketConvoy avec le code {code}', linkCopied: 'Lien d’invitation copié', codeIs: 'Code du convoi : {code}',
-    noTrips: 'Aucun trajet enregistré pour l’instant. Ils apparaissent ici quand tu termines un convoi.', convoyCode: 'Convoi {code}',
+    avgMoving: 'Vitesse moyenne en roulant', maxSpeed: 'Vitesse max', saveQuit: 'Enregistrer et quitter', keepDriving: 'Continuer à rouler',
+    lagYou: 'Tu es à {d} du leader', lagOther: '{name} est à {d} du leader', leaderStopped: 'Le leader {name} est à l’arrêt',
+    heading: 'Cap {d}', itsYou: 'C’est toi', carsOnline: 'Voitures connectées', average: 'Moyenne', gapLeader: 'Écart au leader', altitude: 'Altitude',
+    noTrips: 'Aucun trajet enregistré pour l’instant. Ils apparaissent ici quand tu termines un trajet.', demoTrip: 'Trajet démo',
     cars1: '1 voiture', carsN: '{n} voitures', tripLine: '{dist} en {dur}, {cars}', fromTo: '{date}, de {a} à {b}', delTrip: 'Supprimer ce trajet',
-    confirmQuit: 'Quitter le convoi sans enregistrer ce trajet ?', confirmDel: 'Supprimer ce trajet de l’historique ?',
+    confirmQuit: 'Quitter sans enregistrer ce trajet ?', confirmDel: 'Supprimer ce trajet de l’historique ?',
     viewConvoy: 'Vue du convoi', followMe: 'Me suivre',
+    demoTitle: 'Démo', simSpeed: 'Vitesse de la simulation', pauseShort: 'Pause', autoEvents: 'Événements automatiques', on: 'Activés', off: 'Désactivés',
+    scenarios: 'Tester un scénario', echoNote: 'Le talkie est en mode écho : ce que tu dis est rejoué quand tu relâches le bouton. Les amis simulés parlent avec la voix de synthèse de l’iPhone.',
+    hintAddDest: 'Tu es le leader : ouvre Parcours et choisis une destination pour lancer le convoi.',
+    sc_talk: 'Un ami parle', scd_talk: 'Message vocal dans le talkie',
+    sc_alert: 'Un ami envoie une alerte', scd_alert: 'Pause, essence, ralentir ou perdu',
+    sc_lag: 'Une voiture prend du retard', scd_lag: 'Déclenche l’alerte de distance',
+    sc_stop: 'Le leader s’arrête', scd_stop: 'Alerte après une minute d’arrêt',
+    sc_sos: 'Une panne', scd_sos: 'Alerte plein écran',
+    sc_signal: 'Une voiture perd le signal', scd_signal: 'Grisée après 45 secondes sans nouvelles',
+    sc_leave: 'Une voiture quitte le convoi', scd_leave: 'Elle revient 30 secondes plus tard',
+    sc_leader: 'Changer de leader', scd_leader: 'Passe le rôle à la voiture suivante',
+    needFollower: 'Tu es le leader : passe le rôle à un ami pour voir cette alerte.', needRoute: 'Choisis d’abord une destination dans Parcours.',
+    lagStarted: '{name} recule de {d}. L’alerte apparaît dans quelques secondes.', stopStarted: '{name} s’arrête. L’alerte arrive après une minute d’arrêt, accélère la simulation pour aller plus vite.',
+    signalStarted: '{name} n’envoie plus sa position.', noBot: 'Aucune voiture simulée disponible pour ce scénario.',
   },
   en: {
-    tagline: 'Drive together, never lose each other', resumeTitle: 'Trip in progress', resume: 'Resume', resumeEnd: 'End',
-    nickname: 'Your nickname', nicknamePh: 'For example Nitsu', colour: 'Your colour on the map', colourAria: 'Colour',
-    create: 'Create a convoy', orJoin: 'or join with a code', join: 'Join', history: 'Trip history', settings: 'Settings',
-    cfgWarn: '<b>Missing configuration.</b> Add your Supabase project URL and public key to the config.js file in the repository.',
-    homeNote: 'While driving, keep the app open in the foreground on a mount. On iPhone, locking the screen or switching apps stops location sharing and the walkie-talkie.',
-    tabMap: 'Map', tabSpeed: 'Speed', viewAria: 'View', shareAria: 'Share the convoy code', soundOn: 'Turn sound on',
-    pickHint: 'Tap the map to place the stop', cancel: 'Cancel',
+    tagline: 'Drive together, never lose each other',
+    demoBadge: 'Demo version: three cars are simulated on your phone so you can test the map, guidance, alerts and walkie-talkie.',
+    nickname: 'Your nickname', nicknamePh: 'Nitsu', colour: 'Your colour on the map', colourAria: 'Colour',
+    posLabel: 'Your position', posSim: 'Simulated drive', posGps: 'Real GPS', leadLabel: 'Convoy leader', leadMe: 'Me', leadFriend: 'A friend',
+    startDemo: 'Start the demo', history: 'History', settings: 'Settings',
+    homeNote: 'Simulated drive: your car drives itself from Lausanne to Gruyères. Real GPS: your real position, with the other cars around you.',
+    tabMap: 'Map', tabSpeed: 'Speed', viewAria: 'View', demo: 'Demo', pickHint: 'Tap the map to place the stop', cancel: 'Cancel',
     toolRoute: 'Route', toolAlerts: 'Alerts', toolConvoy: 'Convoy', toolSettings: 'Settings', ptt: 'Walkie-talkie', close: 'Close', back: 'Back',
     route: 'Route', searchPh: 'Address or place', pickBtn: 'Place a stop on the map',
     quickTitle: 'Quick alerts', qPause: 'Break', qFuel: 'Fuel', qSlow: 'Slow down', qLost: 'I’m lost', qOk: 'All good, moving on',
     qSos: 'Breakdown or emergency', qSosConfirm: 'Tap again to confirm',
     quickNote: 'Every alert goes to the whole convoy with a sound. A breakdown shows full screen on the other phones.',
-    convoy: 'Convoy', lang: 'Language', theme: 'Theme', talkBtn: 'Walkie-talkie button', hold: 'Hold to talk', toggle: 'Tap to toggle',
-    map: 'Map', night: 'Night', day: 'Day', lagAlert: 'Alert when a car is far from the leader',
-    shareCode: 'Share the convoy code', endTrip: 'End the trip', quit: 'Leave without saving', yourTrip: 'Your trip',
+    convoy: 'Convoy', lang: 'Language', theme: 'Theme', accent: 'Accent colour', talkBtn: 'Walkie-talkie button', hold: 'Hold', toggle: 'Tap',
+    map: 'Map', night: 'Dark', day: 'Light', lagAlert: 'Alert when a car is far from the leader',
+    endTrip: 'End the trip', quit: 'Leave without saving', yourTrip: 'Your trip',
+    th_graphite: 'Graphite', th_light: 'Light', th_oled: 'OLED', th_red: 'Red night',
+    thn_graphite: 'Neutral greys, a single bright colour for what matters.', thn_light: 'For driving in daylight.',
+    thn_oled: 'Pure black: less glare and less battery on OLED screens.', thn_red: 'Everything in dim red to keep your eyes adapted to the dark. The accent is locked to red.',
     sosHas: '{name} has a problem', sosSub: 'Breakdown or emergency reported', sosShow: 'Show on the map', sosOk: 'Got it', sosDist: '{d} away from you',
     play: 'Play', pause: 'Pause', replayAria: 'Position in the trip', gaugeAria: 'Speedometer',
-    th_motorway: 'Motorway', th_main: 'Main road', th_amoled: 'AMOLED', th_light: 'Light', th_red: 'Night vision',
-    thn_motorway: 'Motorway sign green on a dark background.', thn_main: 'Main road sign blue.',
-    thn_amoled: 'Pure black: less glare and less battery on OLED screens.', thn_light: 'For driving in daylight, with the light map.',
-    thn_red: 'Everything in dim red to keep your eyes adapted to the dark.',
     st_route: 'Driving', st_arret: 'Stopped', st_pause: 'On a break', st_essence: 'Refuelling', st_perdu: 'Lost', st_panne: 'Broken down',
     q_pause: 'I’m taking a break', q_essence: 'I’m stopping for fuel', q_perdu: 'I’m lost', q_ralentir: 'Careful, slow down',
     q_ok: 'All good, moving on', q_sos: 'Breakdown or emergency', msgFrom: '{name}: {text}',
-    errName: 'Pick a nickname so the others recognise you.', errCfg: 'Add your Supabase URL and key to config.js, then reload the page.',
-    errLibs: 'The libraries could not load. Check your connection.', errCode: 'The convoy code has 6 characters.',
-    tooShort: 'Trip too short: it was not saved.', resumeText: 'Convoy {code}, left at {time}. {dist} driven.',
-    created: 'Convoy created. Share the code {code} with the other cars.',
-    micDenied: 'Microphone blocked: you can hear the others but cannot talk. Allow the microphone, then tap the walkie-talkie button.',
-    planChanged: '{name} changed the route', endedAll: '{name} ended the trip for the whole convoy', joined: '{name} joined the convoy',
-    leftConvoy: '{name} is no longer connected', youLeader: 'You are now the convoy leader', newLeader: '{name} is the new leader',
+    errName: 'Pick a nickname so the others recognise you.', errLibs: 'The map could not load. Check your connection.',
+    tooShort: 'Trip too short: it was not saved.',
+    micDenied: 'Microphone blocked. Allow the microphone for Safari in the iPhone settings to test the walkie-talkie.',
+    planChanged: '{name} changed the route', joined: '{name} joined the convoy', leftConvoy: '{name} is no longer connected',
+    youLeader: 'You are now the convoy leader', newLeader: '{name} is the new leader',
     noGps: 'No GPS available on this device.', geoDenied: 'Location blocked. Allow location for Safari in Settings, Privacy, Location Services.',
     routeFail: 'Route unavailable for now. Trying again soon.', arrivedToast: 'You have arrived. End the trip to see your stats.',
     stopReached: 'Stop reached: {label}', arrived: 'You have arrived', tapStats: 'Tap to see the trip stats',
@@ -137,22 +139,38 @@ const I18N = {
     yourRoute: ' Your route: {dist}.', destSent: 'Destination sent to the convoy', stopSent: 'Stop sent to the convoy',
     noResult: 'No results. Try with the town or a more precise address.', searchFail: 'Search unavailable. Check your connection.',
     asStop: 'Stop', asDest: 'Destination', mapPoint: 'Point picked on the map', noName: 'Unnamed place',
-    micOn: 'Turn the mic on', live: 'Live', holdTalk: 'Hold to talk', tapStop: 'Tap to stop', tapTalk: 'Tap to talk',
-    talks1: '{name} is talking', talksN: '{names} are talking', and: ' and ', sent: 'Sent to the convoy: {text}',
-    offline: 'Offline', lostSignal: 'Signal lost', at: '{d} away', waiting: 'Waiting for the other cars. Code', leader: 'Leader',
-    micReady: 'Mic ready', micOff: 'Mic off', audioOk: 'Audio connected', audioFail: 'Audio failed', audioWait: 'Audio connecting',
-    you: ' (you)', see: 'Show', makeLeader: 'Leader', currentLeader: 'Current leader: {name}. The leader picks the destination and the stops.',
+    micOn: 'Mic blocked', live: 'Live', holdTalk: 'Hold to talk', tapStop: 'Tap to stop', tapTalk: 'Tap to talk',
+    talks1: '{name} is talking', talksN: '{names} are talking', and: ' and ', echo: 'Your voice, played back', sent: 'Sent to the convoy: {text}',
+    offline: 'Offline', lostSignal: 'Signal lost', at: '{d} away', waitingDemo: 'The simulated cars are arriving…', leader: 'Leader',
+    simulated: 'Simulated car', you: ' (you)', see: 'Show', makeLeader: 'Make leader', currentLeader: 'Current leader: {name}. The leader picks the destination and the stops.',
     youShort: 'you', nobody: 'nobody', car: 'Car', distance: 'Distance', driving: 'Driving', avgShort: 'Avg.', max: 'Max',
     rankTitle: 'The convoy, ranked by distance', drivingOf: 'Driving time out of {t}', drivingTime: 'Driving time',
-    avgMoving: 'Average speed while moving', maxSpeed: 'Top speed', saveQuit: 'Save and leave', endAll: 'End for the whole convoy',
-    keepDriving: 'Keep driving', lagYou: 'You are {d} from the leader', lagOther: '{name} is {d} from the leader', leaderStopped: 'The leader {name} has stopped',
-    heading: 'Heading {d}', itsYou: 'It’s you', average: 'Average', gapLeader: 'Gap to leader', altitude: 'Altitude',
-    shareText: 'Join my convoy on PocketConvoy with the code {code}', linkCopied: 'Invite link copied', codeIs: 'Convoy code: {code}',
-    noTrips: 'No trips saved yet. They appear here when you end a convoy.', convoyCode: 'Convoy {code}',
+    avgMoving: 'Average speed while moving', maxSpeed: 'Top speed', saveQuit: 'Save and leave', keepDriving: 'Keep driving',
+    lagYou: 'You are {d} from the leader', lagOther: '{name} is {d} from the leader', leaderStopped: 'The leader {name} has stopped',
+    heading: 'Heading {d}', itsYou: 'It’s you', carsOnline: 'Cars connected', average: 'Average', gapLeader: 'Gap to leader', altitude: 'Altitude',
+    noTrips: 'No trips saved yet. They appear here when you end a trip.', demoTrip: 'Demo trip',
     cars1: '1 car', carsN: '{n} cars', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, from {a} to {b}', delTrip: 'Delete this trip',
-    confirmQuit: 'Leave the convoy without saving this trip?', confirmDel: 'Delete this trip from the history?',
+    confirmQuit: 'Leave without saving this trip?', confirmDel: 'Delete this trip from the history?',
     viewConvoy: 'Convoy view', followMe: 'Follow me',
+    demoTitle: 'Demo', simSpeed: 'Simulation speed', pauseShort: 'Pause', autoEvents: 'Automatic events', on: 'On', off: 'Off',
+    scenarios: 'Test a scenario', echoNote: 'The walkie-talkie is in echo mode: what you say is played back when you release the button. The simulated friends speak with the iPhone’s synthetic voice.',
+    hintAddDest: 'You are the leader: open Route and pick a destination to get the convoy moving.',
+    sc_talk: 'A friend talks', scd_talk: 'Voice message on the walkie-talkie',
+    sc_alert: 'A friend sends an alert', scd_alert: 'Break, fuel, slow down or lost',
+    sc_lag: 'A car falls behind', scd_lag: 'Triggers the distance alert',
+    sc_stop: 'The leader stops', scd_stop: 'Alert after one minute stopped',
+    sc_sos: 'A breakdown', scd_sos: 'Full-screen alert',
+    sc_signal: 'A car loses signal', scd_signal: 'Greyed out after 45 seconds without news',
+    sc_leave: 'A car leaves the convoy', scd_leave: 'It comes back 30 seconds later',
+    sc_leader: 'Change leader', scd_leader: 'Hands the role to the next car',
+    needFollower: 'You are the leader: hand the role to a friend to see this alert.', needRoute: 'Pick a destination in Route first.',
+    lagStarted: '{name} drops back by {d}. The alert shows up in a few seconds.', stopStarted: '{name} stops. The alert comes after one minute stopped, speed up the simulation to get there faster.',
+    signalStarted: '{name} no longer sends a position.', noBot: 'No simulated car available for this scenario.',
   },
+};
+const PHRASES = {
+  fr: ['Je vous vois dans le rétro, tout va bien.', 'On garde ce rythme jusqu’à la prochaine sortie.', 'Petite pause à la prochaine aire de repos ?', 'Attention, travaux un peu plus loin.', 'La vue sur le lac est magnifique.'],
+  en: ['I can see you in the mirror, all good.', 'Let’s keep this pace until the next exit.', 'Quick break at the next rest area?', 'Careful, roadworks a bit further on.', 'The view over the lake is amazing.'],
 };
 const NAV = {
   fr: {
@@ -174,6 +192,7 @@ const NAV = {
   },
 };
 const DIRS = { fr: ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'], en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] };
+const SCENARIOS = ['talk', 'alert', 'lag', 'stop', 'sos', 'signal', 'leave', 'leader'];
 
 /* ---------- utilitaires ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -181,7 +200,8 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const rid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
 const initial = n => (String(n || '?').trim().charAt(0) || '?').toUpperCase();
-const ic = (p, s = 24) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const rand = (a, b) => a + Math.random() * (b - a);
+const ic = (p, s = 24) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
 const ICON = {
   flag: '<path d="M6 21V4M6 4h11l-2.5 4L17 12H6"/>',
   convoy: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
@@ -189,15 +209,17 @@ const ICON = {
   play: '<path d="M7 4.5v15l12-7.5z"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
   trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
+  chev: '<path d="M9 5l7 7-7 7"/>',
 };
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem('pc_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('pc_' + k, JSON.stringify(v)); } catch (e) { /* plein */ } },
 };
-const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'motorway' }, store.get('prefs', {}));
+const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', demoPos: 'sim', demoLeader: 'friend' }, store.get('prefs', {}));
 if (!I18N[prefs.lang]) prefs.lang = 'fr';
-if (!THEMES[prefs.theme]) prefs.theme = 'motorway';
+if (!THEMES[prefs.theme]) prefs.theme = 'graphite';
+if (!ACCENTS[prefs.accent]) prefs.accent = 'orange';
 const savePrefs = () => store.set('prefs', prefs);
 
 function t(k, v) {
@@ -231,9 +253,6 @@ const DB = {
   putTrip: tr => DB.run('trips', 'readwrite', s => s.put(tr)),
   allTrips: () => DB.run('trips', 'readonly', s => s.getAll()),
   delTrip: id => DB.run('trips', 'readwrite', s => s.delete(id)),
-  getKV: k => DB.run('kv', 'readonly', s => s.get(k)),
-  setKV: (k, v) => DB.run('kv', 'readwrite', s => s.put(v, k)),
-  delKV: k => DB.run('kv', 'readwrite', s => s.delete(k)),
 };
 
 /* géométrie : points [lat, lng], distances en mètres */
@@ -247,6 +266,12 @@ function bearing(a, b) {
   const y = Math.sin((b[1] - a[1]) * RAD) * Math.cos(b[0] * RAD);
   const x = Math.cos(a[0] * RAD) * Math.sin(b[0] * RAD) - Math.sin(a[0] * RAD) * Math.cos(b[0] * RAD) * Math.cos((b[1] - a[1]) * RAD);
   return (Math.atan2(y, x) / RAD + 360) % 360;
+}
+function offsetPoint(p, distM, brgDeg) {
+  const d = distM / EARTH, b = brgDeg * RAD, la = p[0] * RAD, lo = p[1] * RAD;
+  const la2 = Math.asin(Math.sin(la) * Math.cos(d) + Math.cos(la) * Math.sin(d) * Math.cos(b));
+  const lo2 = lo + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(la), Math.cos(d) - Math.sin(la) * Math.sin(la2));
+  return [la2 / RAD, lo2 / RAD];
 }
 function projectOnSeg(p, a, b) {
   const k = Math.cos(p[0] * RAD);
@@ -294,29 +319,28 @@ function placeLabel(p) {
 
 /* ---------- état ---------- */
 const me = { id: store.get('id', null), name: store.get('name', ''), color: store.get('color', COLORS[0]) };
-if (!me.id) { me.id = rid(); store.set('id', me.id); }
+if (!me.id) { me.id = 'me-' + rid(); store.set('id', me.id); }
 
 const S = {
-  code: null, sb: null, channel: null, conn: false, firstSync: true, joinTs: 0,
-  members: new Map(), online: new Set(), joinedAt: {},
-  leaderId: null, leaderSeq: 0, leaderMissing: 0,
+  active: false, simT: Date.now(),
+  members: new Map(),
+  leaderId: null,
   plan: { v: 0, wps: [] }, passed: new Set(),
   route: null, routing: false, routeAgain: false, nav: { off: 0, last: 0 }, arrived: false,
   pos: null, geoWatch: null, follow: true, zoomNext: true,
   manual: '', stoppedSince: null, movingSince: null,
-  lastSentT: 0, lastSent: null,
   trip: null,
-  localStream: null, peers: new Map(), pendingCands: new Map(),
-  talking: false, talkTimer: null, pttArmed: false, ac: null, wake: null,
+  talking: false, talkTimer: null, micOk: null, echoPlaying: false, ac: null, wake: null,
   alerts: { lag: {}, leaderStop: false },
   map: null, wpMarkers: [], pick: false, sheet: null,
-  timers: [], stripT: null, resumeData: null, spTarget: 0, spDisp: 0,
+  timers: [], stripT: null, spTarget: 0, spDisp: 0,
 };
+const clock = () => S.simT;
 
 function member(id) {
   let m = S.members.get(id);
   if (!m) {
-    m = { id, name: '…', color: '#8899A6', lat: null, lng: null, spd: 0, hdg: null, st: 'route', t: 0,
+    m = { id, name: '…', color: '#8B8B93', lat: null, lng: null, spd: 0, hdg: null, st: 'route', t: 0,
       talking: false, talkUntil: 0, online: id === me.id, stale: false, stats: { dist: 0, mv: 0, mx: 0 }, mk: null, el: null };
     S.members.set(id, m);
   }
@@ -333,8 +357,10 @@ function show(id) {
 function toast(text, kind = 'info', ms = 5000, html = false) {
   const box = $('#toasts');
   const el = document.createElement('div');
-  el.className = 'toast ' + kind;
-  el.innerHTML = html ? text : esc(text);
+  el.className = 'toast glass ' + kind;
+  const span = document.createElement('span');
+  if (html) span.innerHTML = text; else span.textContent = text;
+  el.appendChild(span);
   box.prepend(el);
   while (box.children.length > 3) box.lastChild.remove();
   setTimeout(() => el.remove(), ms);
@@ -344,28 +370,28 @@ function homeErr(msg) { const e = $('#homeErr'); e.textContent = msg; e.hidden =
 function applyLang() {
   document.documentElement.lang = prefs.lang;
   $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
-  $$('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
   $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   $$('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   $$('.swatch').forEach(el => el.setAttribute('aria-label', t('colourAria')));
+  renderScenarios();
   updatePTT();
   setFollow(S.follow, true);
   updatePlayBtn();
-  if (S.code) {
+  if (S.active) {
     renderStrip(); updateNavSign(); updateTalkBar(); updateSpeedo();
     for (const m of S.members.values()) updateMarker(m);
     if (S.sheet === 'route') renderRouteSheet();
     if (S.sheet === 'members') renderMembers();
     if (S.sheet === 'end') renderEnd();
   }
-  if ($('#home').classList.contains('on')) checkResume();
   if ($('#history').classList.contains('on')) openHistory();
-  if (S.sheet === 'settings') syncSettings();
+  syncSegs();
 }
 function applyTheme() {
-  const th = THEMES[prefs.theme];
-  document.documentElement.dataset.theme = prefs.theme;
-  $('#metaTheme').setAttribute('content', th.meta);
+  const root = document.documentElement;
+  root.dataset.theme = prefs.theme;
+  root.style.setProperty('--accent', ACCENTS[prefs.accent]);
+  $('#metaTheme').setAttribute('content', THEMES[prefs.theme].meta);
   styleRouteLayers();
 }
 function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
@@ -376,9 +402,9 @@ function unlockAudio() {
     if (!S.ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) S.ac = new AC(); }
     if (S.ac && S.ac.state !== 'running') S.ac.resume();
   } catch (e) { /* ignoré */ }
-  let blocked = false;
-  for (const p of S.peers.values()) if (p.audio) p.audio.play().catch(() => { blocked = true; });
-  if (!blocked) $('#audioChip').hidden = true;
+}
+function unlockSpeech() {
+  try { if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; speechSynthesis.speak(u); } } catch (e) { /* ignoré */ }
 }
 function beep(name) {
   const ac = S.ac, seq = SOUNDS[name];
@@ -411,140 +437,61 @@ function renderHome() {
   $('#name').value = me.name;
   $('#swatches').innerHTML = COLORS.map(c =>
     `<button class="swatch" style="--c:${c}" data-c="${c}" aria-label="${esc(t('colourAria'))}" aria-pressed="${c === me.color}"></button>`).join('');
-  const c = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (c) $('#code').value = c.slice(0, 6);
-  $('#cfgWarn').hidden = configOk();
   homeErr('');
-  checkResume();
-}
-function configOk() {
-  return /^https:\/\//.test(CFG.supabaseUrl) && CFG.supabaseAnonKey && CFG.supabaseAnonKey.length > 20 && !/X{4}/.test(CFG.supabaseUrl + CFG.supabaseAnonKey);
-}
-function newCode() {
-  const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  let s = '';
-  for (const b of crypto.getRandomValues(new Uint8Array(6))) s += A[b % A.length];
-  return s;
-}
-async function checkResume() {
-  let c = null;
-  try { c = await DB.getKV('current'); } catch (e) { /* ignoré */ }
-  const box = $('#resume');
-  if (!c) { box.hidden = true; S.resumeData = null; return; }
-  if (Date.now() - c.savedAt > 12 * 3600e3) { await saveTripRecord(c.trip, c.rows || []); await DB.delKV('current'); box.hidden = true; return; }
-  S.resumeData = c;
-  $('#resumeText').textContent = t('resumeText', { code: c.code, time: fmtClock(c.trip.start), dist: fmtDist(c.trip.dist) });
-  box.hidden = false;
+  syncSegs();
 }
 
-/* ---------- démarrage d'une session ---------- */
-async function start(code, creating, resume) {
+/* ---------- démarrage et fin de la démo ---------- */
+function start() {
   const name = $('#name').value.trim();
   if (!name) { homeErr(t('errName')); $('#name').focus(); return; }
-  if (!configOk()) { homeErr(t('errCfg')); return; }
-  if (typeof maplibregl === 'undefined' || typeof supabase === 'undefined') { homeErr(t('errLibs')); return; }
+  if (typeof maplibregl === 'undefined') { homeErr(t('errLibs')); return; }
   me.name = name.slice(0, 16);
   store.set('name', me.name); store.set('color', me.color);
   homeErr('');
+  unlockAudio(); unlockSpeech();
 
-  unlockAudio();
-  if (navigator.audioSession) { try { navigator.audioSession.type = 'play-and-record'; } catch (e) { /* ignoré */ } }
-  const micReady = ensureMic(false);
-
-  S.code = code; S.firstSync = true; S.joinTs = Date.now();
-  S.online = new Set([me.id]);
-  if (resume) {
-    S.trip = Object.assign(resume.trip, { last: null });
-    S.plan = resume.plan || { v: 0, wps: [] };
-    S.passed = new Set(resume.passed || []);
-    S.leaderId = resume.leaderId || null;
-    S.leaderSeq = resume.leaderSeq || 0;
-  } else {
-    S.trip = { id: 't' + Date.now(), code, start: Date.now(), dist: 0, moving: 0, max: 0, last: null, tracks: {}, names: {}, colors: {}, dest: '' };
-    S.plan = { v: 0, wps: [] }; S.passed = new Set();
-    S.leaderId = creating ? me.id : null; S.leaderSeq = creating ? 1 : 0;
-  }
+  S.active = true; S.simT = Date.now();
+  S.trip = { id: 't' + Date.now(), start: clock(), dist: 0, moving: 0, max: 0, last: null, tracks: {}, names: {}, colors: {}, dest: '' };
+  S.plan = { v: 0, wps: [] }; S.passed = new Set(); S.arrived = false; S.route = null;
+  S.leaderId = prefs.demoLeader === 'me' ? me.id : BOTS[0].id;
   Object.assign(member(me.id), { name: me.name, color: me.color, online: true });
 
-  $('#codeText').textContent = code;
-  history.replaceState(null, '', location.pathname + '?c=' + code);
   closeSheets();
   show('main');
   initMap();
   setView(prefs.view);
-  startGeo();
-  keepAwake();
   setFollow(true);
+  keepAwake();
   updatePTT();
+  simInit();
+  if (SIM.mode === 'gps') startGeo();
   renderStrip();
   renderWaypoints();
-  await micReady;
-  connect();
-  S.timers.push(setInterval(tick, 3000), setInterval(saveCurrent, 20000));
-  if (creating) setTimeout(() => toast(t('created', { code }), 'ok', 7000), 400);
+  S.timers.push(setInterval(tick, 3000));
+}
+function leave() {
+  talkStop(true);
+  simStop();
+  stopGeo();
+  if (S.wake) { S.wake.release().catch(() => {}); S.wake = null; }
+  S.timers.forEach(clearInterval); S.timers = [];
+  for (const m of S.members.values()) if (m.mk) m.mk.remove();
+  S.members.clear();
+  S.wpMarkers.forEach(mk => mk.remove()); S.wpMarkers = [];
+  Object.assign(S, { active: false, trip: null, route: null, plan: { v: 0, wps: [] }, passed: new Set(), leaderId: null,
+    pos: null, manual: '', arrived: false, alerts: { lag: {}, leaderStop: false }, pick: false, stoppedSince: null });
+  renderRoute(); closeSheets();
+  $('#navCard').hidden = true; $('#navEta').hidden = true; $('#talkBar').hidden = true; $('#toasts').innerHTML = ''; $('#sos').classList.remove('on');
+  show('home'); renderHome();
 }
 
-async function ensureMic(resetPeers) {
-  if (S.localStream) return true;
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { updatePTT(); return false; }
-  try {
-    const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }, video: false });
-    st.getAudioTracks().forEach(tr => { tr.enabled = false; });
-    S.localStream = st;
-    updatePTT();
-    if (resetPeers) for (const id of S.online) if (id !== me.id) resetPeer(id);
-    return true;
-  } catch (e) {
-    updatePTT();
-    toast(t('micDenied'), 'warn', 9000);
-    return false;
-  }
-}
-
-function connect() {
-  if (!S.sb) S.sb = supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    realtime: { params: { eventsPerSecond: 20 } },
-  });
-  const ch = S.sb.channel('pocketconvoy:' + S.code, { config: { broadcast: { self: false, ack: false }, presence: { key: me.id } } });
-  for (const ev of Object.keys(H)) {
-    ch.on('broadcast', { event: ev }, ({ payload }) => { try { H[ev](payload || {}); } catch (e) { console.warn(ev, e); } });
-  }
-  ch.on('presence', { event: 'sync' }, onPresence);
-  ch.subscribe(async status => {
-    if (status === 'SUBSCRIBED') {
-      setConn(true);
-      try { await ch.track({ n: me.name, c: me.color, j: S.joinTs }); } catch (e) { /* ignoré */ }
-      send('hello', { id: me.id });
-      maybeSendPos(true);
-    } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-      setConn(false);
-    }
-  });
-  S.channel = ch;
-}
-function reconnect() {
-  if (!S.code) return;
-  try { if (S.channel) S.sb.removeChannel(S.channel); } catch (e) { /* ignoré */ }
-  S.channel = null; S.firstSync = true;
-  connect();
-}
-function setConn(ok) {
-  S.conn = ok;
-  const d = $('#connDot');
-  d.classList.toggle('ok', ok); d.classList.toggle('bad', !ok);
-}
-function send(event, payload) {
-  if (!S.channel) return;
-  try { S.channel.send({ type: 'broadcast', event, payload }).catch(() => {}); } catch (e) { /* ignoré */ }
-}
-
-/* ---------- messages reçus ---------- */
+/* ---------- événements du convoi (fournis par la simulation) ---------- */
 const H = {
   pos(d) {
     if (!d.id || d.id === me.id) return;
     const m = member(d.id);
-    Object.assign(m, { name: d.n || m.name, color: d.c || m.color, lat: d.la, lng: d.ln, spd: d.s || 0, hdg: d.h, st: d.st || 'route', t: Date.now(), stale: false });
+    Object.assign(m, { name: d.n || m.name, color: d.c || m.color, lat: d.la, lng: d.ln, spd: d.s || 0, hdg: d.h, st: d.st || 'route', t: clock(), stale: false });
     m.stats = { dist: d.d || 0, mv: d.mv || 0, mx: d.mx || 0 };
     recordTrack(m.id, d.la, d.ln);
     updateMarker(m);
@@ -554,7 +501,7 @@ const H = {
     if (!d.id || d.id === me.id) return;
     const m = member(d.id);
     m.talking = !!d.on;
-    m.talkUntil = d.on ? Date.now() + 65000 : 0;
+    m.talkUntil = d.on ? clock() + 120000 : 0;
     beep(d.on ? 'rxStart' : 'rxEnd');
     updateTalkBar(); updateMarker(m);
   },
@@ -567,98 +514,46 @@ const H = {
     else { toast(t('msgFrom', { name: `<b>${esc(m.name)}</b>`, text: esc(t('q_' + d.k)) }), q.kind, 8000, true); beep(q.sound); }
     updateMarker(m); scheduleStrip();
   },
-  rtc(d) { onRtc(d); },
-  hello(d) {
-    if (!d.id || d.id === me.id) return;
-    if (S.leaderId) send('state', { to: d.id, leaderId: S.leaderId, leaderSeq: S.leaderSeq, plan: S.plan });
-    maybeSendPos(true);
-  },
-  state(d) {
-    if (d.to !== me.id) return;
-    if (d.leaderId) setLeader(d.leaderId, d.leaderSeq || 0, true);
-    if (d.plan && d.plan.v > S.plan.v) { S.plan = d.plan; onPlanChanged(); }
-  },
-  leader(d) { if (d.id) setLeader(d.id, d.seq || 0); },
   plan(d) {
     if (!d.plan || d.plan.v <= S.plan.v) return;
     S.plan = d.plan;
     onPlanChanged();
     if (d.by && d.by !== me.id) toast(t('planChanged', { name: member(d.by).name }), 'info', 4500);
   },
-  end(d) {
-    if (!d.by) return;
-    toast(t('endedAll', { name: member(d.by).name }), 'info', 7000);
-    openSheet('end');
+  join(d) {
+    const m = member(d.id);
+    Object.assign(m, { name: d.n, color: d.c, online: true, stale: false });
+    toast(t('joined', { name: m.name }), 'ok', 3500); beep('msg');
+    updateMarker(m); renderStrip();
+    if (S.sheet === 'members') renderMembers();
+  },
+  leave(d) {
+    const m = member(d.id);
+    m.online = false; m.talking = false;
+    toast(t('leftConvoy', { name: m.name }), 'warn', 5000);
+    updateMarker(m); updateTalkBar(); renderStrip();
+    if (S.sheet === 'members') renderMembers();
   },
 };
 
-function onPresence() {
-  if (!S.channel) return;
-  const st = S.channel.presenceState();
-  const ids = new Set([me.id]);
-  for (const [key, metas] of Object.entries(st)) {
-    const meta = metas[metas.length - 1] || {};
-    ids.add(key);
-    S.joinedAt[key] = meta.j || 0;
-    if (key !== me.id) { const m = member(key); if (meta.n) m.name = meta.n; if (meta.c) m.color = meta.c; }
-  }
-  for (const id of ids) {
-    if (id === me.id || S.online.has(id)) continue;
-    const m = member(id);
-    m.online = true; m.stale = false;
-    if (!S.firstSync) { toast(t('joined', { name: m.name }), 'ok', 4000); beep('msg'); }
-    if (me.id < id) callPeer(id);
-    updateMarker(m);
-  }
-  for (const id of S.online) {
-    if (id === me.id || ids.has(id)) continue;
-    const m = member(id);
-    m.online = false; m.talking = false;
-    closePeer(id);
-    toast(t('leftConvoy', { name: m.name }), 'warn', 5000);
-    updateMarker(m); updateTalkBar();
-  }
-  S.online = ids;
-  S.firstSync = false;
-  renderStrip();
-  if (S.sheet === 'members') renderMembers();
-}
-
 /* ---------- leader ---------- */
-function setLeader(id, seq, quiet) {
-  if (seq < S.leaderSeq) return;
-  if (seq === S.leaderSeq && S.leaderId && id >= S.leaderId) return;
+function setLeader(id, quiet) {
   const was = S.leaderId;
-  S.leaderId = id; S.leaderSeq = seq; S.leaderMissing = 0;
-  if (!quiet && was !== id) {
+  if (was === id) return;
+  S.leaderId = id;
+  if (!quiet) {
     if (id === me.id) { toast(t('youLeader'), 'ok', 5000); beep('msg'); }
     else toast(t('newLeader', { name: member(id).name }), 'info', 4500);
   }
   for (const m of S.members.values()) updateMarker(m);
+  simAssignOffsets();
   renderStrip();
   if (S.sheet === 'route') renderRouteSheet();
   if (S.sheet === 'members') renderMembers();
-}
-function giveLeader(id) {
-  const seq = S.leaderSeq + 1;
-  setLeader(id, seq);
-  send('leader', { id, seq });
-}
-function checkLeader() {
-  if (!S.conn) return;
-  if (S.leaderId && S.online.has(S.leaderId)) { S.leaderMissing = 0; return; }
-  if (!S.leaderMissing) { S.leaderMissing = Date.now(); return; }
-  if (Date.now() - S.leaderMissing < (S.leaderId ? 15000 : 5000)) return;
-  const cand = [...S.online].sort((a, b) => (S.joinedAt[a] || S.joinTs) - (S.joinedAt[b] || S.joinTs) || (a < b ? -1 : 1))[0];
-  S.leaderMissing = 0;
-  if (cand === me.id) {
-    const seq = S.leaderSeq + 1;
-    setLeader(me.id, seq);
-    send('leader', { id: me.id, seq });
-  }
+  if (id !== me.id && !S.plan.wps.length) setTimeout(botSetPlan, 2500);
 }
 
-/* ---------- GPS ---------- */
+/* ---------- position (GPS réel ou trajet simulé) ---------- */
 function startGeo() {
   if (!('geolocation' in navigator)) { toast(t('noGps'), 'danger', 8000); return; }
   stopGeo();
@@ -667,7 +562,8 @@ function startGeo() {
 function stopGeo() { if (S.geoWatch != null) navigator.geolocation.clearWatch(S.geoWatch); S.geoWatch = null; }
 function onGeoErr(e) { if (e.code === 1) toast(t('geoDenied'), 'danger', 10000); }
 function onFix(p) {
-  const c = p.coords, now = Date.now();
+  if (!S.active) return;
+  const c = p.coords, now = clock();
   const cur = [c.latitude, c.longitude];
   const prev = S.pos;
   let spd = (c.speed != null && c.speed >= 0) ? c.speed : null;
@@ -688,8 +584,9 @@ function onFix(p) {
   checkWaypoints();
   if (S.route) navigate();
   else if (pendingWps().length && !S.routing && now - S.nav.last > 15000) computeRoute();
+  if (SIM.mode === 'gps' && SIM.needBuild) simRebuild();
+  if (SIM.mode === 'gps' && !SIM.parked) simParkAround(cur);
   updateSpeedo();
-  maybeSendPos(false);
 }
 function updateStats(cur) {
   const T = S.trip;
@@ -709,31 +606,16 @@ function updateStats(cur) {
   }
 }
 function autoStatus(p) {
-  const now = Date.now();
+  const now = clock();
   if (p.spd < 0.8) { if (!S.stoppedSince) S.stoppedSince = now; } else S.stoppedSince = null;
   if (['pause', 'essence', 'perdu'].includes(S.manual)) {
-    if (p.spd > 8) { if (!S.movingSince) S.movingSince = now; if (now - S.movingSince > 20000) { S.manual = ''; maybeSendPos(true); } }
+    if (p.spd > 8) { if (!S.movingSince) S.movingSince = now; if (now - S.movingSince > 20000) S.manual = ''; }
     else S.movingSince = null;
   }
 }
 function myStatus() {
   if (S.manual) return S.manual;
-  return (S.stoppedSince && Date.now() - S.stoppedSince > 45000) ? 'arret' : 'route';
-}
-function maybeSendPos(force) {
-  const p = S.pos;
-  if (!S.channel || !p) return;
-  const now = Date.now();
-  const moved = S.lastSent ? hav([S.lastSent.lat, S.lastSent.lng], [p.lat, p.lng]) : 1e9;
-  if (!force && !(now - S.lastSentT > 2000 && moved > 5) && now - S.lastSentT < 10000) return;
-  const T = S.trip || {};
-  send('pos', {
-    id: me.id, n: me.name, c: me.color,
-    la: +p.lat.toFixed(6), ln: +p.lng.toFixed(6),
-    s: Math.round(p.spd * 3.6), h: p.hdg == null ? null : Math.round(p.hdg),
-    st: myStatus(), d: Math.round(T.dist || 0), mv: Math.round(T.moving || 0), mx: +(T.max || 0).toFixed(1),
-  });
-  S.lastSentT = now; S.lastSent = { lat: p.lat, lng: p.lng };
+  return (S.stoppedSince && clock() - S.stoppedSince > 45000) ? 'arret' : 'route';
 }
 function recordTrack(id, lat, lng) {
   const T = S.trip;
@@ -741,7 +623,7 @@ function recordTrack(id, lat, lng) {
   const m = S.members.get(id);
   if (m) { T.names[id] = m.name; T.colors[id] = m.color; }
   const tr = T.tracks[id] || (T.tracks[id] = []);
-  const tt = Math.round((Date.now() - T.start) / 1000);
+  const tt = Math.round((clock() - T.start) / 1000);
   const l = tr[tr.length - 1];
   if (!l || (tt - l[0] >= 5 && hav([l[1], l[2]], [lat, lng]) >= 20) || tt - l[0] >= 60) tr.push([tt, +lat.toFixed(5), +lng.toFixed(5)]);
 }
@@ -750,7 +632,7 @@ function recordTrack(id, lat, lng) {
 function initMap() {
   if (S.map) { S.map.resize(); return; }
   const m = new maplibregl.Map({
-    container: 'map', style: STYLES[prefs.mapTheme], center: [8.23, 46.8], zoom: 7,
+    container: 'map', style: STYLES[prefs.mapTheme], center: [DEMO_START[1], DEMO_START[0]], zoom: 12,
     attributionControl: { compact: true }, dragRotate: false, touchPitch: false, pitchWithRotate: false, maxPitch: 60,
   });
   m.touchZoomRotate.disableRotation();
@@ -766,21 +648,21 @@ function initMap() {
 function addRouteLayers() {
   const m = S.map;
   if (!m.getSource('route')) m.addSource('route', { type: 'geojson', data: routeGeo() });
-  if (!m.getLayer('route-casing')) m.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--route-casing'), 'line-width': 12 } });
-  if (!m.getLayer('route-line')) m.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--route'), 'line-width': 7 } });
+  if (!m.getLayer('route-casing')) m.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--route-casing'), 'line-width': 10, 'line-opacity': 0.8 } });
+  if (!m.getLayer('route-line')) m.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--accent'), 'line-width': 5 } });
 }
 function styleRouteLayers() {
   const m = S.map;
-  if (!m || !m.getLayer || !m.isStyleLoaded()) return;
+  if (!m || !m.isStyleLoaded || !m.isStyleLoaded()) return;
   if (m.getLayer('route-casing')) m.setPaintProperty('route-casing', 'line-color', cssVar('--route-casing'));
-  if (m.getLayer('route-line')) m.setPaintProperty('route-line', 'line-color', cssVar('--route'));
+  if (m.getLayer('route-line')) m.setPaintProperty('route-line', 'line-color', cssVar('--accent'));
 }
 function routeGeo() {
   const c = S.route ? S.route.coords.map(p => [p[1], p[0]]) : [];
   return { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c.length > 1 ? c : [] } };
 }
 function renderRoute() {
-  const src = S.map && S.map.getSource('route');
+  const src = S.map && S.map.getSource && S.map.getSource('route');
   if (src) src.setData(routeGeo());
 }
 function updateMarker(m) {
@@ -802,10 +684,9 @@ function updateMarker(m) {
   for (const k of STATUSES) cl.toggle('st-' + k, (m.st || 'route') === k);
   el.style.setProperty('--c', m.color);
   el.querySelector('.car-dot span').textContent = initial(m.name);
-  const tagText = m.id === me.id ? '' : m.name + (m.st && m.st !== 'route' ? ' : ' + statusLabel(m.st) : '');
   const tag = el.querySelector('.car-tag');
-  tag.textContent = prefs.lang === 'en' ? tagText.replace(' : ', ': ') : tagText;
-  tag.hidden = !tagText;
+  const tagText = m.id === me.id ? '' : m.name + (m.st && m.st !== 'route' ? (prefs.lang === 'en' ? ': ' : ' : ') + statusLabel(m.st) : '');
+  tag.textContent = tagText; tag.hidden = !tagText;
   el.style.zIndex = m.id === me.id ? 3 : (m.talking ? 2 : 1);
   updateCone(m);
 }
@@ -824,13 +705,13 @@ function followCamera() {
     center: [p.lng, p.lat], bearing: moving ? p.hdg : S.map.getBearing(), pitch: moving ? 45 : 0,
     offset: [0, Math.round(window.innerHeight * 0.16)], duration: 900, easing: x => x,
   };
-  if (S.zoomNext) { opts.zoom = Math.max(S.map.getZoom(), 15.5); S.zoomNext = false; }
+  if (S.zoomNext) { opts.zoom = Math.max(S.map.getZoom(), 15); S.zoomNext = false; }
   S.map.easeTo(opts);
 }
 function setFollow(on, labelOnly) {
   S.follow = on;
   const b = $('#btnLocate');
-  b.innerHTML = ic(on ? ICON.convoy : ICON.locate, 26);
+  b.innerHTML = ic(on ? ICON.convoy : ICON.locate, 22);
   b.setAttribute('aria-label', t(on ? 'viewConvoy' : 'followMe'));
   if (labelOnly) return;
   if (on) { S.zoomNext = true; if (S.map && S.pos) followCamera(); }
@@ -862,7 +743,7 @@ function renderWaypoints() {
     const last = i === S.plan.wps.length - 1;
     const el = document.createElement('div');
     el.className = 'wp' + (last ? ' dest' : '') + (S.passed.has(w.id) ? ' done' : '');
-    el.innerHTML = last ? ic(ICON.flag, 16) : String(i + 1);
+    el.innerHTML = last ? ic(ICON.flag, 13) : String(i + 1);
     S.wpMarkers.push(new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat([w.lng, w.lat]).addTo(S.map));
   });
 }
@@ -872,7 +753,6 @@ const pendingWps = () => S.plan.wps.filter(w => !S.passed.has(w.id));
 
 function setPlan(wps) {
   S.plan = { v: S.plan.v + 1, wps };
-  send('plan', { plan: S.plan, by: me.id });
   onPlanChanged();
 }
 function onPlanChanged() {
@@ -881,6 +761,7 @@ function onPlanChanged() {
   if (S.trip && dest) S.trip.dest = dest.label;
   renderWaypoints();
   if (S.sheet === 'route') renderRouteSheet();
+  simRebuild();
   if (!pendingWps().length) { S.route = null; renderRoute(); updateNavSign(); return; }
   computeRoute();
 }
@@ -888,7 +769,7 @@ async function computeRoute() {
   const wps = pendingWps();
   if (!S.pos || !wps.length) { updateNavSign(); return; }
   if (S.routing) { S.routeAgain = true; return; }
-  S.nav.last = Date.now();
+  S.nav.last = clock();
   const pts = [[S.pos.lat, S.pos.lng], ...wps.map(w => [w.lat, w.lng])];
   const coords = pts.map(p => p[1].toFixed(6) + ',' + p[0].toFixed(6)).join(';');
   S.routing = true;
@@ -914,7 +795,7 @@ async function computeRoute() {
     renderRoute();
     navigate();
   } catch (e) {
-    toast(t('routeFail'), 'warn', 5000);
+    if (clock() - (S.routeFailT || 0) > 60000) { S.routeFailT = clock(); toast(t('routeFail'), 'warn', 5000); }
   } finally {
     S.routing = false;
     updateNavSign();
@@ -947,8 +828,8 @@ function instr(step) {
 }
 function arrowSVG(step) {
   const W = 'currentColor';
-  if (!step || step.type === 'arrive') return `<svg viewBox="0 0 48 48"><path d="M24 44S11 31 11 21a13 13 0 0 1 26 0c0 10-13 23-13 23z" fill="none" stroke="${W}" stroke-width="4"/><circle cx="24" cy="21" r="5" fill="${W}"/></svg>`;
-  if (step.mod === 'uturn') return `<svg viewBox="0 0 48 48"><path d="M31 44V20a8 8 0 0 0-16 0v10" fill="none" stroke="${W}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 28l8 11 8-11z" fill="${W}"/></svg>`;
+  if (!step || step.type === 'arrive') return `<svg viewBox="0 0 48 48"><path d="M24 44S11 31 11 21a13 13 0 0 1 26 0c0 10-13 23-13 23z" fill="none" stroke="${W}" stroke-width="3.5"/><circle cx="24" cy="21" r="4.5" fill="${W}"/></svg>`;
+  if (step.mod === 'uturn') return `<svg viewBox="0 0 48 48"><path d="M31 44V20a8 8 0 0 0-16 0v10" fill="none" stroke="${W}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 28l7 10 7-10z" fill="${W}"/></svg>`;
   const A = { straight: 0, 'slight right': 45, right: 90, 'sharp right': 135, 'slight left': -45, left: -90, 'sharp left': -135 };
   const a = (A[step.mod] ?? 0) * RAD;
   const round = /roundabout|rotary/.test(step.type) && step.type.indexOf('exit') !== 0;
@@ -957,9 +838,9 @@ function arrowSVG(step) {
   const r0 = round ? 8 : 0, L = round ? 13 : 14;
   const bx = cx + r0 * sx, by = cy - r0 * cyy, ex = cx + L * sx, ey = cy - L * cyy;
   const f = n => n.toFixed(1);
-  const tip = [ex + 8 * sx, ey - 8 * cyy], l = [ex + 7 * cyy, ey + 7 * sx], r = [ex - 7 * cyy, ey - 7 * sx];
+  const tip = [ex + 7 * sx, ey - 7 * cyy], l = [ex + 6 * cyy, ey + 6 * sx], r = [ex - 6 * cyy, ey - 6 * sx];
   const shaft = round ? `M24 44V${cy + r0}` : `M${f(cx)} 44V${cy}L${f(ex)} ${f(ey)}`;
-  return `<svg viewBox="0 0 48 48"><g fill="none" stroke="${W}" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">`
+  return `<svg viewBox="0 0 48 48"><g fill="none" stroke="${W}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">`
     + (round ? `<circle cx="${cx}" cy="${cy}" r="${r0}"/><path d="M${f(bx)} ${f(by)}L${f(ex)} ${f(ey)}"/>` : '')
     + `<path d="${shaft}"/></g><path d="M${f(tip[0])} ${f(tip[1])}L${f(l[0])} ${f(l[1])}L${f(r[0])} ${f(r[1])}z" fill="${W}"/></svg>`;
 }
@@ -980,7 +861,7 @@ function navigate() {
   const tol = Math.max(45, Math.min(110, (S.pos.acc || 20) * 1.5));
   if (best.d > tol) {
     S.nav.off++;
-    if (S.nav.off >= 3 && Date.now() - S.nav.last > 12000 && !S.routing) computeRoute();
+    if (S.nav.off >= 3 && clock() - S.nav.last > 12000 && !S.routing) computeRoute();
   } else S.nav.off = 0;
   updateNavSign();
 }
@@ -1003,12 +884,13 @@ function checkWaypoints() {
 }
 function updateNavSign() { updateNavSignInner(); layoutSpeedo(); }
 function updateNavSignInner() {
-  const sign = $('#navSign'), eta = $('#navEta'), rt = S.route;
-  if (!S.plan.wps.length) { sign.hidden = true; eta.hidden = true; return; }
-  sign.hidden = false;
+  const card = $('#navCard'), eta = $('#navEta'), rt = S.route;
+  if (!S.plan.wps.length) { card.hidden = true; eta.hidden = true; return; }
+  card.hidden = false;
   const set = (icon, dist, text, road) => {
-    $('.nav-ico', sign).innerHTML = icon; $('.nav-dist', sign).textContent = dist;
-    $('.nav-text', sign).textContent = text; $('.nav-road', sign).textContent = road;
+    $('.nav-ico', card).innerHTML = icon; $('.nav-dist', card).textContent = dist;
+    $('.nav-text', card).textContent = text; $('.nav-road', card).textContent = road;
+    $('.nav-dist', card).hidden = !dist;
   };
   if (S.arrived) { set(arrowSVG(null), '', t('arrived'), t('tapStats')); eta.hidden = true; return; }
   if (!rt) {
@@ -1024,7 +906,7 @@ function updateNavSignInner() {
   set(arrowSVG(step), fmtDist(Math.max(0, dist)), instr(step), step.road);
   const left = Math.max(0, rt.total - prog);
   const secs = rt.total ? left * rt.dur / rt.total : 0;
-  $('#etaTime').textContent = t('eta', { time: fmtClock(Date.now() + secs * 1000) });
+  $('#etaTime').textContent = t('eta', { time: fmtClock(clock() + secs * 1000) });
   $('#etaLeft').textContent = t('remaining', { dist: fmtDist(left) });
   eta.hidden = false;
 }
@@ -1039,7 +921,7 @@ function renderRouteSheet() {
     h = '<div class="list">' + wps.map((w, i) => {
       const last = i === wps.length - 1, done = S.passed.has(w.id);
       return `<div class="item${done ? ' done' : ''}">
-        <span class="wp${last ? ' dest' : ''}">${last ? ic(ICON.flag, 16) : i + 1}</span>
+        <span class="wp${last ? ' dest' : ''}">${last ? ic(ICON.flag, 13) : i + 1}</span>
         <div class="grow"><div class="t">${esc(w.label)}</div><div class="s">${esc(last ? t('dest') : t('stopN', { n: i + 1 }))}${done ? esc(t('passed')) : ''}</div></div>
         ${lead ? `<button class="mini" data-act="up" data-i="${i}" aria-label="${esc(t('up'))}" ${i === 0 ? 'disabled' : ''}>↑</button>
         <button class="mini" data-act="down" data-i="${i}" aria-label="${esc(t('down'))}" ${last ? 'disabled' : ''}>↓</button>
@@ -1072,7 +954,7 @@ async function runSearch(q) {
     box.innerHTML = fs.map((f, i) => {
       const L = placeLabel(f.properties || {});
       return `<div class="item"><div class="grow"><div class="t">${esc(L.title)}</div><div class="s">${esc(L.sub)}</div></div>
-        <button class="mini wide" data-res="${i}" data-as="stop">${esc(t('asStop'))}</button><button class="mini wide go" data-res="${i}" data-as="dest">${esc(t('asDest'))}</button></div>`;
+        <button class="mini" data-res="${i}" data-as="stop">${esc(t('asStop'))}</button><button class="mini go" data-res="${i}" data-as="dest">${esc(t('asDest'))}</button></div>`;
     }).join('');
     box._features = fs;
   } catch (e) {
@@ -1093,123 +975,77 @@ async function onMapClick(e) {
   openSheet('route');
 }
 
-/* ---------- talkie-walkie (WebRTC en maillage) ---------- */
-function rtcSend(to, d) { send('rtc', { from: me.id, to, d }); }
-function newPC(id) {
-  closePeer(id);
-  const pc = new RTCPeerConnection({ iceServers: CFG.iceServers });
-  const p = { id, pc, audio: null };
-  S.peers.set(id, p);
-  pc.onicecandidate = e => { if (e.candidate) rtcSend(id, { cand: e.candidate.toJSON() }); };
-  pc.ontrack = e => playRemote(p, (e.streams && e.streams[0]) || new MediaStream([e.track]));
-  pc.onconnectionstatechange = () => {
-    const st = pc.connectionState;
-    if (st === 'failed') setTimeout(() => { if (S.peers.get(id) === p && S.online.has(id)) resetPeer(id); }, 2000);
-    if (st === 'disconnected') setTimeout(() => { if (S.peers.get(id) === p && pc.connectionState === 'disconnected' && S.online.has(id)) resetPeer(id); }, 8000);
-    if (S.sheet === 'members') renderMembers();
-  };
-  return p;
-}
-function playRemote(p, stream) {
-  if (!p.audio) {
-    p.audio = document.createElement('audio');
-    p.audio.autoplay = true;
-    p.audio.setAttribute('playsinline', '');
-    $('#audios').appendChild(p.audio);
-  }
-  p.audio.srcObject = stream;
-  p.audio.play().catch(() => { $('#audioChip').hidden = false; });
-}
-async function callPeer(id) {
-  const p = newPC(id);
-  try {
-    if (S.localStream) S.localStream.getAudioTracks().forEach(tr => p.pc.addTrack(tr, S.localStream));
-    else p.pc.addTransceiver('audio', { direction: 'recvonly' });
-    await p.pc.setLocalDescription(await p.pc.createOffer());
-    const d = p.pc.localDescription;
-    rtcSend(id, { sdp: { type: d.type, sdp: d.sdp } });
-  } catch (e) { console.warn('offre', e); }
-}
-async function onRtc({ from, to, d }) {
-  if (to !== me.id || !from || !d || !S.code) return;
-  try {
-    if (d.reset) { closePeer(from); if (me.id < from) setTimeout(() => callPeer(from), 400); return; }
-    if (d.sdp && d.sdp.type === 'offer') {
-      const p = newPC(from);
-      await p.pc.setRemoteDescription(d.sdp);
-      const track = S.localStream && S.localStream.getAudioTracks()[0];
-      if (track) {
-        const tr = p.pc.getTransceivers().find(x => x.receiver && x.receiver.track && x.receiver.track.kind === 'audio');
-        if (tr) { tr.direction = 'sendrecv'; await tr.sender.replaceTrack(track); }
-      }
-      await p.pc.setLocalDescription(await p.pc.createAnswer());
-      const ld = p.pc.localDescription;
-      rtcSend(from, { sdp: { type: ld.type, sdp: ld.sdp } });
-      flushCands(from);
-    } else if (d.sdp && d.sdp.type === 'answer') {
-      const p = S.peers.get(from);
-      if (p && p.pc.signalingState === 'have-local-offer') { await p.pc.setRemoteDescription(d.sdp); flushCands(from); }
-    } else if (d.cand) {
-      const p = S.peers.get(from);
-      if (p && p.pc.remoteDescription) await p.pc.addIceCandidate(d.cand).catch(() => {});
-      else { const q = S.pendingCands.get(from) || []; q.push(d.cand); S.pendingCands.set(from, q); }
-    }
-  } catch (e) { console.warn('rtc', e); }
-}
-function flushCands(id) {
-  const p = S.peers.get(id), q = S.pendingCands.get(id);
-  S.pendingCands.delete(id);
-  if (p && q) q.forEach(c => p.pc.addIceCandidate(c).catch(() => {}));
-}
-function closePeer(id) {
-  const p = S.peers.get(id);
-  if (p) { try { p.pc.close(); } catch (e) { /* ignoré */ } if (p.audio) p.audio.remove(); S.peers.delete(id); }
-  S.pendingCands.delete(id);
-}
-function resetPeer(id) {
-  closePeer(id);
-  if (me.id < id) callPeer(id); else rtcSend(id, { reset: true });
-}
-function checkPeers() {
-  for (const id of S.online) {
-    if (id === me.id) continue;
-    const p = S.peers.get(id);
-    const st = p && p.pc.connectionState;
-    if (!p ? me.id < id : ['failed', 'closed', 'disconnected'].includes(st)) resetPeer(id);
-  }
-}
-function talkStart() {
-  if (S.talking || !S.localStream) return;
+/* ---------- talkie (démo : écho de ta voix) ---------- */
+const REC = { stream: null, rec: null, chunks: [], token: 0 };
+async function talkStart() {
+  if (S.talking || !S.active) return;
   S.talking = true;
-  S.localStream.getAudioTracks().forEach(tr => { tr.enabled = true; });
-  send('talk', { id: me.id, on: true });
+  const token = ++REC.token;
   beep('start');
   clearTimeout(S.talkTimer);
-  S.talkTimer = setTimeout(talkStop, 60000);
+  S.talkTimer = setTimeout(() => talkStop(), 60000);
   updatePTT();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
+    S.micOk = true;
+    if (!S.talking || token !== REC.token) { st.getTracks().forEach(x => x.stop()); return; }
+    REC.stream = st; REC.chunks = [];
+    if (window.MediaRecorder) {
+      REC.rec = new MediaRecorder(st);
+      REC.rec.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
+      REC.rec.onstop = playEcho;
+      REC.rec.start();
+    }
+  } catch (e) {
+    S.micOk = false; S.talking = false; clearTimeout(S.talkTimer); updatePTT();
+    toast(t('micDenied'), 'warn', 8000);
+  }
 }
-function talkStop() {
+function talkStop(silent) {
   if (!S.talking) return;
   S.talking = false;
   clearTimeout(S.talkTimer);
-  if (S.localStream) S.localStream.getAudioTracks().forEach(tr => { tr.enabled = false; });
-  send('talk', { id: me.id, on: false });
-  beep('end');
+  if (!silent) beep('end');
   updatePTT();
+  if (REC.rec && REC.rec.state !== 'inactive' && !silent) REC.rec.stop();
+  else releaseMic();
+}
+function releaseMic() {
+  if (REC.stream) REC.stream.getTracks().forEach(x => x.stop());
+  REC.stream = null; REC.rec = null;
+}
+function playEcho() {
+  const type = (REC.rec && REC.rec.mimeType) || 'audio/mp4';
+  const blob = new Blob(REC.chunks, { type });
+  releaseMic();
+  if (!blob.size || !S.active) return;
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  const done = () => { S.echoPlaying = false; updateTalkBar(); URL.revokeObjectURL(url); };
+  audio.onended = done; audio.onerror = done;
+  setTimeout(() => {
+    S.echoPlaying = true; updateTalkBar();
+    audio.play().catch(done);
+  }, 350);
 }
 function updatePTT() {
   const b = $('#ptt'), l = $('#pttLabel');
-  b.classList.toggle('nomic', !S.localStream);
+  b.classList.toggle('nomic', S.micOk === false);
   b.classList.toggle('live', S.talking);
-  if (!S.localStream) l.textContent = t('micOn');
+  if (S.micOk === false && !S.talking) l.textContent = t('micOn');
   else if (prefs.talkMode === 'hold') l.textContent = t(S.talking ? 'live' : 'holdTalk');
   else l.textContent = t(S.talking ? 'tapStop' : 'tapTalk');
 }
 function updateTalkBar() {
   const ts = [...S.members.values()].filter(m => m.talking && m.id !== me.id);
   const bar = $('#talkBar');
-  bar.hidden = !ts.length;
-  if (ts.length) $('.who', bar).textContent = ts.length === 1 ? t('talks1', { name: ts[0].name }) : t('talksN', { names: ts.map(m => m.name).join(t('and')) });
+  let txt = '';
+  if (ts.length === 1) txt = t('talks1', { name: ts[0].name });
+  else if (ts.length > 1) txt = t('talksN', { names: ts.map(m => m.name).join(t('and')) });
+  else if (S.echoPlaying) txt = t('echo');
+  bar.hidden = !txt;
+  if (txt) $('.who', bar).textContent = txt;
 }
 
 /* ---------- alertes rapides ---------- */
@@ -1229,9 +1065,7 @@ function sendQuick(kind) {
   }
   if (q.status !== null) S.manual = q.status;
   S.movingSince = null;
-  send('msg', { id: me.id, k: kind, la: S.pos ? +S.pos.lat.toFixed(5) : null, ln: S.pos ? +S.pos.lng.toFixed(5) : null });
   const self = member(me.id); self.st = myStatus(); updateMarker(self);
-  maybeSendPos(true);
   closeSheets();
   toast(t('sent', { text: t('q_' + kind) }), 'ok', 3000);
 }
@@ -1260,30 +1094,25 @@ function sortedOthers() {
 }
 function renderStrip() {
   const el = $('#strip');
-  if (!S.code) { el.innerHTML = ''; return; }
+  if (!S.active) { el.innerHTML = ''; return; }
   const others = sortedOthers();
-  if (!others.length) { el.innerHTML = `<div class="mchip wait">${esc(t('waiting'))} <b>${esc(S.code)}</b></div>`; return; }
-  el.innerHTML = others.map(m => `<button class="mchip${m.online && !m.stale ? '' : ' off'}" data-id="${esc(m.id)}">
+  if (!others.length) { el.innerHTML = `<div class="mchip glass wait">${esc(t('waitingDemo'))}</div>`; return; }
+  el.innerHTML = others.map(m => `<button class="mchip glass${m.online && !m.stale ? '' : ' off'}" data-id="${esc(m.id)}">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
-    <span style="min-width:0"><span class="nm">${esc(m.name)}${m.id === S.leaderId ? `<span class="lead-badge">${esc(t('leader'))}</span>` : ''}</span><span class="meta">${esc(memberMeta(m))}</span></span>
+    <span style="min-width:0"><span class="nm">${esc(m.name)}${m.id === S.leaderId ? '<i class="lead-tag" aria-label="' + esc(t('leader')) + '"></i>' : ''}</span><span class="meta">${esc(memberMeta(m))}</span></span>
   </button>`).join('');
 }
 function renderMembers() {
   const list = [member(me.id), ...sortedOthers()];
   const lead = isLeader();
-  const audio = m => {
-    if (m.id === me.id) return t(S.localStream ? 'micReady' : 'micOff');
-    const p = S.peers.get(m.id), st = p && p.pc.connectionState;
-    return st === 'connected' ? t('audioOk') : st === 'failed' ? t('audioFail') : m.online ? t('audioWait') : '';
-  };
   $('#membersList').innerHTML = list.map(m => `<div class="item">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
-    <div class="grow"><div class="t">${esc(m.name)}${m.id === me.id ? esc(t('you')) : ''}${m.id === S.leaderId ? `<span class="lead-badge">${esc(t('leader'))}</span>` : ''}</div>
+    <div class="grow"><div class="t">${esc(m.name)}${m.id === me.id ? esc(t('you')) : ''}${m.id === S.leaderId ? '<i class="lead-tag"></i>' : ''}</div>
     <div class="s">${esc(m.id === me.id ? statusLabel(myStatus()) + ', ' + Math.round(m.spd || 0) + ' km/h' : memberMeta(m))}</div>
-    <div class="s">${esc(audio(m))}</div></div>
-    ${m.lat != null ? `<button class="mini wide" data-see="${esc(m.id)}">${esc(t('see'))}</button>` : ''}
-    ${lead && m.id !== me.id && m.online ? `<button class="mini wide" data-lead="${esc(m.id)}">${esc(t('makeLeader'))}</button>` : ''}
-  </div>`).join('') + `<p class="s">${esc(t('currentLeader', { name: leaderName() }))}</p>`;
+    ${m.id !== me.id ? `<div class="s">${esc(t('simulated'))}</div>` : ''}</div>
+    ${m.lat != null ? `<button class="mini" data-see="${esc(m.id)}">${esc(t('see'))}</button>` : ''}
+    ${lead && m.id !== me.id && m.online ? `<button class="mini" data-lead="${esc(m.id)}">${esc(t('makeLeader'))}</button>` : ''}
+  </div>`).join('') + `<p class="s" style="margin-top:12px">${esc(t('currentLeader', { name: leaderName() }))}</p>`;
 }
 
 /* ---------- statistiques et fin de trajet ---------- */
@@ -1315,61 +1144,28 @@ function bigStats(r, totalMs) {
 function renderEnd() {
   const T = S.trip;
   const rows = statsRows();
-  $('#endBody').innerHTML = bigStats(rows[0], T ? Date.now() - T.start : 0)
-    + (rows.length > 1 ? `<div class="field-label">${esc(t('rankTitle'))}</div>` + rankTable(rows) : '')
+  $('#endBody').innerHTML = bigStats(rows[0], T ? clock() - T.start : 0)
+    + (rows.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(rows)}</div>` : '')
     + `<button class="btn btn-primary" id="endSave">${esc(t('saveQuit'))}</button>`
-    + (isLeader() && S.online.size > 1 ? `<button class="btn btn-amber" id="endAll">${esc(t('endAll'))}</button>` : '')
     + `<button class="btn btn-ghost" data-close>${esc(t('keepDriving'))}</button>`;
 }
-async function saveTripRecord(trip, rows) {
-  if (!trip) return false;
-  const mine = rows.find(r => r.me) || { dist: trip.dist };
-  if ((mine.dist || 0) < 300) return false;
-  const rec = {
-    id: trip.id, code: trip.code, start: trip.start, end: trip.savedEnd || Date.now(), dest: trip.dest || '',
-    tracks: trip.tracks, names: trip.names, colors: trip.colors, stats: rows,
-  };
-  try { await DB.putTrip(rec); return true; } catch (e) { return false; }
-}
-async function saveCurrent() {
-  if (!S.trip || !S.code) return;
-  const trip = Object.assign({}, S.trip, { last: null, savedEnd: Date.now() });
-  try {
-    await DB.setKV('current', { code: S.code, trip, rows: statsRows(), plan: S.plan, passed: [...S.passed], leaderId: S.leaderId, leaderSeq: S.leaderSeq, savedAt: Date.now() });
-  } catch (e) { /* stockage indisponible */ }
-}
-async function finish(saveIt) {
+async function finish() {
+  const T = S.trip, rows = statsRows();
   let saved = false;
-  if (saveIt) saved = await saveTripRecord(Object.assign({}, S.trip, { savedEnd: Date.now() }), statsRows());
-  try { await DB.delKV('current'); } catch (e) { /* ignoré */ }
-  leave();
-  if (saveIt) {
-    if (saved) openHistory(); else { show('home'); renderHome(); homeErr(t('tooShort')); }
+  if (T && (rows[0].dist || 0) >= 300) {
+    try {
+      await DB.putTrip({ id: T.id, start: T.start, end: clock(), dest: T.dest || '', tracks: T.tracks, names: T.names, colors: T.colors, stats: rows });
+      saved = true;
+    } catch (e) { /* stockage indisponible */ }
   }
-}
-function leave() {
-  talkStop();
-  for (const id of [...S.peers.keys()]) closePeer(id);
-  try { if (S.channel) S.sb.removeChannel(S.channel); } catch (e) { /* ignoré */ }
-  S.channel = null; setConn(false);
-  stopGeo();
-  if (S.wake) { S.wake.release().catch(() => {}); S.wake = null; }
-  if (S.localStream) { S.localStream.getTracks().forEach(tr => tr.stop()); S.localStream = null; }
-  S.timers.forEach(clearInterval); S.timers = [];
-  for (const m of S.members.values()) if (m.mk) m.mk.remove();
-  S.members.clear(); S.online = new Set(); S.joinedAt = {};
-  S.wpMarkers.forEach(mk => mk.remove()); S.wpMarkers = [];
-  Object.assign(S, { code: null, trip: null, route: null, plan: { v: 0, wps: [] }, passed: new Set(), leaderId: null, leaderSeq: 0,
-    pos: null, manual: '', arrived: false, alerts: { lag: {}, leaderStop: false }, lastSentT: 0, lastSent: null, pick: false });
-  renderRoute(); closeSheets();
-  $('#navSign').hidden = true; $('#navEta').hidden = true; $('#talkBar').hidden = true; $('#toasts').innerHTML = '';
-  history.replaceState(null, '', location.pathname);
-  show('home'); renderHome();
+  leave();
+  if (saved) openHistory(); else homeErr(t('tooShort'));
 }
 
 /* ---------- boucle périodique ---------- */
 function tick() {
-  const now = Date.now();
+  if (!S.active) return;
+  const now = clock();
   let talkChanged = false;
   for (const m of S.members.values()) {
     if (m.id === me.id) continue;
@@ -1399,8 +1195,6 @@ function tick() {
       } else { L.stopSince = null; S.alerts.leaderStop = false; }
     }
   }
-  checkLeader();
-  maybeSendPos(false);
   renderStrip();
   if (S.sheet === 'members') renderMembers();
   if (S.route) updateNavSign();
@@ -1408,7 +1202,7 @@ function tick() {
 }
 
 /* ---------- compteur (0 à 300 km/h) ---------- */
-const GAUGE = { cx: 150, cy: 140, r: 118, max: 300, a0: 135, sweep: 270, step: 10, mid: 50, lbl: 50 };
+const GAUGE = { cx: 150, cy: 140, r: 116, max: 300, a0: 135, sweep: 270, step: 10, lbl: 50 };
 const polar = (r, deg) => [GAUGE.cx + r * Math.cos(deg * RAD), GAUGE.cy + r * Math.sin(deg * RAD)];
 let gaugeRaf = null;
 function buildGauge() {
@@ -1418,27 +1212,26 @@ function buildGauge() {
   G.len = G.r * G.sweep * RAD;
   let ticks = '';
   for (let v = 0; v <= G.max; v += G.step) {
-    const a = G.a0 + v / G.max * G.sweep;
-    const major = v % G.lbl === 0 || v === G.max, mid = !major && v % G.mid === 0;
-    const [x1, y1] = polar(101, a), [x2, y2] = polar(major ? 88 : mid ? 92 : 95, a);
-    ticks += `<line class="g-tick${major ? ' major' : mid ? ' mid' : ''}" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}"/>`;
-    if (major) { const [lx, ly] = polar(74, a); ticks += `<text class="g-lbl" x="${f(lx)}" y="${f(ly + 4)}" text-anchor="middle">${v}</text>`; }
+    const a = G.a0 + v / G.max * G.sweep, major = v % G.lbl === 0;
+    const [x1, y1] = polar(103, a), [x2, y2] = polar(major ? 92 : 97, a);
+    ticks += `<line class="g-tick${major ? ' major' : ''}" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}"/>`;
+    if (major) { const [lx, ly] = polar(78, a); ticks += `<text class="g-lbl" x="${f(lx)}" y="${f(ly + 4)}" text-anchor="middle">${v}</text>`; }
   }
   $('#gaugeSvg').innerHTML = `<path class="g-track" d="${arc}"/>
     <path class="g-val" id="gVal" d="${arc}" stroke-dasharray="${f(G.len)}" stroke-dashoffset="${f(G.len)}"/>
-    ${ticks}<circle class="g-dot" id="gDot" r="9" cx="${f(sx)}" cy="${f(sy)}"/>
+    ${ticks}<line class="g-needle" id="gNeedle" x1="0" y1="0" x2="0" y2="0"/>
     <text class="g-num" id="gNum" x="150" y="160" text-anchor="middle">–</text>
-    <text class="g-unit" x="150" y="186" text-anchor="middle">km/h</text>
+    <text class="g-unit" x="150" y="184" text-anchor="middle">km/h</text>
     <text class="g-dir" id="gDir" x="150" y="232" text-anchor="middle"></text>`;
 }
 function drawGauge(v) {
   const G = GAUGE, frac = Math.max(0, Math.min(1, v / G.max));
-  const val = $('#gVal'), dot = $('#gDot');
+  const val = $('#gVal'), nd = $('#gNeedle');
   if (!val) return;
   val.setAttribute('stroke-dashoffset', (G.len * (1 - frac)).toFixed(1));
   val.style.opacity = frac > 0.002 ? 1 : 0;
-  const [x, y] = polar(G.r, G.a0 + frac * G.sweep);
-  dot.setAttribute('cx', x.toFixed(1)); dot.setAttribute('cy', y.toFixed(1));
+  const a = G.a0 + frac * G.sweep, [x1, y1] = polar(G.r - 12, a), [x2, y2] = polar(G.r + 12, a);
+  nd.setAttribute('x1', x1.toFixed(1)); nd.setAttribute('y1', y1.toFixed(1)); nd.setAttribute('x2', x2.toFixed(1)); nd.setAttribute('y2', y2.toFixed(1));
   $('#gNum').textContent = S.pos ? String(Math.round(v)) : '–';
 }
 function gaugeLoop() {
@@ -1450,9 +1243,9 @@ function gaugeLoop() {
   if (S.spDisp !== tgt) gaugeRaf = requestAnimationFrame(gaugeLoop);
 }
 function updateSpeedo() {
-  if (prefs.view !== 'speed' || !S.code) return;
+  if (prefs.view !== 'speed' || !S.active) return;
   const p = S.pos;
-  S.spTarget = p && Date.now() - p.t < 8000 ? p.spd * 3.6 : 0;
+  S.spTarget = p && clock() - p.t < 8000 ? p.spd * 3.6 : 0;
   if (!gaugeRaf) gaugeRaf = requestAnimationFrame(gaugeLoop);
   const dirs = DIRS[prefs.lang] || DIRS.fr;
   $('#gDir').textContent = p && p.hdg != null && p.spd > 1 ? t('heading', { d: dirs[Math.round(p.hdg / 45) % 8] }) : '';
@@ -1463,7 +1256,8 @@ function updateSpeedo() {
   else { const L = S.leaderId && S.members.get(S.leaderId); if (L && L.lat != null && p) lead = fmtDist(hav([p.lat, p.lng], [L.lat, L.lng])); }
   const tiles = [
     [fmtDist(T.dist), t('distance'), ''], [fmtDur(T.moving), t('driving'), ''], [avg ? fmtKmh(avg) : '–', t('average'), ''],
-    [lead, t('gapLeader'), 'opt'], [T.max ? fmtKmh(T.max) : '–', t('max'), 'opt'], [p && p.alt != null ? Math.round(p.alt) + ' m' : '–', t('altitude'), 'opt'],
+    [lead, t('gapLeader'), 'opt'], [T.max ? fmtKmh(T.max) : '–', t('max'), 'opt'],
+    p && p.alt != null ? [Math.round(p.alt) + ' m', t('altitude'), 'opt'] : [[...S.members.values()].filter(m => m.online && !m.stale).length + '/' + S.members.size, t('carsOnline'), 'opt'],
   ];
   $('#spStats').innerHTML = tiles.map(([v, l, c]) => `<div class="sp-tile ${c}"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div></div>`).join('');
 }
@@ -1471,8 +1265,8 @@ function layoutSpeedo() {
   const sp = $('#speedo');
   if (!sp || sp.hidden) return;
   const main = $('#main').getBoundingClientRect(), row = $('#topRow').getBoundingClientRect(), ctr = $('.controls').getBoundingClientRect();
-  sp.style.setProperty('--sp-top', Math.round(row.bottom - main.top + 10) + 'px');
-  sp.style.setProperty('--sp-bottom', Math.round(main.bottom - ctr.top + 10) + 'px');
+  sp.style.setProperty('--sp-top', Math.round(row.bottom - main.top + 12) + 'px');
+  sp.style.setProperty('--sp-bottom', Math.round(main.bottom - ctr.top + 12) + 'px');
 }
 function setView(v) {
   prefs.view = v === 'speed' ? 'speed' : 'map';
@@ -1491,7 +1285,7 @@ function openSheet(id) {
   if (id === 'route') renderRouteSheet();
   if (id === 'members') renderMembers();
   if (id === 'end') renderEnd();
-  if (id === 'settings') syncSettings();
+  syncSegs();
   $('#scrim').classList.add('open');
   $('#sheet-' + id).classList.add('open');
   S.sheet = id;
@@ -1501,18 +1295,21 @@ function closeSheets() {
   $('#scrim').classList.remove('open');
   S.sheet = null;
 }
-function syncSettings() {
-  $$('#sheet-settings .seg').forEach(seg => {
+function syncSegs() {
+  $$('.seg[data-pref]').forEach(seg => {
     const k = seg.dataset.pref;
     $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(prefs[k]))));
   });
-  $('#themeGrid').innerHTML = Object.keys(THEMES).map(k => {
-    const [pb, ps, pa, pi] = THEMES[k].prev;
-    return `<button class="theme-tile" data-theme-pick="${k}" aria-pressed="${k === prefs.theme}">
-      <span class="tp" style="--pb:${pb};--ps:${ps};--pa:${pa};--pi:${pi}"><i></i><b></b></span>${esc(t('th_' + k))}</button>`;
-  }).join('');
+  const simVals = { factor: String(SIM.paused ? 0 : SIM.factor), auto: SIM.auto ? '1' : '0' };
+  $$('.seg[data-sim]').forEach(seg => {
+    $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === simVals[seg.dataset.sim])));
+  });
+  $('#accentRow').innerHTML = Object.keys(ACCENTS).map(k =>
+    `<button style="--c:${ACCENTS[k]}" data-accent="${k}" aria-label="${k}" aria-pressed="${k === prefs.accent}"></button>`).join('');
+  $('#accentField').hidden = prefs.theme === 'red';
   $('#themeNote').textContent = t('thn_' + prefs.theme);
-  $('#sessOnly').hidden = !S.code;
+  $('#sessOnly').hidden = !S.active;
+  $('#simSpeedField').hidden = SIM.mode === 'gps';
 }
 function setPref(k, v) {
   if (prefs[k] === v) return;
@@ -1521,20 +1318,322 @@ function setPref(k, v) {
   if (k === 'mapTheme' && S.map) S.map.setStyle(STYLES[v], { diff: false });
   if (k === 'lagKm') S.alerts.lag = {};
   if (k === 'lang') applyLang();
+  if (k === 'accent') applyTheme();
   if (k === 'theme') {
     applyTheme();
     const m = THEMES[v].map;
     if (prefs.mapTheme !== m) setPref('mapTheme', m);
   }
-  syncSettings();
+  syncSegs();
 }
-async function shareCode() {
-  if (!S.code) return;
-  const url = location.origin + location.pathname + '?c=' + S.code;
-  const text = t('shareText', { code: S.code });
-  if (navigator.share) { try { await navigator.share({ title: 'PocketConvoy', text, url }); } catch (e) { /* annulé */ } return; }
-  try { await navigator.clipboard.writeText(url); toast(t('linkCopied'), 'ok', 3000); }
-  catch (e) { toast(t('codeIs', { code: S.code }), 'info', 6000); }
+function renderScenarios() {
+  $('#scList').innerHTML = SCENARIOS.map(k => `<button class="sc" data-sc="${k}"><span class="grow"><span class="t" style="display:block">${esc(t('sc_' + k))}</span><span class="s">${esc(t('scd_' + k))}</span></span>${ic(ICON.chev, 18)}</button>`).join('');
+}
+
+/* ---------- simulation du convoi ---------- */
+const SIM = { mode: 'sim', factor: 1, paused: false, auto: true, path: null, A: { s: 0, v: 0, stopUntil: 0 }, cars: new Map(),
+  timer: null, lastReal: 0, lastEmit: 0, lastSelfEmit: 0, nextEvent: 0, buildToken: 0, needBuild: false, parked: false };
+
+function mkCar(id, name, color, pitch) {
+  return { id, name, color, pitch, s: 0, v: 0, o: 0, rank: 0, var: id === me.id ? 1 : rand(0.97, 1.03), park: null,
+    offline: id !== me.id, stopUntil: 0, silentUntil: 0, ghost: null, ghostUntil: 0, manual: '', manualUntil: 0, stopT: 0, dist: 0, mv: 0, mx: 0 };
+}
+function simInit() {
+  SIM.mode = prefs.demoPos === 'gps' ? 'gps' : 'sim';
+  Object.assign(SIM, { factor: 1, paused: false, path: null, A: { s: 0, v: 0, stopUntil: 0 }, cars: new Map(), needBuild: false, parked: false, buildToken: SIM.buildToken + 1 });
+  SIM.nextEvent = clock() + 45000;
+  const taken = new Set([me.color]);
+  for (const b of BOTS) {
+    let color = b.color;
+    if (taken.has(color)) color = COLORS.find(c => !taken.has(c) && !BOTS.some(x => x.color === c)) || '#8B8B93';
+    taken.add(color);
+    SIM.cars.set(b.id, mkCar(b.id, b.name, color, b.pitch));
+  }
+  if (SIM.mode === 'sim') SIM.cars.set(me.id, mkCar(me.id, me.name, me.color, 1));
+  simAssignOffsets();
+  if (SIM.mode === 'sim') simParkAround(DEMO_START, true);
+  BOTS.forEach((b, i) => setTimeout(() => {
+    const c = SIM.cars.get(b.id);
+    if (!S.active || !c) return;
+    c.offline = false;
+    H.join({ id: c.id, n: c.name, c: c.color });
+    if (i === BOTS.length - 1) afterJoin();
+  }, 900 + i * 900));
+  SIM.lastReal = performance.now(); SIM.lastEmit = 0; SIM.lastSelfEmit = 0;
+  clearInterval(SIM.timer);
+  SIM.timer = setInterval(simStep, 250);
+  if (SIM.mode === 'sim') emitSelf();
+}
+function afterJoin() {
+  if (!isLeader()) setTimeout(botSetPlan, 1500);
+  else setTimeout(() => { if (S.active && !S.plan.wps.length) toast(t('hintAddDest'), 'info', 8000); }, 800);
+}
+function simStop() {
+  clearInterval(SIM.timer); SIM.timer = null;
+  SIM.buildToken++;
+  SIM.path = null; SIM.cars = new Map();
+  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { /* ignoré */ }
+}
+function simAssignOffsets() {
+  const ids = [...SIM.cars.keys()];
+  const order = [S.leaderId, ...ids.filter(id => id !== S.leaderId)].filter(id => SIM.cars.has(id));
+  if (SIM.mode === 'sim') {
+    order.forEach((id, i) => { const c = SIM.cars.get(id); c.o = -i * 380; c.rank = i; });
+    const L = SIM.cars.get(S.leaderId);
+    if (SIM.path && L) { SIM.A.s = L.s; SIM.A.v = L.v; }
+  } else {
+    let k = 1;
+    for (const id of order) {
+      const c = SIM.cars.get(id);
+      if (id === S.leaderId) { c.o = 450; c.rank = 0; } else { c.o = -k * 380; c.rank = k; k++; }
+    }
+  }
+}
+function simParkAround(center, line) {
+  for (const c of SIM.cars.values()) c.park = line ? offsetPoint(center, 18 * c.rank, 225) : offsetPoint(center, rand(60, 160), rand(0, 360));
+  SIM.parked = true;
+}
+
+/* chemin : coordonnées, distances cumulées, caps et vitesses par segment */
+function mkPath(line, spd) {
+  const cum = [0], brg = [];
+  for (let i = 1; i < line.length; i++) { cum.push(cum[i - 1] + hav(line[i - 1], line[i])); brg.push(bearing(line[i - 1], line[i])); }
+  const sm = spd.map((_, i) => {
+    let a = 0, n = 0;
+    for (let j = Math.max(0, i - 3); j <= Math.min(spd.length - 1, i + 3); j++) { a += spd[j]; n++; }
+    return Math.max(5, Math.min(34, a / n));
+  });
+  return { coords: line, cum, brg, spd: sm, total: cum[cum.length - 1] };
+}
+function segIndex(P, s) {
+  if (s <= 0) return 0;
+  if (s >= P.total) return Math.max(0, P.cum.length - 2);
+  let lo = 0, hi = P.cum.length - 1;
+  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P.cum[m] <= s) lo = m; else hi = m; }
+  return lo;
+}
+function pointAt(P, s) {
+  const i = segIndex(P, s);
+  const a = P.coords[i], b = P.coords[i + 1] || a;
+  const L = (P.cum[i + 1] != null ? P.cum[i + 1] : P.cum[i]) - P.cum[i];
+  const f = L > 0 ? Math.max(0, Math.min(1, (s - P.cum[i]) / L)) : 0;
+  return { lat: a[0] + (b[0] - a[0]) * f, lng: a[1] + (b[1] - a[1]) * f, hdg: P.brg[i] != null ? P.brg[i] : null };
+}
+const roadSpeed = (P, s) => P.spd[segIndex(P, s)] || 15;
+function projectS(P, p) {
+  let best = { d: Infinity, s: 0 };
+  for (let i = 0; i < P.coords.length - 1; i++) {
+    const pr = projectOnSeg(p, P.coords[i], P.coords[i + 1]);
+    if (pr.d < best.d) best = { d: pr.d, s: P.cum[i] + pr.t * (P.cum[i + 1] - P.cum[i]) };
+  }
+  return best;
+}
+async function fetchPath(points) {
+  const coords = points.map(p => p[1].toFixed(6) + ',' + p[0].toFixed(6)).join(';');
+  try {
+    const j = await getJSON(`${CFG.routingUrl}/route/v1/driving/${coords}?overview=full&geometries=geojson&annotations=distance,duration`);
+    const rt = j.routes && j.routes[0];
+    if (!rt) throw new Error('no route');
+    const line = rt.geometry.coordinates.map(([x, y]) => [y, x]);
+    if (line.length < 2) throw new Error('short');
+    let spd = [];
+    for (const leg of rt.legs) {
+      const a = leg.annotation;
+      if (!a || !a.distance) { spd = []; break; }
+      a.distance.forEach((d, i) => spd.push(a.duration[i] > 0 ? d / a.duration[i] : 14));
+    }
+    if (spd.length !== line.length - 1) spd = new Array(line.length - 1).fill(rt.distance / Math.max(1, rt.duration));
+    return mkPath(line, spd);
+  } catch (e) {
+    const line = [];
+    for (let i = 0; i < points.length - 1; i++) {
+      const a = points[i], b = points[i + 1], n = Math.max(1, Math.ceil(hav(a, b) / 200));
+      for (let k = 0; k < n; k++) line.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+    }
+    line.push(points[points.length - 1]);
+    return mkPath(line, new Array(line.length - 1).fill(22));
+  }
+}
+function carPoint(c) {
+  if (c.ghost && c.ghostUntil > clock()) return { lat: c.ghost[0], lng: c.ghost[1], hdg: null };
+  if (SIM.path) return pointAt(SIM.path, c.s);
+  if (c.park) return { lat: c.park[0], lng: c.park[1], hdg: null };
+  return null;
+}
+async function simRebuild() {
+  const wps = pendingWps();
+  SIM.needBuild = false;
+  if (!wps.length || !S.active) return;
+  let from;
+  if (SIM.mode === 'gps') {
+    if (!S.pos) { SIM.needBuild = true; return; }
+    from = [S.pos.lat, S.pos.lng];
+  } else {
+    let rear = null;
+    for (const c of SIM.cars.values()) {
+      const p = carPoint(c);
+      if (!p) continue;
+      const key = SIM.path ? c.s : -c.rank;
+      if (!rear || key < rear.key) rear = { key, p };
+    }
+    from = rear ? [rear.p.lat, rear.p.lng] : DEMO_START;
+  }
+  const token = ++SIM.buildToken;
+  const P = await fetchPath([from, ...wps.map(w => [w.lat, w.lng])]);
+  if (token !== SIM.buildToken || !S.active) return;
+  for (const c of SIM.cars.values()) {
+    const p = carPoint(c);
+    c.s = p ? projectS(P, [p.lat, p.lng]).s : 0;
+    c.ghost = null;
+  }
+  SIM.path = P;
+  if (SIM.mode === 'sim') {
+    const L = SIM.cars.get(S.leaderId);
+    SIM.A.s = L ? L.s : 0; SIM.A.v = L ? L.v : 0;
+  }
+}
+function approach(v, vt, dt) {
+  const a = vt > v ? 2.0 : 3.5;
+  return v + Math.max(-a * dt, Math.min(a * dt, vt - v));
+}
+function moveCars(dt) {
+  const P = SIM.path, now = clock(), A = SIM.A;
+  if (!P) return;
+  if (SIM.mode === 'gps') { if (S.pos) A.s = projectS(P, [S.pos.lat, S.pos.lng]).s; }
+  else {
+    const stopped = A.stopUntil > now;
+    A.v = approach(A.v, stopped ? 0 : roadSpeed(P, A.s), dt);
+    A.s = Math.min(P.total, A.s + A.v * dt);
+  }
+  for (const c of SIM.cars.values()) {
+    const road = roadSpeed(P, c.s) * c.var;
+    const cap = Math.max(0, P.total - c.rank * 25);
+    let vt = 0;
+    if (!(c.stopUntil > now) && !(c.offline && c.id !== me.id)) {
+      const err = A.s + c.o - c.s;
+      vt = Math.max(0, Math.min(road * 1.35, road + 0.06 * err));
+      vt = Math.min(vt, Math.max(0, (cap - c.s) * 0.4));
+    }
+    c.v = approach(c.v, vt, dt);
+    const before = c.s;
+    c.s = Math.max(0, Math.min(cap, c.s + c.v * dt));
+    const moved = c.s - before;
+    if (c.s >= cap) c.v = 0;
+    if (c.id !== me.id) { c.dist += moved; if (c.v > 1.5) c.mv += dt * 1000; if (c.v > c.mx) c.mx = c.v; }
+  }
+}
+function emitBots() {
+  const now = clock();
+  for (const c of SIM.cars.values()) {
+    if (c.id === me.id || c.offline || c.silentUntil > now) continue;
+    const p = carPoint(c);
+    if (!p) continue;
+    let st = c.manual && c.manualUntil > now ? c.manual : '';
+    if (!st) {
+      if (c.v < 0.8) { if (!c.stopT) c.stopT = now; st = now - c.stopT > 45000 ? 'arret' : 'route'; }
+      else { c.stopT = 0; st = 'route'; }
+    }
+    H.pos({ id: c.id, n: c.name, c: c.color, la: p.lat, ln: p.lng, s: Math.round(c.v * 3.6), h: c.v > 1 && p.hdg != null ? Math.round(p.hdg) : null,
+      st, d: Math.round(c.dist), mv: Math.round(c.mv), mx: +c.mx.toFixed(1) });
+  }
+}
+function emitSelf() {
+  const c = SIM.cars.get(me.id);
+  if (!c) return;
+  const p = carPoint(c);
+  if (!p) return;
+  onFix({ coords: { latitude: p.lat, longitude: p.lng, speed: c.v, heading: c.v > 0.5 ? p.hdg : null, accuracy: 5, altitude: null } });
+}
+function simStep() {
+  if (!S.active) return;
+  const nowR = performance.now();
+  const dtR = Math.min(1, (nowR - SIM.lastReal) / 1000);
+  SIM.lastReal = nowR;
+  const dt = dtR * (SIM.mode === 'gps' ? 1 : (SIM.paused ? 0 : SIM.factor));
+  S.simT += dt * 1000;
+  if (dt > 0) moveCars(dt);
+  if (nowR - SIM.lastEmit >= 1000) { SIM.lastEmit = nowR; emitBots(); }
+  if (SIM.mode === 'sim' && nowR - SIM.lastSelfEmit >= 500) { SIM.lastSelfEmit = nowR; emitSelf(); }
+  if (SIM.auto && clock() >= SIM.nextEvent) {
+    SIM.nextEvent = clock() + rand(70000, 140000);
+    scenario(Math.random() < 0.6 ? 'talk' : 'alert', true);
+  }
+}
+
+/* amis simulés : paroles, alertes, parcours */
+function botSay(c) {
+  const lines = PHRASES[prefs.lang] || PHRASES.fr;
+  const text = lines[Math.floor(Math.random() * lines.length)];
+  H.talk({ id: c.id, on: true });
+  let done = false;
+  const end = () => { if (done) return; done = true; if (S.active) H.talk({ id: c.id, on: false }); };
+  const synth = window.speechSynthesis;
+  if (!synth || !window.SpeechSynthesisUtterance) { setTimeout(end, 2500); return; }
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = prefs.lang === 'en' ? 'en-GB' : 'fr-FR';
+  const voices = synth.getVoices().filter(v => (v.lang || '').toLowerCase().startsWith(prefs.lang));
+  if (voices.length) u.voice = voices[Math.max(0, BOTS.findIndex(b => b.id === c.id)) % voices.length];
+  u.pitch = c.pitch || 1; u.rate = 1.02;
+  u.onend = end; u.onerror = end;
+  setTimeout(() => { try { synth.speak(u); } catch (e) { end(); } }, 400);
+  setTimeout(end, 12000);
+}
+function botMsg(c, kind) {
+  const p = carPoint(c), q = QUICK[kind], now = clock();
+  if (q.status) { c.manual = q.status; c.manualUntil = now + (kind === 'sos' ? 90000 : 60000); }
+  H.msg({ id: c.id, k: kind, la: p ? p.lat : null, ln: p ? p.lng : null });
+}
+function botSetPlan() {
+  if (!S.active || isLeader() || S.plan.wps.length) return;
+  const wps = DEMO_PLAN.map(w => Object.assign({ id: rid() }, w));
+  H.plan({ plan: { v: S.plan.v + 1, wps }, by: S.leaderId });
+}
+function pickBot(filter) {
+  const l = [...SIM.cars.values()].filter(c => c.id !== me.id && !c.offline && (!filter || filter(c)));
+  return l.length ? l[Math.floor(Math.random() * l.length)] : null;
+}
+function scenario(k, auto) {
+  if (!S.active) return;
+  const now = clock();
+  if (!auto) closeSheets();
+  const noBot = () => { if (!auto) toast(t('noBot'), 'info', 4000); };
+  if (k === 'talk') { const c = pickBot(); if (!c) return noBot(); botSay(c); }
+  else if (k === 'alert') {
+    const c = pickBot(); if (!c) return noBot();
+    const kinds = ['pause', 'essence', 'ralentir', 'perdu'];
+    botMsg(c, kinds[Math.floor(Math.random() * kinds.length)]);
+  } else if (k === 'lag') {
+    const c = pickBot(x => x.id !== S.leaderId); if (!c) return noBot();
+    const X = prefs.lagKm * 1000 + 600;
+    if (SIM.path && c.s > X) c.s -= X;
+    else { const p = carPoint(c); if (p) { c.ghost = offsetPoint([p.lat, p.lng], X, rand(0, 360)); c.ghostUntil = now + 60000; } }
+    emitBots();
+    toast(t('lagStarted', { name: c.name, d: fmtDist(X) }), 'info', 6000);
+  } else if (k === 'stop') {
+    if (isLeader()) { toast(t('needFollower'), 'info', 6000); return; }
+    if (!S.plan.wps.length) { toast(t('needRoute'), 'info', 5000); return; }
+    const L = SIM.cars.get(S.leaderId); if (!L) return noBot();
+    L.stopUntil = now + 80000;
+    if (SIM.mode === 'sim') SIM.A.stopUntil = now + 80000;
+    toast(t('stopStarted', { name: L.name }), 'info', 7000);
+  } else if (k === 'sos') {
+    const c = pickBot(); if (!c) return noBot();
+    c.stopUntil = now + 90000;
+    botMsg(c, 'sos');
+  } else if (k === 'signal') {
+    const c = pickBot(); if (!c) return noBot();
+    c.silentUntil = now + 75000;
+    toast(t('signalStarted', { name: c.name }), 'info', 5000);
+  } else if (k === 'leave') {
+    const c = pickBot(x => x.id !== S.leaderId); if (!c) return noBot();
+    c.offline = true;
+    H.leave({ id: c.id });
+    setTimeout(() => { if (!S.active || !SIM.cars.has(c.id)) return; c.offline = false; H.join({ id: c.id, n: c.name, c: c.color }); }, 30000);
+  } else if (k === 'leader') {
+    const order = [me.id, ...BOTS.map(b => b.id)].filter(id => id === me.id || (SIM.cars.get(id) && !SIM.cars.get(id).offline));
+    const i = order.indexOf(S.leaderId);
+    setLeader(order[(i + 1) % order.length]);
+  }
 }
 
 /* ---------- historique et replay ---------- */
@@ -1550,10 +1649,10 @@ async function openHistory() {
     const mine = tr.stats.find(r => r.me) || {};
     const n = tr.stats.length;
     return `<button class="item" data-trip="${esc(tr.id)}"><div class="grow">
-      <div class="t">${esc(tr.dest || t('convoyCode', { code: tr.code }))}</div>
+      <div class="t">${esc(tr.dest || t('demoTrip'))}</div>
       <div class="s">${esc(fmtDate(tr.start))}</div>
       <div class="s">${esc(t('tripLine', { dist: fmtDist(mine.dist || 0), dur: fmtDur(tr.end - tr.start), cars: n > 1 ? t('carsN', { n }) : t('cars1') }))}</div>
-    </div><span class="chev" aria-hidden="true">›</span></button>`;
+    </div><span class="chev">${ic(ICON.chev, 18)}</span></button>`;
   }).join('');
 }
 async function openTrip(id) {
@@ -1561,19 +1660,19 @@ async function openTrip(id) {
   try { tr = (await DB.allTrips()).find(x => x.id === id); } catch (e) { /* ignoré */ }
   if (!tr) return;
   show('trip');
-  $('#tripTitle').textContent = tr.dest || t('convoyCode', { code: tr.code });
+  $('#tripTitle').textContent = tr.dest || t('demoTrip');
   const mine = tr.stats.find(r => r.me) || { dist: 0, mv: 0, mx: 0 };
   $('#tripStats').innerHTML = `<p class="s">${esc(t('fromTo', { date: fmtDate(tr.start), a: fmtClock(tr.start), b: fmtClock(tr.end) }))}</p>`
     + bigStats(mine, 0)
-    + (tr.stats.length > 1 ? `<div class="field-label">${esc(t('rankTitle'))}</div>` + rankTable(tr.stats) : '')
-    + `<button class="btn btn-ghost btn-text-danger" data-deltrip="${esc(tr.id)}">${ic(ICON.trash, 20)}${esc(t('delTrip'))}</button>`;
+    + (tr.stats.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(tr.stats)}</div>` : '')
+    + `<button class="btn btn-danger" data-deltrip="${esc(tr.id)}">${esc(t('delTrip'))}</button>`;
 
   if (RP && RP.map) RP.map.remove();
   const dur = Math.max(1, Math.round((tr.end - tr.start) / 1000));
   const speeds = [10, 30, 60, 120, 300, 600];
   const target = dur / 60;
   const speed = speeds.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
-  const map = new maplibregl.Map({ container: 'tripMap', style: STYLES[prefs.mapTheme], center: [8.23, 46.8], zoom: 7, attributionControl: { compact: true }, dragRotate: false });
+  const map = new maplibregl.Map({ container: 'tripMap', style: STYLES[prefs.mapTheme], center: [DEMO_START[1], DEMO_START[0]], zoom: 9, attributionControl: { compact: true }, dragRotate: false });
   map.touchZoomRotate.disableRotation();
   RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0 };
   $('#rpSlider').max = dur; $('#rpSlider').value = 0;
@@ -1584,9 +1683,9 @@ async function openTrip(id) {
     for (const [mid, track] of Object.entries(tr.tracks)) {
       if (!track || track.length < 2) continue;
       any = true;
-      const col = tr.colors[mid] || '#8899A6';
+      const col = tr.colors[mid] || '#8B8B93';
       map.addSource('tr-' + mid, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: track.map(p => [p[2], p[1]]) } } });
-      map.addLayer({ id: 'tr-' + mid, type: 'line', source: 'tr-' + mid, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': col, 'line-width': 4, 'line-opacity': 0.85 } });
+      map.addLayer({ id: 'tr-' + mid, type: 'line', source: 'tr-' + mid, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': col, 'line-width': 3, 'line-opacity': 0.85 } });
       track.forEach(p => b.extend([p[2], p[1]]));
       const el = document.createElement('div');
       el.className = 'car rp';
@@ -1630,7 +1729,7 @@ function rpLoop(ts) {
 }
 function updatePlayBtn() {
   if (!RP) return;
-  $('#rpPlay').innerHTML = ic(RP.playing ? ICON.pause : ICON.play, 22);
+  $('#rpPlay').innerHTML = ic(RP.playing ? ICON.pause : ICON.play, 20);
   $('#rpPlay').setAttribute('aria-label', t(RP.playing ? 'pause' : 'play'));
   $('#rpSpeed').textContent = '×' + RP.speed;
 }
@@ -1647,55 +1746,54 @@ function bind() {
     me.color = b.dataset.c; store.set('color', me.color);
     $$('.swatch').forEach(s => s.setAttribute('aria-pressed', String(s === b)));
   });
-  $('#code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); });
-  $('#btnCreate').addEventListener('click', () => start(newCode(), true));
-  $('#btnJoin').addEventListener('click', () => {
-    const c = $('#code').value.trim();
-    if (c.length !== 6) { homeErr(t('errCode')); $('#code').focus(); return; }
-    start(c, false);
-  });
-  $('#code').addEventListener('keydown', e => { if (e.key === 'Enter') $('#btnJoin').click(); });
+  $('#btnStart').addEventListener('click', start);
+  $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); start(); } });
   $('#btnHistory').addEventListener('click', () => openHistory());
   $('#btnHomeSettings').addEventListener('click', () => openSheet('settings'));
-  $('#btnResume').addEventListener('click', () => { const c = S.resumeData; if (c) start(c.code, false, c); });
-  $('#btnResumeEnd').addEventListener('click', async () => {
-    const c = S.resumeData;
-    if (!c) return;
-    const ok = await saveTripRecord(c.trip, c.rows || []);
-    await DB.delKV('current');
-    S.resumeData = null;
-    if (ok) openHistory(); else { renderHome(); homeErr(t('tooShort')); }
+  $('#demoChip').addEventListener('click', () => openSheet('demo'));
+
+  document.addEventListener('click', e => {
+    const segBtn = e.target.closest('.seg[data-pref] button');
+    if (segBtn) { const k = segBtn.closest('.seg').dataset.pref; setPref(k, k === 'lagKm' ? +segBtn.dataset.v : segBtn.dataset.v); return; }
+    const simBtn = e.target.closest('.seg[data-sim] button');
+    if (simBtn) {
+      const k = simBtn.closest('.seg').dataset.sim, v = +simBtn.dataset.v;
+      if (k === 'factor') { SIM.paused = v === 0; if (v) SIM.factor = v; }
+      if (k === 'auto') { SIM.auto = !!v; SIM.nextEvent = clock() + 30000; }
+      syncSegs(); return;
+    }
+    const acc = e.target.closest('[data-accent]');
+    if (acc) { setPref('accent', acc.dataset.accent); return; }
+    const sc = e.target.closest('[data-sc]');
+    if (sc) { scenario(sc.dataset.sc); return; }
+    if (e.target.closest('[data-close]')) closeSheets();
   });
 
   $('#main').addEventListener('pointerdown', () => { if (S.ac && S.ac.state !== 'running') unlockAudio(); }, { capture: true });
-  $('#audioChip').addEventListener('click', unlockAudio);
-  $('#codeChip').addEventListener('click', shareCode);
-  $('#btnShare').addEventListener('click', shareCode);
   $('#viewTabs').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
   $('#btnLocate').addEventListener('click', () => { if (S.follow) { setFollow(false); fitConvoy(); } else setFollow(true); });
-  $('#navSign').addEventListener('click', () => openSheet(S.arrived ? 'end' : 'route'));
+  $('#navCard').addEventListener('click', () => openSheet(S.arrived ? 'end' : 'route'));
   $$('[data-sheet]').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.sheet)));
   $('#scrim').addEventListener('click', closeSheets);
-  document.addEventListener('click', e => { if (e.target.closest('[data-close]')) closeSheets(); });
   window.addEventListener('resize', () => setTimeout(layoutSpeedo, 120));
   if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => layoutSpeedo()); ro.observe($('#topRow')); ro.observe($('.controls')); }
 
   const ptt = $('#ptt');
+  let armed = false;
   ptt.addEventListener('contextmenu', e => e.preventDefault());
   ptt.addEventListener('pointerdown', e => {
     e.preventDefault();
     unlockAudio();
-    S.pttArmed = !!S.localStream;
-    if (!S.localStream) { ensureMic(true); return; }
+    armed = true;
     if (prefs.talkMode === 'hold') { try { ptt.setPointerCapture(e.pointerId); } catch (err) { /* ignoré */ } talkStart(); }
   });
   ptt.addEventListener('pointerup', () => {
-    if (!S.pttArmed) return;
+    if (!armed) return;
+    armed = false;
     if (prefs.talkMode === 'hold') talkStop();
     else if (S.talking) talkStop(); else talkStart();
   });
-  ptt.addEventListener('pointercancel', () => { if (prefs.talkMode === 'hold') talkStop(); });
-  ptt.addEventListener('lostpointercapture', () => { if (prefs.talkMode === 'hold') talkStop(); });
+  ptt.addEventListener('pointercancel', () => { armed = false; if (prefs.talkMode === 'hold') talkStop(); });
 
   $('#wpList').addEventListener('click', e => {
     const b = e.target.closest('[data-act]');
@@ -1734,27 +1832,12 @@ function bind() {
   $('#membersList').addEventListener('click', e => {
     const s = e.target.closest('[data-see]'), l = e.target.closest('[data-lead]');
     if (s) focusMember(s.dataset.see);
-    if (l && isLeader()) { giveLeader(l.dataset.lead); renderMembers(); }
+    if (l && isLeader()) { setLeader(l.dataset.lead); renderMembers(); }
   });
 
-  $('#sheet-settings').addEventListener('click', e => {
-    const th = e.target.closest('[data-theme-pick]');
-    if (th) { setPref('theme', th.dataset.themePick); return; }
-    const b = e.target.closest('.seg button');
-    if (!b) return;
-    const k = b.closest('.seg').dataset.pref;
-    setPref(k, k === 'lagKm' ? +b.dataset.v : b.dataset.v);
-  });
   $('#btnEndOpen').addEventListener('click', () => openSheet('end'));
-  $('#btnQuit').addEventListener('click', async () => {
-    if (!confirm(t('confirmQuit'))) return;
-    try { await DB.delKV('current'); } catch (e) { /* ignoré */ }
-    leave();
-  });
-  $('#endBody').addEventListener('click', e => {
-    if (e.target.closest('#endSave')) finish(true);
-    if (e.target.closest('#endAll')) { send('end', { by: me.id }); finish(true); }
-  });
+  $('#btnQuit').addEventListener('click', () => { if (confirm(t('confirmQuit'))) leave(); });
+  $('#endBody').addEventListener('click', e => { if (e.target.closest('#endSave')) finish(); });
 
   $('#histBack').addEventListener('click', () => { show('home'); renderHome(); });
   $('#histList').addEventListener('click', e => { const b = e.target.closest('[data-trip]'); if (b) openTrip(b.dataset.trip); });
@@ -1781,16 +1864,10 @@ function bind() {
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (!S.code) return;
-    if (document.visibilityState === 'visible') {
-      keepAwake(); startGeo(); unlockAudio();
-      if (!S.conn) reconnect();
-      setTimeout(checkPeers, 1500);
-    } else {
-      talkStop(); saveCurrent();
-    }
+    if (!S.active) return;
+    if (document.visibilityState === 'visible') { keepAwake(); unlockAudio(); if (SIM.mode === 'gps') startGeo(); SIM.lastReal = performance.now(); }
+    else talkStop(true);
   });
-  window.addEventListener('pagehide', () => { if (S.code) saveCurrent(); });
 }
 
 applyTheme();
