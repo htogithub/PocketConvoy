@@ -261,7 +261,7 @@ svg{display:block}
 /* feuilles */
 #scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none}
 #scrim.open{display:block}
-.sheet{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:21;max-height:calc(86% - var(--kb,0px));background:var(--surface);color:var(--text);border-top:1px solid var(--line);border-radius:16px 16px 0 0;display:none;flex-direction:column;padding-bottom:var(--sab)}
+.sheet{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:21;max-height:calc(86% - var(--kb,0px));transition:bottom .3s cubic-bezier(.2,.8,.2,1),max-height .3s cubic-bezier(.2,.8,.2,1),height .3s cubic-bezier(.2,.8,.2,1);background:var(--surface);color:var(--text);border-top:1px solid var(--line);border-radius:16px 16px 0 0;display:none;flex-direction:column;padding-bottom:var(--sab)}
 .sheet.open{display:flex}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:14px calc(var(--sar) + 16px) 4px calc(var(--sal) + 20px)}
 .sheet-head h2{margin:0;font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-.01em}

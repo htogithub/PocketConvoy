@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '0.12.0';
+const APP_VERSION = '0.13.0';
 /* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -512,7 +512,7 @@ const S = {
   leaderId: null,
   plan: { v: 0, wps: [] }, passed: new Set(),
   route: null, routing: false, routeAgain: false, nav: { off: 0, last: 0 }, arrived: false,
-  pos: null, geoWatch: null, follow: true, zoomNext: true,
+  pos: null, geoWatch: null, follow: true, gesture: false, camB: 0, camP: 0, zoomTarget: null,
   manual: '', stoppedSince: null, movingSince: null,
   trip: null,
   talking: false, talkTimer: null, micOk: null, echoPlaying: false, ac: null, wake: null,
@@ -797,6 +797,7 @@ const H = {
     Object.assign(m, { name: d.n || m.name, color: d.c || m.color, lat: d.la, lng: d.ln, spd: d.s || 0, hdg: d.h, st: d.st || 'route', t: clock(), stale: false });
     m.stats = { dist: d.d || 0, mv: d.mv || 0, mx: d.mx || 0 };
     recordTrack(m.id, d.la, d.ln);
+    moveTo(m, d.la, d.ln, (d.s || 0) / 3.6);
     updateMarker(m);
     scheduleStrip();
   },
@@ -906,6 +907,7 @@ function onFix(p) {
   const self = member(me.id);
   Object.assign(self, { lat: cur[0], lng: cur[1], spd: S.pos.spd * 3.6, hdg, st: myStatus(), t: now, online: true });
   recordTrack(me.id, cur[0], cur[1]);
+  moveTo(self, cur[0], cur[1], S.pos.spd);
   updateMarker(self);
   if (S.follow) followCamera();
   checkWaypoints();
@@ -966,6 +968,8 @@ function initMap() {
   m.on('style.load', () => { addRouteLayers(); renderRoute(); });
   applyMapStyle(m);
   m.on('dragstart', () => setFollow(false));
+  m.on('zoomstart', e => { if (e && e.originalEvent) S.gesture = true; });
+  m.on('zoomend', () => { if (S.gesture) { S.gesture = false; kick(); } });
   m.on('rotate', () => { for (const mm of S.members.values()) updateCone(mm); });
   m.on('click', onMapClick);
   let lpT = null, lpPt = null, lpReady = null;
@@ -1024,9 +1028,9 @@ function updateMarker(m) {
     el.innerHTML = '<div class="car-cone"></div><div class="car-dot"><span></span></div><div class="car-flag"></div><div class="car-tag"></div>';
     el.addEventListener('click', ev => { ev.stopPropagation(); focusMember(m.id); });
     m.el = el;
-    m.mk = new maplibregl.Marker({ element: el }).setLngLat([m.lng, m.lat]).addTo(S.map);
+    m.mk = new maplibregl.Marker({ element: el }).setLngLat([m.dLng != null ? m.dLng : m.lng, m.dLat != null ? m.dLat : m.lat]).addTo(S.map);
   }
-  m.mk.setLngLat([m.lng, m.lat]);
+  if (m.dLat == null) m.mk.setLngLat([m.lng, m.lat]);
   const el = m.el, cl = el.classList;
   cl.add('car');
   cl.toggle('me', m.id === me.id);
@@ -1047,18 +1051,72 @@ function updateCone(m) {
   if (!c) return;
   const on = m.hdg != null && m.spd > 8;
   c.style.display = on ? '' : 'none';
-  if (on) c.style.transform = `rotate(${m.hdg - (S.map ? S.map.getBearing() : 0)}deg)`;
+  if (on) c.style.transform = `rotate(${(m.dHdg != null ? m.dHdg : m.hdg) - (S.map ? S.map.getBearing() : 0)}deg)`;
 }
-function followCamera() {
-  const p = S.pos;
-  if (!S.map || !p || prefs.view === 'speed') return;
-  const moving = p.spd > 2.5 && p.hdg != null;
-  const opts = {
-    center: [p.lng, p.lat], bearing: moving ? p.hdg : S.map.getBearing(), pitch: moving ? 45 : 0,
-    offset: [0, Math.round(window.innerHeight * 0.16)], duration: 900, easing: x => x,
-  };
-  if (S.zoomNext) { opts.zoom = Math.max(S.map.getZoom(), 15); S.zoomNext = false; }
-  S.map.easeTo(opts);
+/* Le GPS ne donne qu'un point par seconde environ. Pour un mouvement fluide comme une app de navigation,
+   chaque voiture glisse en continu vers sa position prévue (vitesse et cap) et la caméra suit image par image. */
+const ANIM = { raf: 0 };
+const angDiff = (a, b) => ((a - b + 540) % 360) - 180;
+function kick() { if (!ANIM.raf) ANIM.raf = requestAnimationFrame(frame); }
+function moveTo(m, lat, lng, spdMs) {
+  const now = performance.now();
+  if (m.dLat == null || hav([m.dLat, m.dLng], [lat, lng]) > 500) {
+    m.dLat = lat; m.dLng = lng; m.anim = null; m.lastFixT = now;
+    if (m.mk) m.mk.setLngLat([lng, lat]);
+    kick(); return;
+  }
+  const dt = Math.min(2500, Math.max(300, now - (m.lastFixT || now - 1000)));
+  m.lastFixT = now;
+  m.fixInt = m.fixInt ? m.fixInt * 0.7 + dt * 0.3 : dt;
+  const f = SIM.mode === 'sim' ? (SIM.paused ? 0 : SIM.factor) : 1;
+  const moving = spdMs * f > 1 && m.hdg != null;
+  const to = moving ? offsetPoint([lat, lng], spdMs * f * m.fixInt / 1000 * 0.9, m.hdg) : [lat, lng];
+  m.anim = { from: [m.dLat, m.dLng], to, t0: now, dur: m.fixInt, kMax: moving ? 1.6 : 1 };
+  kick();
+}
+function frame(now) {
+  ANIM.raf = 0;
+  if (!S.active) return;
+  let busy = false;
+  for (const m of S.members.values()) {
+    const a = m.anim;
+    if (a) {
+      const k = Math.min(a.kMax, (now - a.t0) / a.dur);
+      m.dLat = a.from[0] + (a.to[0] - a.from[0]) * k;
+      m.dLng = a.from[1] + (a.to[1] - a.from[1]) * k;
+      if (m.mk) m.mk.setLngLat([m.dLng, m.dLat]);
+      if (k >= a.kMax) m.anim = null; else busy = true;
+    }
+    if (m.hdg != null) {
+      if (m.dHdg == null) m.dHdg = m.hdg;
+      const d = angDiff(m.hdg, m.dHdg);
+      if (Math.abs(d) > 0.3) { m.dHdg = (m.dHdg + d * 0.15 + 360) % 360; busy = true; updateCone(m); }
+    }
+  }
+  if (followFrame()) busy = true;
+  if (busy) kick();
+}
+function followFrame() {
+  const map = S.map, self = S.members.get(me.id);
+  if (!map || !S.follow || S.gesture || prefs.view !== 'map' || !self || self.dLat == null) return false;
+  const p = S.pos, moving = !!(p && p.spd > 2.5 && p.hdg != null);
+  const tb = moving ? p.hdg : S.camB, tp = moving ? 45 : 0;
+  const db = angDiff(tb, S.camB);
+  S.camB = (S.camB + db * 0.08 + 360) % 360;
+  S.camP += (tp - S.camP) * 0.08;
+  const opts = { center: [self.dLng, self.dLat], bearing: S.camB, pitch: S.camP };
+  let zBusy = false;
+  if (S.zoomTarget != null) {
+    const z = map.getZoom(), nz = z + (S.zoomTarget - z) * 0.12;
+    opts.zoom = nz;
+    if (Math.abs(S.zoomTarget - nz) < 0.01) S.zoomTarget = null; else zBusy = true;
+  }
+  map.jumpTo(opts);
+  return !!self.anim || Math.abs(db) > 0.2 || Math.abs(tp - S.camP) > 0.2 || zBusy;
+}
+function followCamera() { kick(); }
+function setFollowPadding() {
+  if (S.map && S.map.setPadding) S.map.setPadding({ top: Math.round(window.innerHeight * 0.32), bottom: 0, left: 0, right: 0 });
 }
 function setFollow(on, labelOnly) {
   S.follow = on;
@@ -1066,7 +1124,12 @@ function setFollow(on, labelOnly) {
   b.innerHTML = ic(on ? ICON.convoy : ICON.locate, 22);
   b.setAttribute('aria-label', t(on ? 'viewConvoy' : 'followMe'));
   if (labelOnly) return;
-  if (on) { S.zoomNext = true; if (S.map && S.pos) followCamera(); }
+  if (on && S.map) {
+    S.camB = S.map.getBearing(); S.camP = S.map.getPitch();
+    S.zoomTarget = Math.max(S.map.getZoom(), 15);
+    setFollowPadding();
+    kick();
+  }
 }
 function fitConvoy() {
   if (!S.map) return;
@@ -1076,8 +1139,8 @@ function fitConvoy() {
   const dest = S.plan.wps[S.plan.wps.length - 1];
   if (dest) { b.extend([dest.lng, dest.lat]); n++; }
   if (!n) return;
-  const top = $('.hud-top').offsetHeight + 30, bottom = $('#hudBottom').offsetHeight + 30;
-  S.map.fitBounds(b, { padding: { top, bottom, left: 50, right: 50 }, maxZoom: 15, bearing: 0, pitch: 0, duration: 800 });
+  const bottom = $('#hudBottom').offsetHeight + 30;
+  S.map.fitBounds(b, { padding: { top: 30, bottom, left: 50, right: 50 }, maxZoom: 15, bearing: 0, pitch: 0, duration: 800 });
 }
 function focusMember(id) {
   const m = S.members.get(id);
@@ -2067,8 +2130,8 @@ function simStep() {
   const dt = dtR * (SIM.mode === 'gps' ? 1 : (SIM.paused ? 0 : SIM.factor));
   S.simT += dt * 1000;
   if (dt > 0) moveCars(dt);
-  if (nowR - SIM.lastEmit >= 1000) { SIM.lastEmit = nowR; emitBots(); }
-  if (SIM.mode === 'sim' && nowR - SIM.lastSelfEmit >= 500) { SIM.lastSelfEmit = nowR; emitSelf(); }
+  if (nowR - SIM.lastEmit >= 950) { SIM.lastEmit = nowR; emitBots(); }
+  if (SIM.mode === 'sim' && nowR - SIM.lastSelfEmit >= 450) { SIM.lastSelfEmit = nowR; emitSelf(); }
   if (SIM.auto && clock() >= SIM.nextEvent) {
     SIM.nextEvent = clock() + rand(70000, 140000);
     const r = Math.random();
@@ -2339,7 +2402,7 @@ function bind() {
   $('#navCard').addEventListener('click', () => openSheet(S.arrived ? 'end' : 'route'));
   $$('[data-sheet]').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.sheet)));
   $('#scrim').addEventListener('click', closeSheets);
-  window.addEventListener('resize', () => setTimeout(layoutSpeedo, 120));
+  window.addEventListener('resize', () => setTimeout(() => { layoutSpeedo(); if (S.follow) setFollowPadding(); }, 120));
   if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => layoutSpeedo()); ro.observe($('.hud-top')); ro.observe($('.controls')); }
 
   const ptt = $('#ptt');
@@ -2429,12 +2492,25 @@ function bind() {
     if (b && b.id !== 'ptt' && !b.closest('#hapCats')) haptic('tap');
   }, { capture: true });
   if (window.visualViewport) {
-    const kb = () => {
-      const app = $('#app'), h = app.getBoundingClientRect().height;
-      const k = Math.max(0, h - (visualViewport.height + visualViewport.offsetTop));
-      app.style.setProperty('--kb', (k > 80 ? Math.round(k) : 0) + 'px');
+    const vv = window.visualViewport, app = $('#app');
+    let predicted = store.get('kbH', 0);
+    const isField = el => el && el.matches && el.matches('input.text, textarea');
+    const apply = () => {
+      const H = document.documentElement.clientHeight;
+      const kb = Math.round(H - vv.height);
+      const open = kb > 100 && isField(document.activeElement);
+      app.style.transform = open && vv.offsetTop > 0 ? `translateY(${Math.round(vv.offsetTop)}px)` : '';
+      app.style.setProperty('--kb', (open ? kb : 0) + 'px');
+      if (open) {
+        if (Math.abs(kb - predicted) > 4) { predicted = kb; store.set('kbH', kb); }
+        if (S.sheet === 'chat') { const l = $('#chatList'); l.scrollTop = l.scrollHeight; }
+      }
     };
-    visualViewport.addEventListener('resize', kb); visualViewport.addEventListener('scroll', kb);
+    vv.addEventListener('resize', apply); vv.addEventListener('scroll', apply);
+    document.addEventListener('focusin', e => { if (isField(e.target) && predicted) app.style.setProperty('--kb', predicted + 'px'); });
+    document.addEventListener('focusout', () => setTimeout(() => {
+      if (!isField(document.activeElement)) { app.style.setProperty('--kb', '0px'); app.style.transform = ''; }
+    }, 60));
   }
   $('#pickCancel').addEventListener('click', () => { S.pick = false; $('#pickBar').hidden = true; });
 
