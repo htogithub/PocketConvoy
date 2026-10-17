@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Convoy">
 <title>PocketConvoy</title>
+<script>try{var p=JSON.parse(localStorage.getItem('pc_prefs')||'{}'),A={orange:'#FF5B1F',yellow:'#FFD60A',lime:'#B6F23A',cyan:'#00D1FF',magenta:'#FF2E88'},r=document.documentElement;if(p.theme)r.dataset.theme=p.theme;if(A[p.accent])r.style.setProperty('--accent',A[p.accent]);if(p.lang)r.lang=p.lang;}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -42,7 +43,8 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 button:disabled{opacity:.3}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 svg{display:block}
-.screen{position:fixed;inset:0;display:none;background:var(--bg)}
+#app{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;overflow:hidden}
+.screen{position:absolute;inset:0;display:none;background:var(--bg)}
 .screen.on{display:flex;flex-direction:column}
 .s{font-size:14px;color:var(--muted);margin:0}
 .empty{color:var(--muted);margin:4px 0}
@@ -137,6 +139,50 @@ svg{display:block}
 #ptt.nomic svg{color:var(--muted)}
 @keyframes ping{from{opacity:1;transform:scale(.96)}to{opacity:0;transform:scale(1.12)}}
 
+/* grandes alertes */
+#alerts{display:flex;flex-direction:column;gap:8px}
+.alert{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;text-align:left;border-radius:16px;padding:14px 16px;animation:alertIn .28s cubic-bezier(.2,.9,.3,1.15)}
+.a-ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:var(--surface-2);color:var(--text);flex:none}
+.a-warn .a-ico{background:var(--accent);color:var(--accent-ink)}
+.a-ok .a-ico{background:var(--ok);color:#0F0F10}
+.a-main{min-width:0;flex:1}
+.a-who{display:block;font-size:14px;color:var(--muted);font-weight:500}
+.a-text{display:block;font-size:20px;font-weight:600;line-height:1.2}
+.a-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:var(--muted);transform-origin:left;animation:alertBar 9s linear forwards}
+.a-warn .a-bar{background:var(--accent)}.a-ok .a-bar{background:var(--ok)}
+@keyframes alertIn{from{opacity:0;transform:translateY(-10px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes alertBar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+/* pins */
+.pin{width:30px;height:37px;cursor:pointer}
+.pin-b{position:absolute;left:0;top:0;width:30px;height:30px;border-radius:9px;background:var(--surface);border:2px solid var(--c);display:grid;place-items:center;color:var(--text);z-index:1}
+.pin::after{content:"";position:absolute;left:11px;top:25px;width:8px;height:8px;background:var(--c);transform:rotate(45deg)}
+.pin.danger .pin-b{background:var(--danger);border-color:var(--danger);color:#fff}
+.pin.danger::after{background:var(--danger)}
+.pin.in-route{opacity:.45}
+.pin-ico{width:34px;height:34px;flex:none;border-radius:9px;border:2px solid var(--c);display:grid;place-items:center;color:var(--text)}
+.ptypes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ptypes button{min-height:70px;border-radius:12px;border:1px solid var(--line-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;color:var(--muted);padding:6px}
+.ptypes button[aria-pressed="true"]{border-color:var(--text);color:var(--text);background:var(--surface-2)}
+.toggles{display:flex;flex-wrap:wrap;gap:6px}
+.toggles button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--line-2);font-size:14px;font-weight:500;color:var(--muted)}
+.toggles button[aria-pressed="true"]{color:var(--text);border-color:var(--text);background:var(--surface-2)}
+.toggles .t-test{color:var(--accent-fg);border-color:var(--accent)}
+
+/* écran de lancement */
+#splash{position:fixed;left:0;top:0;width:100%;height:100vh;height:100lvh;z-index:500;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;animation:spOut .45s ease 1.8s forwards}
+.sp-wheel{width:92px;height:92px;overflow:visible;animation:spRoll .75s cubic-bezier(.55,0,.25,1) 1s both}
+.sp-tire{fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:240;transform:rotate(-90deg);transform-origin:50px 50px;animation:spDraw .7s cubic-bezier(.6,0,.2,1) .1s forwards}
+.sp-spokes{fill:none;stroke:currentColor;stroke-width:4.5;stroke-linecap:round;opacity:0;transform-origin:50px 50px;animation:spSpokes .45s ease-out .55s forwards}
+.sp-hub{fill:var(--accent);transform-origin:50px 50px;transform:scale(0);animation:spHub .4s cubic-bezier(.3,1.7,.5,1) .82s forwards}
+.sp-name{font-size:26px;font-weight:600;letter-spacing:-.01em;opacity:0;transform:translateY(8px);animation:spName .5s ease-out 1.05s forwards}
+@keyframes spDraw{to{stroke-dashoffset:0}}
+@keyframes spSpokes{from{opacity:0;transform:rotate(-80deg) scale(.5)}to{opacity:1;transform:none}}
+@keyframes spHub{to{transform:scale(1)}}
+@keyframes spRoll{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes spName{to{opacity:1;transform:none}}
+@keyframes spOut{to{opacity:0;visibility:hidden}}
+
 /* compteur */
 #speedo{position:absolute;inset:0;z-index:4;background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:14px;padding:var(--sp-top,120px) calc(var(--sar) + 18px) var(--sp-bottom,180px) calc(var(--sal) + 18px)}
 .sp-gauge{flex:1 1 auto;min-height:110px;width:100%;max-width:430px;display:flex;justify-content:center}
@@ -176,9 +222,9 @@ svg{display:block}
 .wp svg{width:13px;height:13px}
 
 /* feuilles */
-#scrim{position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none}
+#scrim{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.5);display:none}
 #scrim.open{display:block}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:21;max-height:86%;background:var(--surface);color:var(--text);border-top:1px solid var(--line);border-radius:16px 16px 0 0;display:none;flex-direction:column;padding-bottom:var(--sab)}
+.sheet{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:21;max-height:calc(86% - var(--kb,0px));background:var(--surface);color:var(--text);border-top:1px solid var(--line);border-radius:16px 16px 0 0;display:none;flex-direction:column;padding-bottom:var(--sab)}
 .sheet.open{display:flex}
 .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:14px calc(var(--sar) + 16px) 4px calc(var(--sal) + 20px)}
 .sheet-head h2{margin:0;font-size:20px;font-weight:600}
@@ -258,11 +304,17 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
   .sheet{left:auto;top:0;width:min(440px,62vw);max-height:none;border-radius:0;border-top:0;border-left:1px solid var(--line);padding-top:var(--sat)}
   #tripMap{height:58vh}
 }
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}#splash{display:none}}
 </style>
 </head>
 <body>
 
+<div id="splash" aria-hidden="true">
+  <svg class="sp-wheel" viewBox="0 0 100 100"><circle class="sp-tire" cx="50" cy="50" r="38"/><g class="sp-spokes"><path d="M50 41V16"/><path d="M58.6 47.2 82.3 39.5"/><path d="M55.3 57.3 70 77.5"/><path d="M44.7 57.3 30 77.5"/><path d="M41.4 47.2 17.7 39.5"/></g><circle class="sp-hub" cx="50" cy="50" r="8"/></svg>
+  <div class="sp-name">PocketConvoy</div>
+</div>
+
+<div id="app">
 <!-- Accueil -->
 <section id="home" class="screen on">
   <div class="home-wrap">
@@ -322,8 +374,9 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
       <button id="demoChip" class="chip glass"><span class="dot live"></span><span data-i18n="demo">Démo</span></button>
       <div id="navEta" class="chip glass num" hidden><span id="etaTime"></span><span class="muted" id="etaLeft"></span></div>
     </div>
+    <div id="alerts" aria-live="assertive"></div>
     <div id="talkBar" hidden><span class="bars"><i></i><i></i><i></i></span><span class="who"></span></div>
-    <div id="pickBar" class="chip glass" hidden><span data-i18n="pickHint">Touche la carte pour placer l’étape</span><button id="pickCancel" data-i18n="cancel">Annuler</button></div>
+    <div id="pickBar" class="chip glass" hidden><span id="pickText">Touche la carte pour placer l’étape</span><button id="pickCancel" data-i18n="cancel">Annuler</button></div>
     <div id="toasts" aria-live="polite"></div>
   </div>
 
@@ -399,7 +452,17 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
       <button class="btn btn-ghost" id="btnPick" data-i18n="pickBtn">Placer une étape sur la carte</button>
     </div>
     <p class="s" id="wpNote"></p>
+    <div class="field"><span class="field-label" data-i18n="pins">Pins du convoi</span>
+      <div id="pinList" class="list"></div>
+      <button class="btn btn-ghost" id="btnPinHere" data-i18n="pinHere">Pin à ma position</button>
+      <button class="btn btn-ghost" id="btnPinMap" data-i18n="pinOnMap">Placer un pin sur la carte</button>
+    </div>
   </div>
+</section>
+
+<section class="sheet" id="sheet-pin">
+  <div class="sheet-head"><h2 id="pinTitle"></h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body" id="pinBody"></div>
 </section>
 
 <section class="sheet" id="sheet-msgs">
@@ -439,7 +502,7 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
   <div class="sheet-head"><h2 data-i18n="settings">Réglages</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sheet-body">
     <div class="field"><span class="field-label" data-i18n="lang">Langue</span>
-      <div class="seg" data-pref="lang"><button data-v="fr">Français</button><button data-v="en">English</button></div></div>
+      <div class="seg" data-pref="lang"><button data-v="fr">Français</button><button data-v="en">English</button><button data-v="de">Deutsch</button></div></div>
     <div class="field"><span class="field-label" data-i18n="theme">Thème</span>
       <div class="seg" data-pref="theme"><button data-v="graphite" data-i18n="th_graphite">Graphite</button><button data-v="light" data-i18n="th_light">Clair</button><button data-v="oled" data-i18n="th_oled">OLED</button><button data-v="red" data-i18n="th_red">Nuit rouge</button></div>
       <p class="s" id="themeNote"></p></div>
@@ -447,6 +510,15 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
       <div class="accents" id="accentRow"></div></div>
     <div class="field"><span class="field-label" data-i18n="map">Carte</span>
       <div class="seg" data-pref="mapTheme"><button data-v="night" data-i18n="night">Sombre</button><button data-v="day" data-i18n="day">Claire</button></div></div>
+    <div class="field"><span class="field-label" data-i18n="haptics">Retour haptique</span>
+      <div class="seg" data-pref="haptics"><button data-v="off" data-i18n="hapOff">Désactivé</button><button data-v="light" data-i18n="hapLight">Léger</button><button data-v="normal" data-i18n="hapNormal">Normal</button><button data-v="strong" data-i18n="hapStrong">Fort</button></div>
+      <span class="field-label" data-i18n="hapFor">Utiliser pour</span>
+      <div class="toggles" id="hapCats"><button data-hcat="ui" data-i18n="hapUi">Boutons</button><button data-hcat="talk" data-i18n="hapTalk">Talkie</button><button data-hcat="alerts" data-i18n="hapAlerts">Alertes</button><button class="t-test" id="hapTest" data-i18n="hapTest">Tester</button></div>
+      <p class="s" data-i18n="hapNote"></p></div>
+    <div class="field"><span class="field-label" data-i18n="sounds">Sons</span>
+      <div class="seg" data-pref="sound"><button data-v="on" data-i18n="on">Activés</button><button data-v="off" data-i18n="off">Désactivés</button></div>
+      <span class="field-label" data-i18n="sndPreview">Écouter le son de chaque alerte</span>
+      <div class="toggles" id="sndList"></div></div>
     <div class="field"><span class="field-label" data-i18n="talkBtn">Bouton du talkie</span>
       <div class="seg" data-pref="talkMode"><button data-v="hold" data-i18n="hold">Maintenir</button><button data-v="toggle" data-i18n="toggle">Appui simple</button></div></div>
     <div class="field"><span class="field-label" data-i18n="lagAlert">Alerte quand une voiture est loin du leader</span>
@@ -462,6 +534,8 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
   <div class="sheet-head"><h2 data-i18n="yourTrip">Ton trajet</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sheet-body" id="endBody"></div>
 </section>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script src="app.js"></script>
