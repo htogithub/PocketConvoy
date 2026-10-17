@@ -605,10 +605,22 @@ function applyMapStyle(map) {
 function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
 /* ---------- son ---------- */
+/* Sur iPhone, les sons générés par Web Audio sont coupés par le mode silencieux, sauf si la page se déclare
+   comme lecteur audio. Avec l'API Audio Session (iOS 16.4 et plus) c'est direct ; sinon on joue un silence en boucle. */
+const SILENT_WAV = 'data:audio/wav;base64,UklGRmQGAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YUAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+let silentEl = null;
+function setAudioSession(type) {
+  try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (e) { /* ignoré */ }
+}
 function unlockAudio() {
   try {
+    if (navigator.audioSession) { if (!REC.stream) setAudioSession('playback'); }
+    else if (IS_IOS) {
+      if (!silentEl) { silentEl = new Audio(SILENT_WAV); silentEl.loop = true; silentEl.setAttribute('playsinline', ''); }
+      if (silentEl.paused) silentEl.play().catch(() => {});
+    }
     if (!S.ac) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) S.ac = new AC(); }
-    if (S.ac && S.ac.state !== 'running') S.ac.resume();
+    if (S.ac && S.ac.state !== 'running') S.ac.resume().catch(() => {});
   } catch (e) { /* ignoré */ }
 }
 function unlockSpeech() {
@@ -617,6 +629,7 @@ function unlockSpeech() {
 function sfx(name, force) {
   const ac = S.ac, seq = SFX[name];
   if (!ac || !seq || (prefs.sound === 'off' && !force)) return;
+  if (ac.state !== 'running') ac.resume().catch(() => {});
   let tm = ac.currentTime + 0.01;
   for (const n of seq) {
     if (n.gap) { tm += n.gap; continue; }
@@ -1384,6 +1397,7 @@ async function talkStart() {
   updatePTT();
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
   try {
+    setAudioSession('play-and-record');
     const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
     S.micOk = true;
     if (!S.talking || token !== REC.token) { st.getTracks().forEach(x => x.stop()); return; }
@@ -1411,6 +1425,7 @@ function talkStop(silent) {
 function releaseMic() {
   if (REC.stream) REC.stream.getTracks().forEach(x => x.stop());
   REC.stream = null; REC.rec = null;
+  setAudioSession('playback');
 }
 function playEcho() {
   const type = (REC.rec && REC.rec.mimeType) || 'audio/mp4';
@@ -2279,7 +2294,14 @@ function bind() {
     }
     if (e.target.closest('#hapTest')) haptic('alert', true);
   });
-  $('#sndList').addEventListener('click', e => { const b = e.target.closest('[data-snd]'); if (b) { unlockAudio(); sfx(b.dataset.snd, true); } });
+  $('#sndList').addEventListener('click', e => {
+    const b = e.target.closest('[data-snd]');
+    if (!b) return;
+    unlockAudio();
+    sfx(b.dataset.snd, true);
+    b.classList.add('playing');
+    setTimeout(() => b.classList.remove('playing'), 900);
+  });
   document.addEventListener('pointerdown', e => {
     const b = e.target.closest('button');
     if (b && b.id !== 'ptt' && !b.closest('#hapCats')) haptic('tap');
