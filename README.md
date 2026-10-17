@@ -28,7 +28,7 @@ This is the demo version. The other cars of the convoy are simulated on the phon
 
 ## Services used
 
-All free and without keys: MapLibre GL JS with CARTO basemaps built on OpenStreetMap data, the public OSRM server for routing and Photon for address search.
+All free and without keys: MapLibre GL JS with OpenFreeMap vector tiles built on OpenStreetMap data (restyled in the app's colours, labels in Noto Sans and in the app's language, CARTO basemaps as a fallback), the public OSRM server for routing and Photon for address search.
 
 ## Files
 

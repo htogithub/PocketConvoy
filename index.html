@@ -6,10 +6,9 @@
 <meta name="theme-color" content="#0F0F10" id="metaTheme">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Convoy">
 <title>PocketConvoy</title>
-<script>(function(){function fit(){var h=window.innerHeight,ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),sa=navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);if(ios&&sa){var a=screen.width,b=screen.height;h=window.innerWidth>window.innerHeight?Math.min(a,b):Math.max(a,b);}document.documentElement.style.setProperty('--app-h',h+'px');}fit();addEventListener('resize',fit);addEventListener('orientationchange',function(){setTimeout(fit,300);});})();</script>
 <script>try{var p=JSON.parse(localStorage.getItem('pc_prefs')||'{}'),A={orange:'#FF5B1F',yellow:'#FFD60A',lime:'#B6F23A',cyan:'#00D1FF',magenta:'#FF2E88'},r=document.documentElement;if(p.theme)r.dataset.theme=p.theme;if(A[p.accent])r.style.setProperty('--accent',A[p.accent]);if(p.lang)r.lang=p.lang;}catch(e){}</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -37,7 +36,6 @@
 :root[data-theme="oled"]{--bg:#000000;--surface:#0A0A0B;--surface-2:#131315;--line:#222226;--line-2:#323237;--glass:rgba(0,0,0,.86);--ring:#000000;--route-casing:#000000}
 :root[data-theme="red"]{--bg:#050000;--surface:#0E0202;--surface-2:#170404;--line:#2A0707;--line-2:#3D0B0B;--text:#FF5A4D;--muted:#9E352C;--faint:#5E1E19;--accent:#FF3B2F!important;--accent-ink:#050000;--accent-fg:#FF3B2F;--danger:#FF3B2F;--ok:#FF5A4D;--glass:rgba(14,2,2,.9);--ring:#050000;--tag-bg:rgba(14,2,2,.9);--tag-ink:#FF5A4D;--route-casing:#050000}
 :root[data-theme="red"] .maplibregl-canvas{filter:grayscale(1) sepia(1) saturate(6) hue-rotate(-40deg) brightness(.5)}
-:root[data-theme="light"] body::after{content:"";position:fixed;left:0;right:0;top:0;height:var(--sat);background:#111113;z-index:200;pointer-events:none}
 
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.4;overflow:hidden;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
 input{-webkit-user-select:text;user-select:text}
@@ -45,7 +43,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 button:disabled{opacity:.3}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 svg{display:block}
-#app{position:fixed;left:0;top:0;width:100%;height:var(--app-h,100%);overflow:hidden}
+#app{position:fixed;inset:0;overflow:hidden}
 .screen{position:absolute;inset:0;display:none;background:var(--bg)}
 .screen.on{display:flex;flex-direction:column}
 .s{font-size:14px;color:var(--muted);margin:0}
@@ -177,7 +175,7 @@ svg{display:block}
 .toggles .t-test{color:var(--accent-fg);border-color:var(--accent)}
 
 /* écran de lancement */
-#splash{position:fixed;left:0;top:0;width:100%;height:var(--app-h,100%);z-index:500;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;transition:opacity .45s ease,visibility .45s}
+#splash{position:fixed;inset:0;z-index:500;background:var(--bg);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;pointer-events:none;transition:opacity .45s ease,visibility .45s}
 #splash.out{opacity:0;visibility:hidden}
 .sp-wheel{width:92px;height:92px;overflow:visible}
 .sp-tire{fill:none;stroke:currentColor;stroke-width:9;stroke-linecap:round;stroke-dasharray:240;stroke-dashoffset:240;transform:rotate(-90deg);transform-origin:50px 50px}

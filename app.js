@@ -2,9 +2,19 @@
 /* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
-const STYLES = {
+/* fond de carte : tuiles OpenFreeMap restylées aux couleurs de l'app (CARTO en secours) */
+const MAP_BASE_URL = 'https://tiles.openfreemap.org/styles/positron';
+const FALLBACK_STYLES = {
   night: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   day: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+};
+const MAP_PAL = {
+  dark: { bg: '#141416', land: '#18181B', park: '#162019', water: '#0D1821', waterway: '#1B3040', building: '#1E1E22', minor: '#2B2B31', major: '#3A3A42',
+    motorway: '#4C4C55', casing: '#141416', rail: '#2A2A30', boundary: '#45454E', label: '#8E8E97', labelStrong: '#E4E4E8', labelRoad: '#7C7C85', labelWater: '#4F7A96', halo: '#141416' },
+  oled: { bg: '#000000', land: '#060607', park: '#08100A', water: '#04090E', waterway: '#10202B', building: '#111113', minor: '#202024', major: '#2E2E34',
+    motorway: '#3E3E46', casing: '#000000', rail: '#1E1E22', boundary: '#3A3A42', label: '#85858E', labelStrong: '#E4E4E8', labelRoad: '#6E6E77', labelWater: '#456B84', halo: '#000000' },
+  light: { bg: '#F3F3F1', land: '#EEEEEB', park: '#E2EADD', water: '#CBD9E4', waterway: '#B4C8D8', building: '#E3E3DF', minor: '#FFFFFF', major: '#FFFFFF',
+    motorway: '#FFFFFF', casing: '#D2D2CC', rail: '#CFCFCA', boundary: '#B5B5AF', label: '#5F5F66', labelStrong: '#18181B', labelRoad: '#6B6B72', labelWater: '#5A7F99', halo: '#F3F3F1' },
 };
 const COLORS = ['#4C9EFF', '#FF4D6D', '#2BD9A0', '#FFC53D', '#B07CFF', '#00C2FF', '#FF8A3D', '#E8E8E8'];
 const ACCENTS = { orange: '#FF5B1F', yellow: '#FFD60A', lime: '#B6F23A', cyan: '#00D1FF', magenta: '#FF2E88' };
@@ -545,6 +555,53 @@ function applyTheme() {
   $('#metaTheme').setAttribute('content', THEMES[prefs.theme].meta);
   styleRouteLayers();
 }
+/* ---------- fond de carte ---------- */
+let mapBasePromise = null;
+function mapPalette() { return prefs.mapTheme === 'day' ? MAP_PAL.light : (prefs.theme === 'oled' ? MAP_PAL.oled : MAP_PAL.dark); }
+function mapPlaceholder() { return { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': mapPalette().bg } }] }; }
+function styleFor(base) {
+  const P = mapPalette();
+  const st = JSON.parse(JSON.stringify(base));
+  const nameExpr = ['coalesce', ['get', 'name:' + prefs.lang], ['get', 'name:latin'], ['get', 'name']];
+  st.layers = st.layers.filter(l => !(l.type === 'symbol' && /poi|housenum|aerodrome|airport/i.test(l.id)));
+  for (const l of st.layers) {
+    const id = l.id.toLowerCase();
+    const p = l.paint = l.paint || {}, lay = l.layout = l.layout || {};
+    if (l.type === 'background') p['background-color'] = P.bg;
+    else if (l.type === 'fill') {
+      const c = /water|ocean|sea|lake/.test(id) ? P.water : /ice|glacier/.test(id) ? P.land
+        : /park|wood|forest|grass|landcover|nature|meadow/.test(id) ? P.park : /building/.test(id) ? P.building : P.land;
+      p['fill-color'] = c; p['fill-outline-color'] = c; delete p['fill-pattern'];
+    } else if (l.type === 'fill-extrusion') {
+      p['fill-extrusion-color'] = P.building;
+    } else if (l.type === 'line') {
+      let c;
+      if (/waterway|river|stream|canal/.test(id)) c = P.waterway;
+      else if (/boundary|admin/.test(id)) c = P.boundary;
+      else if (/rail|transit/.test(id)) c = P.rail;
+      else if (/casing|outline/.test(id)) c = P.casing;
+      else if (/motorway/.test(id)) c = P.motorway;
+      else if (/major|trunk|primary|secondary/.test(id)) c = P.major;
+      else c = P.minor;
+      p['line-color'] = c; delete p['line-pattern'];
+    } else if (l.type === 'symbol' && lay['text-field'] !== undefined) {
+      if (!/ref|housenum/.test(JSON.stringify(lay['text-field']))) lay['text-field'] = nameExpr;
+      lay['text-transform'] = 'none';
+      if (lay['text-letter-spacing'] !== undefined) lay['text-letter-spacing'] = 0.02;
+      p['text-color'] = /city|capital|country|state/.test(id) ? P.labelStrong : /water|ocean|sea|lake|river/.test(id) ? P.labelWater
+        : /road|highway|street|transportation/.test(id) ? P.labelRoad : P.label;
+      p['text-halo-color'] = P.halo; p['text-halo-width'] = 1.4; p['text-halo-blur'] = 0.4;
+    }
+  }
+  return st;
+}
+function applyMapStyle(map) {
+  if (!map) return;
+  if (!mapBasePromise) mapBasePromise = getJSON(MAP_BASE_URL).catch(e => { mapBasePromise = null; throw e; });
+  mapBasePromise
+    .then(base => map.setStyle(styleFor(base), { diff: false }))
+    .catch(() => map.setStyle(FALLBACK_STYLES[prefs.mapTheme], { diff: false }));
+}
 function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 
 /* ---------- son ---------- */
@@ -847,11 +904,12 @@ function recordTrack(id, lat, lng) {
 function initMap() {
   if (S.map) { S.map.resize(); return; }
   const m = new maplibregl.Map({
-    container: 'map', style: STYLES[prefs.mapTheme], center: [DEMO_START[1], DEMO_START[0]], zoom: 12,
+    container: 'map', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 12,
     attributionControl: { compact: true }, dragRotate: false, touchPitch: false, pitchWithRotate: false, maxPitch: 60,
   });
   m.touchZoomRotate.disableRotation();
   m.on('style.load', () => { addRouteLayers(); renderRoute(); });
+  applyMapStyle(m);
   m.on('dragstart', () => setFollow(false));
   m.on('rotate', () => { for (const mm of S.members.values()) updateCone(mm); });
   m.on('click', onMapClick);
@@ -1657,14 +1715,14 @@ function setPref(k, v) {
   if (prefs[k] === v) return;
   prefs[k] = v; savePrefs();
   if (k === 'talkMode') { talkStop(); updatePTT(); }
-  if (k === 'mapTheme' && S.map) S.map.setStyle(STYLES[v], { diff: false });
+  if (k === 'mapTheme') applyMapStyle(S.map);
   if (k === 'lagKm') S.alerts.lag = {};
-  if (k === 'lang') applyLang();
+  if (k === 'lang') { applyLang(); applyMapStyle(S.map); }
   if (k === 'accent') applyTheme();
   if (k === 'theme') {
     applyTheme();
     const m = THEMES[v].map;
-    if (prefs.mapTheme !== m) setPref('mapTheme', m);
+    if (prefs.mapTheme !== m) setPref('mapTheme', m); else applyMapStyle(S.map);
   }
   syncSegs();
 }
@@ -2035,30 +2093,33 @@ async function openTrip(id) {
   const speeds = [10, 30, 60, 120, 300, 600];
   const target = dur / 60;
   const speed = speeds.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
-  const map = new maplibregl.Map({ container: 'tripMap', style: STYLES[prefs.mapTheme], center: [DEMO_START[1], DEMO_START[0]], zoom: 9, attributionControl: { compact: true }, dragRotate: false });
+  const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 9, attributionControl: { compact: true }, dragRotate: false });
   map.touchZoomRotate.disableRotation();
   RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0 };
   $('#rpSlider').max = dur; $('#rpSlider').value = 0;
   updatePlayBtn();
-  map.on('load', () => {
+  let first = true;
+  map.on('style.load', () => {
     const b = new maplibregl.LngLatBounds();
     let any = false;
     for (const [mid, track] of Object.entries(tr.tracks)) {
       if (!track || track.length < 2) continue;
       any = true;
       const col = tr.colors[mid] || '#8B8B93';
-      map.addSource('tr-' + mid, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: track.map(p => [p[2], p[1]]) } } });
-      map.addLayer({ id: 'tr-' + mid, type: 'line', source: 'tr-' + mid, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': col, 'line-width': 3, 'line-opacity': 0.85 } });
+      if (!map.getSource('tr-' + mid)) map.addSource('tr-' + mid, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: track.map(p => [p[2], p[1]]) } } });
+      if (!map.getLayer('tr-' + mid)) map.addLayer({ id: 'tr-' + mid, type: 'line', source: 'tr-' + mid, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': col, 'line-width': 3, 'line-opacity': 0.85 } });
       track.forEach(p => b.extend([p[2], p[1]]));
-      const el = document.createElement('div');
-      el.className = 'car rp';
-      el.style.setProperty('--c', col);
-      el.innerHTML = `<div class="car-dot"><span>${esc(initial(tr.names[mid]))}</span></div>`;
-      RP.markers[mid] = new maplibregl.Marker({ element: el }).setLngLat([track[0][2], track[0][1]]).addTo(map);
+      if (!RP.markers[mid]) {
+        const el = document.createElement('div');
+        el.className = 'car rp';
+        el.style.setProperty('--c', col);
+        el.innerHTML = `<div class="car-dot"><span>${esc(initial(tr.names[mid]))}</span></div>`;
+        RP.markers[mid] = new maplibregl.Marker({ element: el }).setLngLat([track[0][2], track[0][1]]).addTo(map);
+      }
     }
-    if (any) map.fitBounds(b, { padding: 40, duration: 0 });
-    setReplay(0);
+    if (first) { first = false; if (any) map.fitBounds(b, { padding: 40, duration: 0 }); setReplay(0); }
   });
+  applyMapStyle(map);
 }
 function interp(tr, T) {
   if (T <= tr[0][0]) return [tr[0][1], tr[0][2]];
