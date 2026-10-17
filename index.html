@@ -99,8 +99,31 @@ svg{display:block}
 .chip{border-radius:999px;min-height:38px;padding:0 13px;font-size:14px;font-weight:500;display:inline-flex;gap:8px;align-items:center}
 .chip .muted{color:var(--muted)}
 .chip .dot.live{background:var(--accent)}
-.tabs{padding:2px;border-radius:999px;background:var(--glass)}
-.tabs button{flex:none;min-height:32px;border-radius:999px;padding:0 13px;font-size:14px}
+.tabs{position:relative;display:grid;grid-template-columns:1fr 1fr;width:100%;padding:3px;border-radius:999px}
+.tabs button{position:relative;z-index:1;min-height:38px;border-radius:999px;font-size:15px;font-weight:600;color:var(--muted);transition:color .25s}
+.tabs button[aria-pressed="true"]{color:var(--bg)}
+.tabs-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--text);transition:transform .32s cubic-bezier(.3,.8,.3,1)}
+.tabs[data-view="speed"] .tabs-thumb{transform:translateX(100%)}
+#navEta{align-self:flex-start}
+#btnLocate{position:absolute;right:calc(var(--sar) + 10px);bottom:calc(100% + 10px)}
+.chat-btn{position:relative;width:66px;height:66px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;color:var(--muted)}
+.chat-btn svg{width:24px;height:24px;color:var(--text)}
+.badge{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 6px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
+.chat-sheet{height:calc(78% - var(--kb,0px))}
+.chat-list{flex:1;gap:10px}
+.msg{max-width:82%;display:flex;flex-direction:column;gap:3px;align-self:flex-start;align-items:flex-start}
+.msg.mine{align-self:flex-end;align-items:flex-end}
+.msg .who{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
+.msg .who i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.bubble{padding:9px 13px;border-radius:16px;font-size:16px;line-height:1.35;overflow-wrap:anywhere;background:var(--surface-2);border-bottom-left-radius:5px;-webkit-user-select:text;user-select:text}
+.msg.mine .bubble{background:var(--accent);color:var(--accent-ink);border-bottom-left-radius:16px;border-bottom-right-radius:5px}
+.bubble a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.msg time{font-size:11px;color:var(--faint);font-variant-numeric:tabular-nums}
+.chat-compose{display:flex;align-items:center;gap:8px;padding:10px calc(var(--sar) + 14px) 12px calc(var(--sal) + 14px);border-top:1px solid var(--line)}
+.chat-compose .text{flex:1;min-width:0;padding:11px 14px;font-size:16px;border-radius:999px}
+.chat-pos,.chat-send{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
+.chat-pos{border:1px solid var(--line-2);color:var(--text)}
+.chat-send{background:var(--accent);color:var(--accent-ink)}
 #talkBar{align-self:flex-start;display:flex;align-items:center;gap:10px;background:var(--accent);color:var(--accent-ink);border-radius:10px;padding:8px 14px;font-size:17px;font-weight:600}
 .bars{display:flex;gap:3px;align-items:flex-end;height:16px}
 .bars i{width:3px;background:currentColor;border-radius:2px;animation:bar .8s infinite ease-in-out}
@@ -127,7 +150,7 @@ svg{display:block}
 .tools{display:grid;grid-template-columns:repeat(2,64px);gap:6px}
 .tool{width:64px;height:56px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:600;color:var(--muted)}
 .tool svg{width:22px;height:22px;color:var(--text)}
-.ptt-wrap{margin-left:auto;display:flex;align-items:flex-end;gap:10px}
+.ptt-wrap{margin-left:auto;display:flex;align-items:center;gap:10px}
 .round{width:50px;height:50px;border-radius:50%;display:grid;place-items:center}
 .round svg{width:22px;height:22px}
 #ptt{position:relative;width:118px;height:118px;border-radius:50%;background:var(--glass);border:2px solid var(--accent);color:var(--text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-weight:600;font-size:13px;line-height:1.15;text-align:center;padding:0 12px;touch-action:none;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
@@ -384,17 +407,14 @@ setTimeout(out,6000);})();</script>
   </div>
 
   <div class="hud-top">
+    <div class="tabs glass" id="viewTabs" data-view="map" role="group" aria-label="Vue" data-i18n-aria="viewAria">
+      <i class="tabs-thumb" aria-hidden="true"></i><button data-view="map" data-i18n="tabMap">Carte</button><button data-view="speed" data-i18n="tabSpeed">Compteur</button>
+    </div>
     <button id="navCard" class="nav glass" hidden>
       <span class="nav-ico"></span>
       <span class="nav-main"><span class="nav-dist"></span><span class="nav-text"></span><span class="nav-road"></span></span>
     </button>
-    <div class="row" id="topRow">
-      <div class="seg tabs glass" id="viewTabs" role="group" aria-label="Vue" data-i18n-aria="viewAria">
-        <button data-view="map" data-i18n="tabMap">Carte</button><button data-view="speed" data-i18n="tabSpeed">Compteur</button>
-      </div>
-      <button id="demoChip" class="chip glass"><span class="dot live"></span><span data-i18n="demo">Démo</span></button>
-      <div id="navEta" class="chip glass num" hidden><span id="etaTime"></span><span class="muted" id="etaLeft"></span></div>
-    </div>
+    <div id="navEta" class="chip glass num" hidden><span id="etaTime"></span><span class="muted" id="etaLeft"></span></div>
     <div id="alerts" aria-live="assertive"></div>
     <div id="talkBar" hidden><span class="bars"><i></i><i></i><i></i></span><span class="who"></span></div>
     <div id="pickBar" class="chip glass" hidden><span id="pickText">Touche la carte pour placer l’étape</span><button id="pickCancel" data-i18n="cancel">Annuler</button></div>
@@ -402,6 +422,7 @@ setTimeout(out,6000);})();</script>
   </div>
 
   <div class="hud-bottom" id="hudBottom">
+    <button id="btnLocate" class="round glass" aria-label="Vue du convoi"></button>
     <div id="strip"></div>
     <div class="controls">
       <div class="tools">
@@ -419,7 +440,7 @@ setTimeout(out,6000);})();</script>
         </button>
       </div>
       <div class="ptt-wrap">
-        <button id="btnLocate" class="round glass" aria-label="Vue du convoi"></button>
+        <button id="btnChat" class="chat-btn glass" aria-label="Chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a7.5 7.5 0 0 1-11 6.6L4 20l1.4-4.6A7.5 7.5 0 1 1 20 12z"/><path d="M8.5 11h7M8.5 14h4.5"/></svg><span data-i18n="chat">Chat</span><b class="badge" id="chatBadge" hidden></b></button>
         <button id="ptt" aria-label="Talkie-walkie" data-i18n-aria="ptt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg><span id="pttLabel"></span></button>
       </div>
     </div>
@@ -502,6 +523,16 @@ setTimeout(out,6000);})();</script>
   </div>
 </section>
 
+<section class="sheet chat-sheet" id="sheet-chat">
+  <div class="sheet-head"><h2 data-i18n="chat">Chat</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+  <div class="sheet-body chat-list" id="chatList"></div>
+  <div class="chat-compose">
+    <button class="chat-pos" id="chatPos" aria-label="Partager ma position" data-i18n-aria="chatPos"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
+    <input id="chatInput" class="text" maxlength="500" placeholder="Message ou lien" data-i18n-ph="chatPh" autocomplete="off" enterkeyhint="send">
+    <button class="chat-send" id="chatSend" aria-label="Envoyer" data-i18n-aria="sendAria"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5"/></svg></button>
+  </div>
+</section>
+
 <section class="sheet" id="sheet-members">
   <div class="sheet-head"><h2 data-i18n="convoy">Convoi</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sheet-body"><div id="membersList" class="list"></div></div>
@@ -523,6 +554,7 @@ setTimeout(out,6000);})();</script>
 <section class="sheet" id="sheet-settings">
   <div class="sheet-head"><h2 data-i18n="settings">Réglages</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sheet-body">
+    <button class="btn btn-ghost" id="btnDemoPanel" data-i18n="demoPanel">Démo : scénarios et vitesse</button>
     <div class="field"><span class="field-label" data-i18n="lang">Langue</span>
       <div class="seg" data-pref="lang"><button data-v="fr">Français</button><button data-v="en">English</button><button data-v="de">Deutsch</button></div></div>
     <div class="field"><span class="field-label" data-i18n="theme">Thème</span>

@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '0.10.0';
+const APP_VERSION = '0.11.0';
 /* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -160,6 +160,9 @@ const I18N = {
     pin_view: 'Point de vue', pin_food: 'Restaurant', pin_fuel: 'Station-service', pin_parking: 'Parking', pin_danger: 'Danger', pin_other: 'Autre',
     sc_pin: 'Un ami ajoute un pin', scd_pin: 'Repère partagé sur la carte',
     credits: 'Crédits', version: 'Version {v}, démo',
+    chat: 'Chat', chatPh: 'Message ou lien', chatEmpty: 'Aucun message pour l’instant. Le chat repart à zéro à chaque nouveau convoi.',
+    chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', demoPanel: 'Démo : scénarios et vitesse',
+    sc_chat: 'Un ami écrit dans le chat', scd_chat: 'Message, parfois avec un lien',
     creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot.',
   },
   en: {
@@ -240,6 +243,9 @@ const I18N = {
     pin_view: 'Viewpoint', pin_food: 'Restaurant', pin_fuel: 'Fuel station', pin_parking: 'Parking', pin_danger: 'Hazard', pin_other: 'Other',
     sc_pin: 'A friend drops a pin', scd_pin: 'Shared marker on the map',
     credits: 'Credits', version: 'Version {v}, demo',
+    chat: 'Chat', chatPh: 'Message or link', chatEmpty: 'No messages yet. The chat starts fresh with every new convoy.',
+    chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', demoPanel: 'Demo: scenarios and speed',
+    sc_chat: 'A friend writes in the chat', scd_chat: 'Message, sometimes with a link',
     creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot.',
   },
   de: {
@@ -320,6 +326,9 @@ const I18N = {
     pin_view: 'Aussichtspunkt', pin_food: 'Restaurant', pin_fuel: 'Tankstelle', pin_parking: 'Parkplatz', pin_danger: 'Gefahr', pin_other: 'Anderes',
     sc_pin: 'Ein Freund setzt einen Pin', scd_pin: 'Gemeinsame Markierung auf der Karte',
     credits: 'Quellen', version: 'Version {v}, Demo',
+    chat: 'Chat', chatPh: 'Nachricht oder Link', chatEmpty: 'Noch keine Nachrichten. Der Chat beginnt bei jedem neuen Konvoi von vorn.',
+    chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', demoPanel: 'Demo: Szenarien und Tempo',
+    sc_chat: 'Ein Freund schreibt im Chat', scd_chat: 'Nachricht, manchmal mit Link',
     creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot.',
   },
 };
@@ -356,7 +365,18 @@ const NAV = {
   },
 };
 const DIRS = { fr: ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'], en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], de: ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'] };
-const SCENARIOS = ['talk', 'alert', 'pin', 'lag', 'stop', 'sos', 'signal', 'leave', 'leader'];
+const SCENARIOS = ['talk', 'alert', 'chat', 'pin', 'lag', 'stop', 'sos', 'signal', 'leave', 'leader'];
+const OSM_LINK = (lat, lng) => `https://www.openstreetmap.org/?mlat=${lat.toFixed(5)}&mlon=${lng.toFixed(5)}#map=16/${lat.toFixed(5)}/${lng.toFixed(5)}`;
+const CHAT_BOT = {
+  fr: ['On s’arrête manger à Gruyères ?', 'Quelqu’un a besoin d’essence ?', 'Je mets de la musique, des préférences ?', 'Regardez ce point de vue, on pourrait s’y arrêter : {link}', 'Le parking dont je parlais : {link}'],
+  en: ['Shall we stop for food in Gruyères?', 'Does anyone need fuel?', 'I’m putting some music on, any requests?', 'Look at this viewpoint, we could stop there: {link}', 'The car park I mentioned: {link}'],
+  de: ['Halten wir in Gruyères zum Essen an?', 'Braucht jemand Benzin?', 'Ich mache Musik an, Wünsche?', 'Schaut euch diesen Aussichtspunkt an, da könnten wir anhalten: {link}', 'Der Parkplatz, von dem ich gesprochen habe: {link}'],
+};
+const CHAT_REPLY = {
+  fr: ['Bien reçu !', 'OK, ça marche.', 'Super, merci !', 'Ça me va.'], frLink: 'Merci pour le lien !',
+  en: ['Got it!', 'OK, sounds good.', 'Great, thanks!', 'Works for me.'], enLink: 'Thanks for the link!',
+  de: ['Verstanden!', 'OK, passt.', 'Super, danke!', 'Passt für mich.'], deLink: 'Danke für den Link!',
+};
 
 /* ---------- utilitaires ---------- */
 const $ = (s, r = document) => r.querySelector(s);
@@ -500,6 +520,7 @@ const S = {
   map: null, wpMarkers: [], pick: false, sheet: null,
   timers: [], stripT: null, spTarget: 0, spDisp: 0,
   pins: new Map(), pinMarkers: [], pinDraft: null, pinOpen: null,
+  chat: [], chatUnread: 0,
 };
 const clock = () => S.simT;
 
@@ -550,6 +571,7 @@ function applyLang() {
     if (S.sheet === 'members') renderMembers();
     if (S.sheet === 'end') renderEnd();
     if (S.sheet === 'pin') renderPinSheet();
+    if (S.sheet === 'chat') renderChat();
     renderPinList();
   }
   if ($('#history').classList.contains('on')) openHistory();
@@ -729,6 +751,7 @@ function start() {
   unlockAudio(); unlockSpeech();
 
   S.active = true; S.simT = Date.now();
+  S.chat = []; S.chatUnread = 0; updateChatBadge();
   S.trip = { id: 't' + Date.now(), start: clock(), dist: 0, moving: 0, max: 0, last: null, tracks: {}, names: {}, colors: {}, dest: '' };
   S.plan = { v: 0, wps: [] }; S.passed = new Set(); S.arrived = false; S.route = null;
   S.leaderId = prefs.demoLeader === 'me' ? me.id : BOTS[0].id;
@@ -757,6 +780,7 @@ function leave() {
   S.members.clear();
   S.wpMarkers.forEach(mk => mk.remove()); S.wpMarkers = [];
   S.pinMarkers.forEach(mk => mk.remove()); S.pinMarkers = []; S.pins.clear();
+  S.chat = []; S.chatUnread = 0; updateChatBadge();
   $('#alerts').innerHTML = '';
   Object.assign(S, { active: false, trip: null, route: null, plan: { v: 0, wps: [] }, passed: new Set(), leaderId: null,
     pos: null, manual: '', arrived: false, alerts: { lag: {}, leaderStop: false }, pick: false, stoppedSince: null });
@@ -805,6 +829,17 @@ const H = {
     renderPins();
     if (d.by !== me.id) { toast(t('pinFrom', { name: member(d.by).name, label: pinLabel(d) }), 'info', 5000); sfx('pin'); haptic('pin'); }
     if (S.sheet === 'route') renderRouteSheet();
+  },
+  chat(d) {
+    if (!d.text) return;
+    S.chat.push({ id: d.id || rid(), by: d.by, text: String(d.text).slice(0, 500), at: d.at || clock() });
+    if (S.sheet === 'chat') renderChat();
+    else if (d.by !== me.id) {
+      S.chatUnread++; updateChatBadge();
+      const txt = d.text.length > 70 ? d.text.slice(0, 67) + '…' : d.text;
+      toast(t('msgFrom', { name: `<b>${esc(member(d.by).name)}</b>`, text: esc(txt) }), 'info', 5000, true);
+      sfx('info');
+    }
   },
   pinDel(d) {
     S.pins.delete(d.id);
@@ -1392,6 +1427,46 @@ function deletePin(id) {
   toast(t('pinRemoved'), 'info', 3000);
 }
 
+/* ---------- chat (vidé à chaque nouveau convoi) ---------- */
+function linkify(text) {
+  return esc(text).replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, m => {
+    let url = m, tail = '';
+    while (/[.,;:!?)\]]$/.test(url)) { tail = url.slice(-1) + tail; url = url.slice(0, -1); }
+    const href = /^https?:/.test(url) ? url : 'https://' + url;
+    let shown = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+    if (shown.length > 34) shown = shown.slice(0, 32) + '…';
+    return `<a href="${href}" target="_blank" rel="noopener">${shown}</a>${tail}`;
+  });
+}
+function updateChatBadge() {
+  const b = $('#chatBadge');
+  b.hidden = !S.chatUnread;
+  b.textContent = S.chatUnread > 9 ? '9+' : String(S.chatUnread);
+}
+function renderChat() {
+  const box = $('#chatList');
+  if (!S.chat.length) { box.innerHTML = `<p class="empty">${esc(t('chatEmpty'))}</p>`; return; }
+  box.innerHTML = S.chat.map(m => {
+    const mine = m.by === me.id, mb = member(m.by);
+    return `<div class="msg ${mine ? 'mine' : 'other'}">
+      ${mine ? '' : `<span class="who"><i style="--c:${esc(mb.color)}"></i>${esc(mb.name)}</span>`}
+      <div class="bubble">${linkify(m.text)}</div><time>${fmtClock(m.at)}</time></div>`;
+  }).join('');
+  box.scrollTop = box.scrollHeight;
+  S.chatUnread = 0; updateChatBadge();
+}
+function sendChat(text) {
+  text = String(text || '').trim();
+  if (!text || !S.active) return;
+  H.chat({ id: rid(), by: me.id, text, at: clock() });
+  sfx('sent'); haptic('select');
+  if (Math.random() < 0.75) setTimeout(() => botReply(text), rand(1800, 4200));
+}
+function shareMyPosition() {
+  if (!S.pos) return;
+  sendChat(t('myPosition') + ' ' + OSM_LINK(S.pos.lat, S.pos.lng));
+}
+
 /* ---------- talkie (démo : écho de ta voix) ---------- */
 const REC = { stream: null, rec: null, chunks: [], token: 0 };
 async function talkStart() {
@@ -1683,8 +1758,10 @@ function updateSpeedo() {
 function layoutSpeedo() {
   const sp = $('#speedo');
   if (!sp || sp.hidden) return;
-  const main = $('#main').getBoundingClientRect(), row = $('#topRow').getBoundingClientRect(), ctr = $('.controls').getBoundingClientRect();
-  sp.style.setProperty('--sp-top', Math.round(row.bottom - main.top + 12) + 'px');
+  const main = $('#main').getBoundingClientRect(), ctr = $('.controls').getBoundingClientRect();
+  let bottom = $('#viewTabs').getBoundingClientRect().bottom;
+  for (const sel of ['#navCard', '#navEta']) { const el = $(sel); if (!el.hidden) bottom = Math.max(bottom, el.getBoundingClientRect().bottom); }
+  sp.style.setProperty('--sp-top', Math.round(bottom - main.top + 12) + 'px');
   sp.style.setProperty('--sp-bottom', Math.round(main.bottom - ctr.top + 12) + 'px');
 }
 function setView(v) {
@@ -1693,6 +1770,7 @@ function setView(v) {
   const sp = prefs.view === 'speed';
   $('#main').classList.toggle('view-speed', sp);
   $('#speedo').hidden = !sp;
+  $('#viewTabs').dataset.view = prefs.view;
   $$('#viewTabs button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === prefs.view)));
   if (sp) { layoutSpeedo(); S.spDisp = 0; updateSpeedo(); }
   else if (S.map) { S.map.resize(); if (S.follow) followCamera(); renderStrip(); }
@@ -1705,6 +1783,7 @@ function openSheet(id) {
   if (id === 'members') renderMembers();
   if (id === 'end') renderEnd();
   if (id === 'pin') renderPinSheet();
+  if (id === 'chat') renderChat();
   syncSegs();
   $('#scrim').classList.add('open');
   $('#sheet-' + id).classList.add('open');
@@ -1729,6 +1808,7 @@ function syncSegs() {
   $('#accentField').hidden = prefs.theme === 'red';
   $('#themeNote').textContent = t('thn_' + prefs.theme);
   $('#sessOnly').hidden = !S.active;
+  $('#btnDemoPanel').hidden = !S.active;
   $('#creditsText').innerHTML = t('creditsHtml');
   $$('#creditsText a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
   $('#versionText').textContent = t('version', { v: APP_VERSION });
@@ -1982,7 +2062,7 @@ function simStep() {
   if (SIM.auto && clock() >= SIM.nextEvent) {
     SIM.nextEvent = clock() + rand(70000, 140000);
     const r = Math.random();
-    scenario(r < 0.5 ? 'talk' : r < 0.8 ? 'alert' : 'pin', true);
+    scenario(r < 0.4 ? 'talk' : r < 0.65 ? 'alert' : r < 0.85 ? 'chat' : 'pin', true);
   }
 }
 
@@ -2026,6 +2106,13 @@ function botAcceptPin(id) {
   renderPins();
   toast(t('pinAccepted', { name: L.name }), 'ok', 5000);
 }
+function botReply(text) {
+  if (!S.active) return;
+  const c = pickBot(); if (!c) return;
+  const R = CHAT_REPLY, L = R[prefs.lang] ? prefs.lang : 'fr';
+  const reply = /https?:\/\/|www\./.test(text) ? R[L + 'Link'] : R[L][Math.floor(Math.random() * R[L].length)];
+  H.chat({ id: rid(), by: c.id, text: reply, at: clock() });
+}
 function pickBot(filter) {
   const l = [...SIM.cars.values()].filter(c => c.id !== me.id && !c.offline && (!filter || filter(c)));
   return l.length ? l[Math.floor(Math.random() * l.length)] : null;
@@ -2040,6 +2127,17 @@ function scenario(k, auto) {
     const c = pickBot(); if (!c) return noBot();
     const kinds = ['pause', 'essence', 'ralentir', 'perdu'];
     botMsg(c, kinds[Math.floor(Math.random() * kinds.length)]);
+  } else if (k === 'chat') {
+    const c = pickBot(); if (!c) return noBot();
+    const lines = CHAT_BOT[prefs.lang] || CHAT_BOT.fr;
+    let text = lines[Math.floor(Math.random() * lines.length)];
+    if (text.includes('{link}')) {
+      const dest = S.plan.wps[S.plan.wps.length - 1];
+      const base = dest ? [dest.lat, dest.lng] : (S.pos ? [S.pos.lat, S.pos.lng] : DEMO_START);
+      const pt = offsetPoint(base, rand(400, 1500), rand(0, 360));
+      text = text.replace('{link}', OSM_LINK(pt[0], pt[1]));
+    }
+    H.chat({ id: rid(), by: c.id, text, at: now });
   } else if (k === 'pin') {
     const c = pickBot(); if (!c) return noBot();
     let pt = null;
@@ -2202,7 +2300,11 @@ function bind() {
   $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); start(); } });
   $('#btnHistory').addEventListener('click', () => openHistory());
   $('#btnHomeSettings').addEventListener('click', () => openSheet('settings'));
-  $('#demoChip').addEventListener('click', () => openSheet('demo'));
+  $('#btnDemoPanel').addEventListener('click', () => openSheet('demo'));
+  $('#btnChat').addEventListener('click', () => openSheet('chat'));
+  $('#chatSend').addEventListener('click', () => { const i = $('#chatInput'); sendChat(i.value); i.value = ''; });
+  $('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(e.target.value); e.target.value = ''; } });
+  $('#chatPos').addEventListener('click', shareMyPosition);
 
   document.addEventListener('click', e => {
     const segBtn = e.target.closest('.seg[data-pref] button');
@@ -2228,7 +2330,7 @@ function bind() {
   $$('[data-sheet]').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.sheet)));
   $('#scrim').addEventListener('click', closeSheets);
   window.addEventListener('resize', () => setTimeout(layoutSpeedo, 120));
-  if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => layoutSpeedo()); ro.observe($('#topRow')); ro.observe($('.controls')); }
+  if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => layoutSpeedo()); ro.observe($('.hud-top')); ro.observe($('.controls')); }
 
   const ptt = $('#ptt');
   let armed = false;
