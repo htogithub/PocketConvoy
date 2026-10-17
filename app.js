@@ -1,4 +1,5 @@
 'use strict';
+const APP_VERSION = '0.10.0';
 /* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -158,6 +159,8 @@ const I18N = {
     pinInRoute: 'Ce pin fait partie du parcours.', pinLeaderNote: 'Le leader peut l’ajouter au parcours.', pinAccepted: '{name} a ajouté ton pin au parcours', pinRemoved: 'Pin supprimé',
     pin_view: 'Point de vue', pin_food: 'Restaurant', pin_fuel: 'Station-service', pin_parking: 'Parking', pin_danger: 'Danger', pin_other: 'Autre',
     sc_pin: 'Un ami ajoute un pin', scd_pin: 'Repère partagé sur la carte',
+    credits: 'Crédits', version: 'Version {v}, démo',
+    creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot.',
   },
   en: {
     tagline: 'Drive together, never lose each other',
@@ -236,6 +239,8 @@ const I18N = {
     pinInRoute: 'This pin is part of the route.', pinLeaderNote: 'The leader can add it to the route.', pinAccepted: '{name} added your pin to the route', pinRemoved: 'Pin deleted',
     pin_view: 'Viewpoint', pin_food: 'Restaurant', pin_fuel: 'Fuel station', pin_parking: 'Parking', pin_danger: 'Hazard', pin_other: 'Other',
     sc_pin: 'A friend drops a pin', scd_pin: 'Shared marker on the map',
+    credits: 'Credits', version: 'Version {v}, demo',
+    creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot.',
   },
   de: {
     tagline: 'Gemeinsam fahren, ohne sich zu verlieren',
@@ -314,6 +319,8 @@ const I18N = {
     pinInRoute: 'Dieser Pin ist Teil der Route.', pinLeaderNote: 'Der Konvoiführer kann ihn zur Route hinzufügen.', pinAccepted: '{name} hat deinen Pin zur Route hinzugefügt', pinRemoved: 'Pin gelöscht',
     pin_view: 'Aussichtspunkt', pin_food: 'Restaurant', pin_fuel: 'Tankstelle', pin_parking: 'Parkplatz', pin_danger: 'Gefahr', pin_other: 'Anderes',
     sc_pin: 'Ein Freund setzt einen Pin', scd_pin: 'Gemeinsame Markierung auf der Karte',
+    credits: 'Quellen', version: 'Version {v}, Demo',
+    creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot.',
   },
 };
 const PHRASES = {
@@ -918,7 +925,7 @@ function initMap() {
   if (S.map) { S.map.resize(); return; }
   const m = new maplibregl.Map({
     container: 'map', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 12,
-    attributionControl: { compact: true }, dragRotate: false, touchPitch: false, pitchWithRotate: false, maxPitch: 60,
+    attributionControl: false, dragRotate: false, touchPitch: false, pitchWithRotate: false, maxPitch: 60,
   });
   m.touchZoomRotate.disableRotation();
   m.on('style.load', () => { addRouteLayers(); renderRoute(); });
@@ -1722,6 +1729,9 @@ function syncSegs() {
   $('#accentField').hidden = prefs.theme === 'red';
   $('#themeNote').textContent = t('thn_' + prefs.theme);
   $('#sessOnly').hidden = !S.active;
+  $('#creditsText').innerHTML = t('creditsHtml');
+  $$('#creditsText a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+  $('#versionText').textContent = t('version', { v: APP_VERSION });
   $$('#hapCats [data-hcat]').forEach(b => b.setAttribute('aria-pressed', String(prefs.hapticCats.includes(b.dataset.hcat))));
   $('#sndList').innerHTML = SND_PREVIEW.map(([k, l]) => `<button data-snd="${k}">${ic('<path d="M7 4.5v15l12-7.5z"/>', 14)}${esc(t(l))}</button>`).join('');
   $('#simSpeedField').hidden = SIM.mode === 'gps';
@@ -2108,7 +2118,7 @@ async function openTrip(id) {
   const speeds = [10, 30, 60, 120, 300, 600];
   const target = dur / 60;
   const speed = speeds.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
-  const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 9, attributionControl: { compact: true }, dragRotate: false });
+  const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 9, attributionControl: false, dragRotate: false });
   map.touchZoomRotate.disableRotation();
   RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0 };
   $('#rpSlider').max = dur; $('#rpSlider').value = 0;

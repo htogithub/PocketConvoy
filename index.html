@@ -173,6 +173,9 @@ svg{display:block}
 .toggles button{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--line-2);font-size:14px;font-weight:500;color:var(--muted)}
 .toggles button[aria-pressed="true"]{color:var(--text);border-color:var(--text);background:var(--surface-2)}
 .toggles .t-test{color:var(--accent-fg);border-color:var(--accent)}
+.credits{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
+.credits a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:2px}
+.credits .version{color:var(--faint);font-variant-numeric:tabular-nums}
 .toggles button.playing{color:var(--accent-ink);background:var(--accent);border-color:var(--accent)}
 
 /* écran de lancement */
@@ -545,6 +548,11 @@ setTimeout(out,6000);})();</script>
     <div id="sessOnly" class="field">
       <button class="btn btn-primary" id="btnEndOpen" data-i18n="endTrip">Terminer le trajet</button>
       <button class="btn btn-danger" id="btnQuit" data-i18n="quit">Quitter sans enregistrer</button>
+    </div>
+    <div class="credits">
+      <span class="field-label" data-i18n="credits">Crédits</span>
+      <p class="s" id="creditsText"></p>
+      <p class="s version" id="versionText"></p>
     </div>
   </div>
 </section>
