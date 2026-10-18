@@ -59,8 +59,6 @@ svg{display:block}
 .brand-mark svg{width:34px;height:34px}
 .brand h1{margin:0;font-family:var(--font-display);font-size:25px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
 .brand p{margin:2px 0 0;color:var(--muted);font-size:15px}
-.demo-note{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--muted);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0}
-.demo-note .dot{margin-top:6px;background:var(--accent)}
 .field{display:flex;flex-direction:column;gap:8px}
 .field-label{font-size:14px;color:var(--muted)}
 .text{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;font-size:18px;padding:13px 14px;outline:none;-webkit-appearance:none;appearance:none}
@@ -80,9 +78,6 @@ svg{display:block}
 .join-row .text{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.2em;font-weight:700;text-align:center}
 .join-row .btn{width:auto;flex:none}
 .warn-note{border-left:3px solid var(--accent);padding-left:12px}
-.demo-box{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:22px;margin-top:6px}
-.demo-head{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px}
-.demo-head .dot{background:var(--accent)}
 .invite{display:flex;flex-direction:column;gap:12px;padding:4px 0 16px;border-bottom:1px solid var(--line);margin-bottom:4px}
 .invite .btn{min-height:48px;font-size:15px}
 .code-big{font-family:var(--font-display);font-size:28px;font-weight:600;letter-spacing:.14em;font-variant-numeric:tabular-nums}
@@ -117,7 +112,9 @@ svg{display:block}
 .tabs-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--text);transition:transform .32s cubic-bezier(.3,.8,.3,1)}
 .tabs[data-view="speed"] .tabs-thumb{transform:translateX(100%)}
 #navEta{align-self:flex-start}
-#btnLocate{position:absolute;right:calc(var(--sar) + 10px);bottom:calc(100% + 10px)}
+.strip-row{display:flex;align-items:center;gap:8px}
+.strip-row #strip{flex:1;min-width:0}
+#btnLocate{flex:none}
 .tool.chat-tile{position:relative;flex:1;width:auto;min-width:72px;max-width:112px;height:118px;border-radius:14px;gap:6px;font-size:12px}
 .tool.chat-tile svg{width:28px;height:28px}
 .badge{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 6px;border-radius:11px;background:var(--accent);color:var(--accent-ink);font-size:12px;font-weight:700;display:grid;place-items:center;border:2px solid var(--bg)}
@@ -245,11 +242,15 @@ svg{display:block}
 .g-tick{stroke:var(--faint);stroke-width:1}
 .g-tick.major{stroke:var(--muted);stroke-width:1.6}
 .g-lbl{fill:var(--muted);font-size:12px;font-weight:600;font-family:var(--font)}
+.g-big{font-size:112px!important;letter-spacing:-4px}
+#gaugeSvg.over .g-val{stroke:var(--danger)}
+#gaugeSvg.over .g-num{fill:var(--danger)}
+.member-actions{border-top:1px solid var(--line);padding-top:16px}
 .g-num{fill:var(--text);font-size:58px;font-weight:600;font-family:var(--font-display);font-variant-numeric:tabular-nums;letter-spacing:-2px}
 .g-unit{fill:var(--muted);font-size:14px;font-weight:600;font-family:var(--font)}
 .g-dir{fill:var(--muted);font-size:13px;font-weight:500;font-family:var(--font)}
 .g-needle{stroke:var(--text);stroke-width:3;stroke-linecap:round}
-#main.view-speed #strip,#main.view-speed #btnLocate{display:none}
+#main.view-speed .strip-row{display:none}
 @media (max-height:720px){.sp-tile.opt{display:none}}
 
 /* voitures */
@@ -344,7 +345,7 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
   .hud-top{right:auto;width:min(56vw,520px)}
   .hud-bottom{flex-direction:row;align-items:flex-end}
   .hud-bottom .controls{margin-left:auto}
-  #strip{flex:1;min-width:0;align-self:flex-end}
+  .strip-row{flex:1;min-width:0;align-self:flex-end}
   #ptt{width:104px;height:104px}
   #speedo{display:block;padding:0}
   .sp-gauge{position:absolute;right:calc(var(--sar) + 10px);top:calc(var(--sat) + 8px);bottom:var(--sp-bottom,150px);width:42vw;max-width:none}
@@ -403,20 +404,7 @@ setTimeout(out,6000);})();</script>
       <button class="btn btn-ghost" id="btnHomeSettings" data-i18n="settings">Réglages</button>
     </div>
 
-    <div class="demo-box">
-      <div class="demo-head"><span class="dot"></span><span data-i18n="demoTitleHome">Essayer sans amis</span></div>
-      <p class="note" data-i18n="demoBadge"></p>
-      <div class="field">
-        <span class="field-label" data-i18n="posLabel">Position</span>
-        <div class="seg" data-pref="demoPos"><button data-v="sim" data-i18n="posSim">Trajet simulé</button><button data-v="gps" data-i18n="posGps">GPS réel</button></div>
-      </div>
-      <div class="field">
-        <span class="field-label" data-i18n="leadLabel">Leader du convoi</span>
-        <div class="seg" data-pref="demoLeader"><button data-v="me" data-i18n="leadMe">Moi</button><button data-v="friend" data-i18n="leadFriend">Un ami</button></div>
-      </div>
-      <button class="btn btn-ghost" id="btnStart" data-i18n="startDemo">Lancer la démo</button>
-      <p class="note" data-i18n="homeNote"></p>
-    </div>
+    <p class="note" data-i18n="homeNote"></p>
   </div>
 </section>
 
@@ -444,8 +432,10 @@ setTimeout(out,6000);})();</script>
   </div>
 
   <div class="hud-bottom" id="hudBottom">
-    <button id="btnLocate" class="round glass" aria-label="Vue du convoi"></button>
-    <div id="strip"></div>
+    <div class="strip-row">
+      <div id="strip"></div>
+      <button id="btnLocate" class="round glass" aria-label="Vue du convoi"></button>
+    </div>
     <div class="controls">
       <div class="tools">
         <button class="tool glass" data-sheet="route">
@@ -557,26 +547,17 @@ setTimeout(out,6000);})();</script>
 
 <section class="sheet" id="sheet-members">
   <div class="sheet-head"><h2 data-i18n="convoy">Convoi</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-  <div class="sheet-body"><div id="membersList" class="list"></div></div>
-</section>
-
-<section class="sheet" id="sheet-demo">
-  <div class="sheet-head"><h2 data-i18n="demoTitle">Démo</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
-  <div class="sheet-body">
-    <div class="field" id="simSpeedField"><span class="field-label" data-i18n="simSpeed">Vitesse de la simulation</span>
-      <div class="seg" data-sim="factor"><button data-v="0" data-i18n="pauseShort">Pause</button><button data-v="1">×1</button><button data-v="2">×2</button><button data-v="5">×5</button><button data-v="10">×10</button></div></div>
-    <div class="field"><span class="field-label" data-i18n="autoEvents">Événements automatiques</span>
-      <div class="seg" data-sim="auto"><button data-v="1" data-i18n="on">Activés</button><button data-v="0" data-i18n="off">Désactivés</button></div></div>
-    <div class="field"><span class="field-label" data-i18n="scenarios">Tester un scénario</span>
-      <div class="list" id="scList"></div></div>
-    <p class="s" data-i18n="echoNote">Le talkie est en mode écho.</p>
+  <div class="sheet-body"><div id="membersList" class="list"></div>
+    <div class="field member-actions">
+      <button class="btn btn-primary" id="btnEndOpen" data-i18n="endTrip">Terminer le trajet</button>
+      <button class="btn btn-danger" id="btnQuit" data-i18n="quit">Quitter sans enregistrer</button>
+    </div>
   </div>
 </section>
 
 <section class="sheet" id="sheet-settings">
   <div class="sheet-head"><h2 data-i18n="settings">Réglages</h2><button class="x-btn" data-close aria-label="Fermer" data-i18n-aria="close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="sheet-body">
-    <button class="btn btn-ghost" id="btnDemoPanel" data-i18n="demoPanel">Démo : scénarios et vitesse</button>
     <div class="field"><span class="field-label" data-i18n="lang">Langue</span>
       <div class="seg" data-pref="lang"><button data-v="fr">Français</button><button data-v="en">English</button><button data-v="de">Deutsch</button></div></div>
     <div class="field"><span class="field-label" data-i18n="theme">Thème</span>
@@ -598,11 +579,17 @@ setTimeout(out,6000);})();</script>
     <div class="field"><span class="field-label" data-i18n="talkBtn">Bouton du talkie</span>
       <div class="seg" data-pref="talkMode"><button data-v="hold" data-i18n="hold">Maintenir</button><button data-v="toggle" data-i18n="toggle">Appui simple</button></div></div>
     <div class="field"><span class="field-label" data-i18n="lagAlert">Alerte quand une voiture est loin du leader</span>
-      <div class="seg" data-pref="lagKm"><button data-v="1">1 km</button><button data-v="2">2 km</button><button data-v="3">3 km</button><button data-v="5">5 km</button></div></div>
-    <div id="sessOnly" class="field">
-      <button class="btn btn-primary" id="btnEndOpen" data-i18n="endTrip">Terminer le trajet</button>
-      <button class="btn btn-danger" id="btnQuit" data-i18n="quit">Quitter sans enregistrer</button>
-    </div>
+      <div class="seg" data-pref="lagKm" id="lagSeg"></div></div>
+    <div class="field"><span class="field-label" data-i18n="units">Unités</span>
+      <div class="seg" data-pref="distUnit"><button data-v="km">km</button><button data-v="mi" data-i18n="miles">miles</button></div>
+      <div class="seg" data-pref="speedUnit"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
+    <div class="field"><span class="field-label" data-i18n="gauge">Compteur</span>
+      <div class="seg" data-pref="gaugeStyle"><button data-v="dial" data-i18n="gDial">Cadran</button><button data-v="digital" data-i18n="gDigital">Numérique</button></div>
+      <span class="field-label" data-i18n="gMax">Graduation maximale</span>
+      <div class="seg" data-pref="gaugeScale" id="gaugeScaleSeg"></div>
+      <span class="field-label" data-i18n="gWarn">Seuil de vitesse</span>
+      <div class="seg" data-pref="speedWarn" id="speedWarnSeg"></div>
+      <p class="s" data-i18n="gWarnNote"></p></div>
     <div class="credits">
       <span class="field-label" data-i18n="credits">Crédits</span>
       <p class="s" id="creditsText"></p>

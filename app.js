@@ -1,6 +1,6 @@
 'use strict';
-const APP_VERSION = '1.0.0';
-/* PocketConvoy, version démo : les autres voitures du convoi sont simulées sur le téléphone. */
+const APP_VERSION = '1.1.0';
+/* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
 /* connexion entre les téléphones : Supabase Realtime (positions, messages) et WebRTC (talkie), réglés dans config.js */
@@ -77,25 +77,16 @@ const ALERT_ICON = {
   leaderStop: '<path d="M8 3h8l5 5v8l-5 5H8l-5-5V8z"/><path d="M9 12h6"/>',
 };
 const ALERT_KIND = { pause: 'info', essence: 'info', ralentir: 'warn', perdu: 'warn', ok: 'ok', lag: 'warn', leaderStop: 'warn' };
-/* démo : départ de Lausanne, étape à Vevey, arrivée à Gruyères */
-const DEMO_START = [46.5167, 6.6291];
-const DEMO_PLAN = [{ lat: 46.4628, lng: 6.8419, label: 'Vevey' }, { lat: 46.5840, lng: 7.0820, label: 'Gruyères' }];
-const BOTS = [
-  { id: 'bot-lea', name: 'Léa', color: '#FF4D6D', pitch: 1.15 },
-  { id: 'bot-marco', name: 'Marco', color: '#2BD9A0', pitch: 0.85 },
-  { id: 'bot-ines', name: 'Inès', color: '#B07CFF', pitch: 1.05 },
-];
-
+/* centre de la carte avant la première position GPS */
+const MAP_HOME = [46.8, 8.23];
 /* ---------- textes FR / EN ---------- */
 const I18N = {
   fr: {
     tagline: 'Rouler ensemble, sans se perdre',
-    demoBadge: 'Trois voitures sont simulées sur ton téléphone pour tester la carte, le guidage, les alertes et le talkie.',
-    nickname: 'Ton pseudo', nicknamePh: 'Pseudo', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
-    posLabel: 'Ta position', posSim: 'Trajet simulé', posGps: 'GPS réel', leadLabel: 'Leader du convoi', leadMe: 'Moi', leadFriend: 'Un ami',
-    startDemo: 'Lancer la démo', history: 'Historique', settings: 'Réglages',
-    homeNote: 'Trajet simulé : ta voiture roule toute seule de Lausanne à Gruyères. GPS réel : ta vraie position, avec les autres voitures autour de toi.',
-    tabMap: 'Carte', tabSpeed: 'Compteur', viewAria: 'Vue', demo: 'Démo', pickHint: 'Touche la carte pour placer l’étape', cancel: 'Annuler',
+    nickname: 'Ton pseudo', nicknamePh: 'Nitsu', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
+    history: 'Historique', settings: 'Réglages',
+    homeNote: 'Pendant le trajet, garde l’app ouverte au premier plan, écran allumé : sur iPhone, une web app s’arrête quand l’écran se verrouille.',
+    tabMap: 'Carte', tabSpeed: 'Compteur', viewAria: 'Vue', pickHint: 'Touche la carte pour placer l’étape', cancel: 'Annuler',
     toolRoute: 'Parcours', toolAlerts: 'Alertes', toolConvoy: 'Convoi', toolSettings: 'Réglages', ptt: 'Talkie-walkie', close: 'Fermer', back: 'Retour',
     route: 'Parcours', searchPh: 'Adresse ou lieu', pickBtn: 'Placer une étape sur la carte',
     quickTitle: 'Alertes rapides', qPause: 'Pause', qFuel: 'Essence', qSlow: 'Ralentissez', qLost: 'Je suis perdu', qOk: 'Tout va bien, je repars',
@@ -128,32 +119,19 @@ const I18N = {
     noResult: 'Aucun résultat. Essaie avec la ville ou une adresse plus précise.', searchFail: 'Recherche impossible. Vérifie ta connexion.',
     asStop: 'Étape', asDest: 'Destination', mapPoint: 'Point choisi sur la carte', noName: 'Lieu sans nom',
     micOn: 'Micro refusé', live: 'En direct', holdTalk: 'Maintenir pour parler', tapStop: 'Toucher pour couper', tapTalk: 'Toucher pour parler',
-    talks1: '{name} parle', talksN: '{names} parlent', and: ' et ', echo: 'Écho de ta voix', sent: 'Envoyé au convoi : {text}',
-    offline: 'Hors ligne', lostSignal: 'Signal perdu', at: 'à {d}', waitingDemo: 'Les voitures simulées arrivent…', leader: 'Leader',
-    simulated: 'Voiture simulée', you: ' (toi)', see: 'Voir', makeLeader: 'Nommer leader', currentLeader: 'Leader actuel : {name}. Le leader choisit la destination et les étapes.',
+    talks1: '{name} parle', talksN: '{names} parlent', and: ' et ', sent: 'Envoyé au convoi : {text}',
+    offline: 'Hors ligne', lostSignal: 'Signal perdu', at: 'à {d}', leader: 'Leader',
+    you: ' (toi)', see: 'Voir', makeLeader: 'Nommer leader', currentLeader: 'Leader actuel : {name}. Le leader choisit la destination et les étapes.',
     youShort: 'toi', nobody: 'personne', car: 'Voiture', distance: 'Distance', driving: 'Conduite', avgShort: 'Moy.', max: 'Max',
     rankTitle: 'Le convoi, classé par distance', drivingOf: 'Temps de conduite sur {t}', drivingTime: 'Temps de conduite',
     avgMoving: 'Vitesse moyenne en roulant', maxSpeed: 'Vitesse max', saveQuit: 'Enregistrer et quitter', keepDriving: 'Continuer à rouler',
     lagYou: 'Tu es à {d} du leader', lagOther: '{name} est à {d} du leader', leaderStopped: 'Le leader {name} est à l’arrêt',
     heading: 'Cap {d}', itsYou: 'C’est toi', carsOnline: 'Voitures connectées', average: 'Moyenne', gapLeader: 'Écart au leader', altitude: 'Altitude',
-    noTrips: 'Aucun trajet enregistré pour l’instant. Ils apparaissent ici quand tu termines un trajet.', demoTrip: 'Trajet démo',
+    noTrips: 'Aucun trajet enregistré pour l’instant. Ils apparaissent ici quand tu termines un trajet.', tripDefault: 'Trajet',
     cars1: '1 voiture', carsN: '{n} voitures', tripLine: '{dist} en {dur}, {cars}', fromTo: '{date}, de {a} à {b}', delTrip: 'Supprimer ce trajet',
     confirmQuit: 'Quitter sans enregistrer ce trajet ?', confirmDel: 'Supprimer ce trajet de l’historique ?',
     viewConvoy: 'Vue du convoi', followMe: 'Me suivre',
-    demoTitle: 'Démo', simSpeed: 'Vitesse de la simulation', pauseShort: 'Pause', autoEvents: 'Événements automatiques', on: 'Activés', off: 'Désactivés',
-    scenarios: 'Tester un scénario', echoNote: 'Le talkie est en mode écho : ce que tu dis est rejoué quand tu relâches le bouton. Les amis simulés parlent avec la voix de synthèse de l’iPhone.',
-    hintAddDest: 'Tu es le leader : ouvre Parcours et choisis une destination pour lancer le convoi.',
-    sc_talk: 'Un ami parle', scd_talk: 'Message vocal dans le talkie',
-    sc_alert: 'Un ami envoie une alerte', scd_alert: 'Pause, essence, ralentir ou perdu',
-    sc_lag: 'Une voiture prend du retard', scd_lag: 'Déclenche l’alerte de distance',
-    sc_stop: 'Le leader s’arrête', scd_stop: 'Alerte après une minute d’arrêt',
-    sc_sos: 'Une panne', scd_sos: 'Alerte plein écran',
-    sc_signal: 'Une voiture perd le signal', scd_signal: 'Grisée après 45 secondes sans nouvelles',
-    sc_leave: 'Une voiture quitte le convoi', scd_leave: 'Elle revient 30 secondes plus tard',
-    sc_leader: 'Changer de leader', scd_leader: 'Passe le rôle à la voiture suivante',
-    needFollower: 'Tu es le leader : passe le rôle à un ami pour voir cette alerte.', needRoute: 'Choisis d’abord une destination dans Parcours.',
-    lagStarted: '{name} recule de {d}. L’alerte apparaît dans quelques secondes.', stopStarted: '{name} s’arrête. L’alerte arrive après une minute d’arrêt, accélère la simulation pour aller plus vite.',
-    signalStarted: '{name} n’envoie plus sa position.', noBot: 'Aucune voiture simulée disponible pour ce scénario.',
+    on: 'Activés', off: 'Désactivés',
     haptics: 'Retour haptique', hapOff: 'Désactivé', hapLight: 'Léger', hapNormal: 'Normal', hapStrong: 'Fort', hapFor: 'Utiliser pour',
     hapUi: 'Boutons', hapTalk: 'Talkie', hapAlerts: 'Alertes', hapTest: 'Tester',
     hapNote: 'Sur iPhone, Safari ne permet qu’un léger tic (iOS 18 et plus) : l’intensité règle le nombre de tics. Sur Android, la vibration suit l’intensité.',
@@ -164,29 +142,25 @@ const I18N = {
     pinFrom: '{name} a ajouté un pin : {label}', pinAsStop: 'Ajouter comme étape', pinAsDest: 'Choisir comme destination', pinDel: 'Supprimer le pin',
     pinInRoute: 'Ce pin fait partie du parcours.', pinLeaderNote: 'Le leader peut l’ajouter au parcours.', pinAccepted: '{name} a ajouté ton pin au parcours', pinRemoved: 'Pin supprimé',
     pin_view: 'Point de vue', pin_food: 'Restaurant', pin_fuel: 'Station-service', pin_parking: 'Parking', pin_danger: 'Danger', pin_other: 'Autre',
-    sc_pin: 'Un ami ajoute un pin', scd_pin: 'Repère partagé sur la carte',
     credits: 'Crédits', version: 'Version {v}',
+    units: 'Unités', miles: 'miles', gauge: 'Compteur', gDial: 'Cadran', gDigital: 'Numérique', gMax: 'Graduation maximale',
+    gWarn: 'Seuil de vitesse', warnOff: 'Aucun', gWarnNote: 'Au-delà du seuil choisi, la vitesse et l’aiguille passent au rouge.',
     create: 'Créer un convoi', orJoin: 'ou rejoindre avec un code', join: 'Rejoindre', errCode: 'Le code du convoi fait 6 caractères.',
-    cfgWarn: 'Pour rouler avec tes amis, ajoute l’URL et la clé de ton projet Supabase dans config.js. La démo fonctionne sans.',
-    errLive: 'La connexion au serveur n’a pas pu se charger. Vérifie ta connexion.', demoTitleHome: 'Essayer sans amis',
-    invite: 'Inviter des amis', codeLabel: 'Code du convoi', shareLink: 'Partager le lien d’invitation',
+    cfgWarn: 'Pour rouler avec tes amis, ajoute l’URL et la clé de ton projet Supabase dans config.js.',
+    errLive: 'La connexion au serveur n’a pas pu se charger. Vérifie ta connexion.', invite: 'Inviter des amis', codeLabel: 'Code du convoi', shareLink: 'Partager le lien d’invitation',
     shareText: 'Rejoins mon convoi sur PocketConvoy avec le code {code}', linkCopied: 'Lien d’invitation copié',
     created: 'Convoi créé. Invite tes amis depuis Convoi, code {code}.', connLost: 'Connexion au convoi perdue, reconnexion…',
     waiting: 'En attente des autres voitures. Code {code}', endAll: 'Terminer pour tout le convoi', endedAll: '{name} a terminé le trajet pour tout le convoi',
     audioOk: 'Talkie connecté', audioFail: 'Talkie en échec', audioWait: 'Talkie en connexion', tapForSound: 'Touche l’écran pour entendre le talkie de tes amis.',
     chat: 'Chat', chatPh: 'Message ou lien', chatEmpty: 'Aucun message pour l’instant. Le chat repart à zéro à chaque nouveau convoi.',
-    chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', demoPanel: 'Démo : scénarios et vitesse',
-    sc_chat: 'Un ami écrit dans le chat', scd_chat: 'Message, parfois avec un lien',
-    creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot.',
+    chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot.',
   },
   en: {
     tagline: 'Drive together, never lose each other',
-    demoBadge: 'Three cars are simulated on your phone so you can test the map, guidance, alerts and walkie-talkie.',
-    nickname: 'Your nickname', nicknamePh: 'Nickname', colour: 'Your colour on the map', colourAria: 'Colour',
-    posLabel: 'Your position', posSim: 'Simulated drive', posGps: 'Real GPS', leadLabel: 'Convoy leader', leadMe: 'Me', leadFriend: 'A friend',
-    startDemo: 'Start the demo', history: 'History', settings: 'Settings',
-    homeNote: 'Simulated drive: your car drives itself from Lausanne to Gruyères. Real GPS: your real position, with the other cars around you.',
-    tabMap: 'Map', tabSpeed: 'Speed', viewAria: 'View', demo: 'Demo', pickHint: 'Tap the map to place the stop', cancel: 'Cancel',
+    nickname: 'Your nickname', nicknamePh: 'Nitsu', colour: 'Your colour on the map', colourAria: 'Colour',
+    history: 'History', settings: 'Settings',
+    homeNote: 'While driving, keep the app open in the foreground with the screen on: on iPhone, a web app stops when the screen locks.',
+    tabMap: 'Map', tabSpeed: 'Speed', viewAria: 'View', pickHint: 'Tap the map to place the stop', cancel: 'Cancel',
     toolRoute: 'Route', toolAlerts: 'Alerts', toolConvoy: 'Convoy', toolSettings: 'Settings', ptt: 'Walkie-talkie', close: 'Close', back: 'Back',
     route: 'Route', searchPh: 'Address or place', pickBtn: 'Place a stop on the map',
     quickTitle: 'Quick alerts', qPause: 'Break', qFuel: 'Fuel', qSlow: 'Slow down', qLost: 'I’m lost', qOk: 'All good, moving on',
@@ -219,32 +193,19 @@ const I18N = {
     noResult: 'No results. Try with the town or a more precise address.', searchFail: 'Search unavailable. Check your connection.',
     asStop: 'Stop', asDest: 'Destination', mapPoint: 'Point picked on the map', noName: 'Unnamed place',
     micOn: 'Mic blocked', live: 'Live', holdTalk: 'Hold to talk', tapStop: 'Tap to stop', tapTalk: 'Tap to talk',
-    talks1: '{name} is talking', talksN: '{names} are talking', and: ' and ', echo: 'Your voice, played back', sent: 'Sent to the convoy: {text}',
-    offline: 'Offline', lostSignal: 'Signal lost', at: '{d} away', waitingDemo: 'The simulated cars are arriving…', leader: 'Leader',
-    simulated: 'Simulated car', you: ' (you)', see: 'Show', makeLeader: 'Make leader', currentLeader: 'Current leader: {name}. The leader picks the destination and the stops.',
+    talks1: '{name} is talking', talksN: '{names} are talking', and: ' and ', sent: 'Sent to the convoy: {text}',
+    offline: 'Offline', lostSignal: 'Signal lost', at: '{d} away', leader: 'Leader',
+    you: ' (you)', see: 'Show', makeLeader: 'Make leader', currentLeader: 'Current leader: {name}. The leader picks the destination and the stops.',
     youShort: 'you', nobody: 'nobody', car: 'Car', distance: 'Distance', driving: 'Driving', avgShort: 'Avg.', max: 'Max',
     rankTitle: 'The convoy, ranked by distance', drivingOf: 'Driving time out of {t}', drivingTime: 'Driving time',
     avgMoving: 'Average speed while moving', maxSpeed: 'Top speed', saveQuit: 'Save and leave', keepDriving: 'Keep driving',
     lagYou: 'You are {d} from the leader', lagOther: '{name} is {d} from the leader', leaderStopped: 'The leader {name} has stopped',
     heading: 'Heading {d}', itsYou: 'It’s you', carsOnline: 'Cars connected', average: 'Average', gapLeader: 'Gap to leader', altitude: 'Altitude',
-    noTrips: 'No trips saved yet. They appear here when you end a trip.', demoTrip: 'Demo trip',
+    noTrips: 'No trips saved yet. They appear here when you end a trip.', tripDefault: 'Trip',
     cars1: '1 car', carsN: '{n} cars', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, from {a} to {b}', delTrip: 'Delete this trip',
     confirmQuit: 'Leave without saving this trip?', confirmDel: 'Delete this trip from the history?',
     viewConvoy: 'Convoy view', followMe: 'Follow me',
-    demoTitle: 'Demo', simSpeed: 'Simulation speed', pauseShort: 'Pause', autoEvents: 'Automatic events', on: 'On', off: 'Off',
-    scenarios: 'Test a scenario', echoNote: 'The walkie-talkie is in echo mode: what you say is played back when you release the button. The simulated friends speak with the iPhone’s synthetic voice.',
-    hintAddDest: 'You are the leader: open Route and pick a destination to get the convoy moving.',
-    sc_talk: 'A friend talks', scd_talk: 'Voice message on the walkie-talkie',
-    sc_alert: 'A friend sends an alert', scd_alert: 'Break, fuel, slow down or lost',
-    sc_lag: 'A car falls behind', scd_lag: 'Triggers the distance alert',
-    sc_stop: 'The leader stops', scd_stop: 'Alert after one minute stopped',
-    sc_sos: 'A breakdown', scd_sos: 'Full-screen alert',
-    sc_signal: 'A car loses signal', scd_signal: 'Greyed out after 45 seconds without news',
-    sc_leave: 'A car leaves the convoy', scd_leave: 'It comes back 30 seconds later',
-    sc_leader: 'Change leader', scd_leader: 'Hands the role to the next car',
-    needFollower: 'You are the leader: hand the role to a friend to see this alert.', needRoute: 'Pick a destination in Route first.',
-    lagStarted: '{name} drops back by {d}. The alert shows up in a few seconds.', stopStarted: '{name} stops. The alert comes after one minute stopped, speed up the simulation to get there faster.',
-    signalStarted: '{name} no longer sends a position.', noBot: 'No simulated car available for this scenario.',
+    on: 'On', off: 'Off',
     haptics: 'Haptic feedback', hapOff: 'Off', hapLight: 'Light', hapNormal: 'Normal', hapStrong: 'Strong', hapFor: 'Use for',
     hapUi: 'Buttons', hapTalk: 'Walkie-talkie', hapAlerts: 'Alerts', hapTest: 'Test',
     hapNote: 'On iPhone, Safari only allows a light tick (iOS 18 and later): the strength sets how many ticks you feel. On Android, the vibration follows the strength.',
@@ -255,29 +216,25 @@ const I18N = {
     pinFrom: '{name} dropped a pin: {label}', pinAsStop: 'Add as a stop', pinAsDest: 'Set as destination', pinDel: 'Delete the pin',
     pinInRoute: 'This pin is part of the route.', pinLeaderNote: 'The leader can add it to the route.', pinAccepted: '{name} added your pin to the route', pinRemoved: 'Pin deleted',
     pin_view: 'Viewpoint', pin_food: 'Restaurant', pin_fuel: 'Fuel station', pin_parking: 'Parking', pin_danger: 'Hazard', pin_other: 'Other',
-    sc_pin: 'A friend drops a pin', scd_pin: 'Shared marker on the map',
     credits: 'Credits', version: 'Version {v}',
+    units: 'Units', miles: 'miles', gauge: 'Speedometer', gDial: 'Dial', gDigital: 'Digital', gMax: 'Maximum on the dial',
+    gWarn: 'Speed threshold', warnOff: 'None', gWarnNote: 'Above the chosen threshold, the speed and the needle turn red.',
     create: 'Create a convoy', orJoin: 'or join with a code', join: 'Join', errCode: 'The convoy code has 6 characters.',
-    cfgWarn: 'To drive with your friends, add your Supabase project URL and key to config.js. The demo works without it.',
-    errLive: 'The server connection could not load. Check your connection.', demoTitleHome: 'Try it without friends',
-    invite: 'Invite friends', codeLabel: 'Convoy code', shareLink: 'Share the invite link',
+    cfgWarn: 'To drive with your friends, add your Supabase project URL and key to config.js.',
+    errLive: 'The server connection could not load. Check your connection.', invite: 'Invite friends', codeLabel: 'Convoy code', shareLink: 'Share the invite link',
     shareText: 'Join my convoy on PocketConvoy with the code {code}', linkCopied: 'Invite link copied',
     created: 'Convoy created. Invite your friends from Convoy, code {code}.', connLost: 'Lost connection to the convoy, reconnecting…',
     waiting: 'Waiting for the other cars. Code {code}', endAll: 'End for the whole convoy', endedAll: '{name} ended the trip for the whole convoy',
     audioOk: 'Walkie-talkie connected', audioFail: 'Walkie-talkie failed', audioWait: 'Walkie-talkie connecting', tapForSound: 'Tap the screen to hear your friends on the walkie-talkie.',
     chat: 'Chat', chatPh: 'Message or link', chatEmpty: 'No messages yet. The chat starts fresh with every new convoy.',
-    chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', demoPanel: 'Demo: scenarios and speed',
-    sc_chat: 'A friend writes in the chat', scd_chat: 'Message, sometimes with a link',
-    creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot.',
+    chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot.',
   },
   de: {
     tagline: 'Gemeinsam fahren, ohne sich zu verlieren',
-    demoBadge: 'Drei Autos werden auf deinem Handy simuliert, damit du Karte, Navigation, Warnungen und Funkgerät testen kannst.',
-    nickname: 'Dein Name', nicknamePh: 'Name', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
-    posLabel: 'Deine Position', posSim: 'Simulierte Fahrt', posGps: 'Echtes GPS', leadLabel: 'Konvoiführer', leadMe: 'Ich', leadFriend: 'Ein Freund',
-    startDemo: 'Demo starten', history: 'Verlauf', settings: 'Einstellungen',
-    homeNote: 'Simulierte Fahrt: Dein Auto fährt von selbst von Lausanne nach Gruyères. Echtes GPS: deine echte Position, mit den anderen Autos um dich herum.',
-    tabMap: 'Karte', tabSpeed: 'Tacho', viewAria: 'Ansicht', demo: 'Demo', pickHint: 'Tippe auf die Karte, um den Zwischenstopp zu setzen', cancel: 'Abbrechen',
+    nickname: 'Dein Name', nicknamePh: 'Nitsu', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
+    history: 'Verlauf', settings: 'Einstellungen',
+    homeNote: 'Lass die App während der Fahrt im Vordergrund und den Bildschirm an: Auf dem iPhone stoppt eine Web-App, wenn der Bildschirm sperrt.',
+    tabMap: 'Karte', tabSpeed: 'Tacho', viewAria: 'Ansicht', pickHint: 'Tippe auf die Karte, um den Zwischenstopp zu setzen', cancel: 'Abbrechen',
     toolRoute: 'Route', toolAlerts: 'Warnungen', toolConvoy: 'Konvoi', toolSettings: 'Optionen', ptt: 'Funkgerät', close: 'Schliessen', back: 'Zurück',
     route: 'Route', searchPh: 'Adresse oder Ort', pickBtn: 'Zwischenstopp auf der Karte setzen',
     quickTitle: 'Schnellwarnungen', qPause: 'Pause', qFuel: 'Tanken', qSlow: 'Langsamer', qLost: 'Verfahren', qOk: 'Alles gut, ich fahre weiter',
@@ -310,32 +267,19 @@ const I18N = {
     noResult: 'Keine Ergebnisse. Versuche es mit dem Ort oder einer genaueren Adresse.', searchFail: 'Suche nicht möglich. Prüfe deine Verbindung.',
     asStop: 'Stopp', asDest: 'Ziel', mapPoint: 'Punkt auf der Karte', noName: 'Ort ohne Namen',
     micOn: 'Mikrofon blockiert', live: 'Live', holdTalk: 'Halten zum Sprechen', tapStop: 'Tippen zum Beenden', tapTalk: 'Tippen zum Sprechen',
-    talks1: '{name} spricht', talksN: '{names} sprechen', and: ' und ', echo: 'Deine Stimme als Echo', sent: 'An den Konvoi gesendet: {text}',
-    offline: 'Offline', lostSignal: 'Signal verloren', at: '{d} entfernt', waitingDemo: 'Die simulierten Autos kommen…', leader: 'Konvoiführer',
-    simulated: 'Simuliertes Auto', you: ' (du)', see: 'Zeigen', makeLeader: 'Zum Führer machen', currentLeader: 'Aktueller Konvoiführer: {name}. Er wählt das Ziel und die Zwischenstopps.',
+    talks1: '{name} spricht', talksN: '{names} sprechen', and: ' und ', sent: 'An den Konvoi gesendet: {text}',
+    offline: 'Offline', lostSignal: 'Signal verloren', at: '{d} entfernt', leader: 'Konvoiführer',
+    you: ' (du)', see: 'Zeigen', makeLeader: 'Zum Führer machen', currentLeader: 'Aktueller Konvoiführer: {name}. Er wählt das Ziel und die Zwischenstopps.',
     youShort: 'du', nobody: 'niemand', car: 'Auto', distance: 'Distanz', driving: 'Fahrzeit', avgShort: 'Ø', max: 'Max',
     rankTitle: 'Der Konvoi, nach Distanz geordnet', drivingOf: 'Fahrzeit von {t}', drivingTime: 'Fahrzeit',
     avgMoving: 'Durchschnitt während der Fahrt', maxSpeed: 'Höchstgeschwindigkeit', saveQuit: 'Speichern und verlassen', keepDriving: 'Weiterfahren',
     lagYou: 'Du bist {d} vom Konvoiführer entfernt', lagOther: '{name} ist {d} vom Konvoiführer entfernt', leaderStopped: 'Konvoiführer {name} steht',
     heading: 'Richtung {d}', itsYou: 'Du', average: 'Durchschnitt', gapLeader: 'Abstand zum Führer', altitude: 'Höhe', carsOnline: 'Verbundene Autos',
-    noTrips: 'Noch keine gespeicherten Fahrten. Sie erscheinen hier, wenn du eine Fahrt beendest.', demoTrip: 'Demofahrt',
+    noTrips: 'Noch keine gespeicherten Fahrten. Sie erscheinen hier, wenn du eine Fahrt beendest.', tripDefault: 'Fahrt',
     cars1: '1 Auto', carsN: '{n} Autos', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, von {a} bis {b}', delTrip: 'Diese Fahrt löschen',
     confirmQuit: 'Ohne Speichern dieser Fahrt verlassen?', confirmDel: 'Diese Fahrt aus dem Verlauf löschen?',
     viewConvoy: 'Konvoi-Ansicht', followMe: 'Mir folgen',
-    demoTitle: 'Demo', simSpeed: 'Simulationsgeschwindigkeit', pauseShort: 'Pause', autoEvents: 'Automatische Ereignisse', on: 'An', off: 'Aus',
-    scenarios: 'Ein Szenario testen', echoNote: 'Das Funkgerät ist im Echo-Modus: Was du sagst, wird beim Loslassen der Taste abgespielt. Die simulierten Freunde sprechen mit der Sprachausgabe des iPhones.',
-    hintAddDest: 'Du bist Konvoiführer: Öffne Route und wähle ein Ziel, um den Konvoi zu starten.',
-    sc_talk: 'Ein Freund spricht', scd_talk: 'Sprachnachricht im Funkgerät',
-    sc_alert: 'Ein Freund sendet eine Warnung', scd_alert: 'Pause, Tanken, langsamer oder verfahren',
-    sc_lag: 'Ein Auto fällt zurück', scd_lag: 'Löst die Distanzwarnung aus',
-    sc_stop: 'Der Konvoiführer hält an', scd_stop: 'Warnung nach einer Minute Stillstand',
-    sc_sos: 'Eine Panne', scd_sos: 'Warnung im Vollbild',
-    sc_signal: 'Ein Auto verliert das Signal', scd_signal: 'Nach 45 Sekunden ohne Meldung ausgegraut',
-    sc_leave: 'Ein Auto verlässt den Konvoi', scd_leave: 'Es kommt 30 Sekunden später zurück',
-    sc_leader: 'Konvoiführer wechseln', scd_leader: 'Übergibt die Rolle an das nächste Auto',
-    needFollower: 'Du bist Konvoiführer: Übergib die Rolle einem Freund, um diese Warnung zu sehen.', needRoute: 'Wähle zuerst ein Ziel unter Route.',
-    lagStarted: '{name} fällt {d} zurück. Die Warnung erscheint in wenigen Sekunden.', stopStarted: '{name} hält an. Die Warnung kommt nach einer Minute Stillstand, beschleunige die Simulation, um schneller dorthin zu kommen.',
-    signalStarted: '{name} sendet keine Position mehr.', noBot: 'Kein simuliertes Auto für dieses Szenario verfügbar.',
+    on: 'An', off: 'Aus',
     haptics: 'Haptisches Feedback', hapOff: 'Aus', hapLight: 'Leicht', hapNormal: 'Normal', hapStrong: 'Stark', hapFor: 'Verwenden für',
     hapUi: 'Tasten', hapTalk: 'Funkgerät', hapAlerts: 'Warnungen', hapTest: 'Testen',
     hapNote: 'Auf dem iPhone erlaubt Safari nur ein leichtes Ticken (ab iOS 18): Die Stärke bestimmt die Anzahl der Ticks. Auf Android folgt die Vibration der Stärke.',
@@ -346,26 +290,19 @@ const I18N = {
     pinFrom: '{name} hat einen Pin gesetzt: {label}', pinAsStop: 'Als Zwischenstopp hinzufügen', pinAsDest: 'Als Ziel festlegen', pinDel: 'Pin löschen',
     pinInRoute: 'Dieser Pin ist Teil der Route.', pinLeaderNote: 'Der Konvoiführer kann ihn zur Route hinzufügen.', pinAccepted: '{name} hat deinen Pin zur Route hinzugefügt', pinRemoved: 'Pin gelöscht',
     pin_view: 'Aussichtspunkt', pin_food: 'Restaurant', pin_fuel: 'Tankstelle', pin_parking: 'Parkplatz', pin_danger: 'Gefahr', pin_other: 'Anderes',
-    sc_pin: 'Ein Freund setzt einen Pin', scd_pin: 'Gemeinsame Markierung auf der Karte',
     credits: 'Quellen', version: 'Version {v}',
+    units: 'Einheiten', miles: 'Meilen', gauge: 'Tacho', gDial: 'Zifferblatt', gDigital: 'Digital', gMax: 'Höchstwert der Skala',
+    gWarn: 'Tempogrenze', warnOff: 'Keine', gWarnNote: 'Über der gewählten Grenze werden Tempo und Zeiger rot.',
     create: 'Konvoi erstellen', orJoin: 'oder mit einem Code beitreten', join: 'Beitreten', errCode: 'Der Konvoi-Code hat 6 Zeichen.',
-    cfgWarn: 'Um mit Freunden zu fahren, trage die URL und den Schlüssel deines Supabase-Projekts in config.js ein. Die Demo funktioniert auch ohne.',
-    errLive: 'Die Serververbindung konnte nicht geladen werden. Prüfe deine Verbindung.', demoTitleHome: 'Ohne Freunde ausprobieren',
-    invite: 'Freunde einladen', codeLabel: 'Konvoi-Code', shareLink: 'Einladungslink teilen',
+    cfgWarn: 'Um mit Freunden zu fahren, trage die URL und den Schlüssel deines Supabase-Projekts in config.js ein.',
+    errLive: 'Die Serververbindung konnte nicht geladen werden. Prüfe deine Verbindung.', invite: 'Freunde einladen', codeLabel: 'Konvoi-Code', shareLink: 'Einladungslink teilen',
     shareText: 'Tritt meinem Konvoi auf PocketConvoy bei, Code {code}', linkCopied: 'Einladungslink kopiert',
     created: 'Konvoi erstellt. Lade deine Freunde unter Konvoi ein, Code {code}.', connLost: 'Verbindung zum Konvoi verloren, neuer Versuch…',
     waiting: 'Warte auf die anderen Autos. Code {code}', endAll: 'Für den ganzen Konvoi beenden', endedAll: '{name} hat die Fahrt für den ganzen Konvoi beendet',
     audioOk: 'Funkgerät verbunden', audioFail: 'Funkgerät-Fehler', audioWait: 'Funkgerät verbindet', tapForSound: 'Tippe auf den Bildschirm, um deine Freunde im Funkgerät zu hören.',
     chat: 'Chat', chatPh: 'Nachricht oder Link', chatEmpty: 'Noch keine Nachrichten. Der Chat beginnt bei jedem neuen Konvoi von vorn.',
-    chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', demoPanel: 'Demo: Szenarien und Tempo',
-    sc_chat: 'Ein Freund schreibt im Chat', scd_chat: 'Nachricht, manchmal mit Link',
-    creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot.',
+    chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot.',
   },
-};
-const PHRASES = {
-  fr: ['Je vous vois dans le rétro, tout va bien.', 'On garde ce rythme jusqu’à la prochaine sortie.', 'Petite pause à la prochaine aire de repos ?', 'Attention, travaux un peu plus loin.', 'La vue sur le lac est magnifique.'],
-  en: ['I can see you in the mirror, all good.', 'Let’s keep this pace until the next exit.', 'Quick break at the next rest area?', 'Careful, roadworks a bit further on.', 'The view over the lake is amazing.'],
-  de: ['Ich sehe euch im Rückspiegel, alles gut.', 'Wir halten dieses Tempo bis zur nächsten Ausfahrt.', 'Kurze Pause beim nächsten Rastplatz?', 'Achtung, weiter vorne ist eine Baustelle.', 'Die Aussicht auf den See ist wunderschön.'],
 };
 const NAV = {
   fr: {
@@ -395,19 +332,7 @@ const NAV = {
   },
 };
 const DIRS = { fr: ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'], en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], de: ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'] };
-const SCENARIOS = ['talk', 'alert', 'chat', 'pin', 'lag', 'stop', 'sos', 'signal', 'leave', 'leader'];
 const OSM_LINK = (lat, lng) => `https://www.openstreetmap.org/?mlat=${lat.toFixed(5)}&mlon=${lng.toFixed(5)}#map=16/${lat.toFixed(5)}/${lng.toFixed(5)}`;
-const CHAT_BOT = {
-  fr: ['On s’arrête manger à Gruyères ?', 'Quelqu’un a besoin d’essence ?', 'Je mets de la musique, des préférences ?', 'Regardez ce point de vue, on pourrait s’y arrêter : {link}', 'Le parking dont je parlais : {link}'],
-  en: ['Shall we stop for food in Gruyères?', 'Does anyone need fuel?', 'I’m putting some music on, any requests?', 'Look at this viewpoint, we could stop there: {link}', 'The car park I mentioned: {link}'],
-  de: ['Halten wir in Gruyères zum Essen an?', 'Braucht jemand Benzin?', 'Ich mache Musik an, Wünsche?', 'Schaut euch diesen Aussichtspunkt an, da könnten wir anhalten: {link}', 'Der Parkplatz, von dem ich gesprochen habe: {link}'],
-};
-const CHAT_REPLY = {
-  fr: ['Bien reçu !', 'OK, ça marche.', 'Super, merci !', 'Ça me va.'], frLink: 'Merci pour le lien !', frPos: 'Bien reçu, je vois où tu es.',
-  en: ['Got it!', 'OK, sounds good.', 'Great, thanks!', 'Works for me.'], enLink: 'Thanks for the link!', enPos: 'Got it, I can see where you are.',
-  de: ['Verstanden!', 'OK, passt.', 'Super, danke!', 'Passt für mich.'], deLink: 'Danke für den Link!', dePos: 'Danke, ich sehe, wo du bist.',
-};
-
 /* ---------- utilitaires ---------- */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -430,7 +355,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('pc_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('pc_' + k, JSON.stringify(v)); } catch (e) { /* plein */ } },
 };
-const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', demoPos: 'sim', demoLeader: 'friend', haptics: 'normal', hapticCats: ['ui', 'talk', 'alerts'], sound: 'on' }, store.get('prefs', {}));
+const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', haptics: 'normal', hapticCats: ['ui', 'talk', 'alerts'], sound: 'on', distUnit: 'km', speedUnit: 'kmh', gaugeStyle: 'dial', gaugeScale: 3, speedWarn: 0 }, store.get('prefs', {}));
 if (!I18N[prefs.lang]) prefs.lang = 'fr';
 if (!THEMES[prefs.theme]) prefs.theme = 'graphite';
 if (!ACCENTS[prefs.accent]) prefs.accent = 'orange';
@@ -498,8 +423,21 @@ function projectOnSeg(p, a, b) {
   return { d: Math.sqrt(x * x + y * y) * DEG_M, t: u };
 }
 
+const MILE = 1609.344, FOOT = 0.3048;
+const useMiles = () => prefs.distUnit === 'mi';
+const speedKey = () => (prefs.speedUnit === 'mph' ? 'mph' : 'kmh');
+const spdUnit = () => (prefs.speedUnit === 'mph' ? 'mph' : 'km/h');
+const kmhTo = kmh => (prefs.speedUnit === 'mph' ? kmh / 1.609344 : kmh);
+const fmtSpd = kmh => Math.round(kmhTo(kmh || 0)) + ' ' + spdUnit();
+const lagMeters = () => prefs.lagKm * (useMiles() ? MILE : 1000);
 function fmtDist(m) {
   if (m == null || isNaN(m)) return '';
+  if (useMiles()) {
+    const dec = x => (prefs.lang === 'en' ? x : x.replace('.', ','));
+    if (m < 0.1 * MILE) { const ft = m / FOOT; return ft < 10 ? '0 ft' : Math.round(ft / 10) * 10 + ' ft'; }
+    const mi = m / MILE;
+    return dec(mi < 10 ? mi.toFixed(1) : String(Math.round(mi))) + ' mi';
+  }
   if (m < 5) return '0 m';
   if (m < 950) return Math.max(10, Math.round(m / 10) * 10) + ' m';
   const k = m / 1000;
@@ -511,7 +449,7 @@ function fmtDur(ms) {
   if (min < 60) return min + ' min';
   return Math.floor(min / 60) + ' h ' + String(min % 60).padStart(2, '0');
 }
-const fmtKmh = ms => Math.round((ms || 0) * 3.6) + ' km/h';
+const fmtKmh = ms => fmtSpd((ms || 0) * 3.6);
 const fmtClock = ts => new Date(ts).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
 const fmtDate = ts => new Date(ts).toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' });
 const statusLabel = st => t('st_' + (STATUSES.includes(st) ? st : 'route'));
@@ -545,7 +483,7 @@ const S = {
   pos: null, geoWatch: null, follow: true, gesture: false, camB: 0, camP: 0, zoomTarget: null,
   manual: '', stoppedSince: null, movingSince: null,
   trip: null,
-  talking: false, talkTimer: null, micOk: null, echoPlaying: false, ac: null, wake: null,
+  talking: false, talkTimer: null, micOk: null, ac: null, wake: null,
   alerts: { lag: {}, leaderStop: false },
   map: null, wpMarkers: [], pick: false, sheet: null,
   timers: [], stripT: null, spTarget: 0, spDisp: 0,
@@ -554,7 +492,7 @@ const S = {
   leaderSeq: 0, leaderMissing: 0, lastSentT: 0, lastSent: null, audioHint: false,
   chat: [], chatUnread: 0,
 };
-const clock = () => (S.live ? Date.now() : S.simT);
+const clock = () => Date.now();
 
 function member(id) {
   let m = S.members.get(id);
@@ -592,7 +530,6 @@ function applyLang() {
   $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   $$('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
   $$('.swatch').forEach(el => el.setAttribute('aria-label', t('colourAria')));
-  renderScenarios();
   updatePTT();
   setFollow(S.follow, true);
   updatePlayBtn();
@@ -675,7 +612,7 @@ function setAudioSession(type) {
 }
 function unlockAudio() {
   try {
-    if (navigator.audioSession) { if (!REC.stream && !RTC.stream) setAudioSession('playback'); }
+    if (navigator.audioSession) { if (!RTC.stream) setAudioSession('playback'); }
     else if (IS_IOS) {
       if (!silentEl) { silentEl = new Audio(SILENT_WAV); silentEl.loop = true; silentEl.setAttribute('playsinline', ''); }
       if (silentEl.paused) silentEl.play().catch(() => {});
@@ -711,18 +648,21 @@ function sfx(name, force) {
 }
 /* retour haptique : vibration sur Android, petit tic du contrôle switch sur iPhone (iOS 18 et plus) */
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-let hapticLabel = null;
+let lastTick = 0;
 function iosTick() {
-  if (!hapticLabel) {
-    hapticLabel = document.createElement('label');
-    hapticLabel.setAttribute('aria-hidden', 'true');
-    hapticLabel.style.cssText = 'position:fixed;left:-200px;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
-    const input = document.createElement('input');
-    input.type = 'checkbox'; input.setAttribute('switch', ''); input.tabIndex = -1;
-    hapticLabel.appendChild(input);
-    document.body.appendChild(hapticLabel);
-  }
-  hapticLabel.click();
+  const now = performance.now();
+  if (now - lastTick < 40) return;
+  lastTick = now;
+  const label = document.createElement('label');
+  label.setAttribute('aria-hidden', 'true');
+  label.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.setAttribute('switch', '');
+  label.appendChild(input);
+  document.head.appendChild(label);
+  label.click();
+  label.remove();
 }
 const HAPTIC = {
   tap: { cat: 'ui', vib: [10], ticks: 1 },
@@ -782,25 +722,24 @@ function newCode() {
   return out;
 }
 
-/* ---------- démarrage : démo ou convoi réel ---------- */
+/* ---------- démarrage d'un convoi ---------- */
 function start(opts) {
   opts = opts || {};
   const name = $('#name').value.trim();
   if (!name) { homeErr(t('errName')); $('#name').focus(); return; }
   if (typeof maplibregl === 'undefined') { homeErr(t('errLibs')); return; }
-  if (opts.live && typeof supabase === 'undefined') { homeErr(t('errLive')); return; }
+  if (typeof supabase === 'undefined') { homeErr(t('errLive')); return; }
   me.name = name.slice(0, 16);
   store.set('name', me.name); store.set('color', me.color);
   homeErr('');
   unlockAudio(); unlockSpeech();
 
-  S.active = true; S.simT = Date.now();
-  S.live = !!opts.live; S.code = opts.code || null;
+  S.active = true;
+  S.live = true; S.code = opts.code;
   S.chat = []; S.chatUnread = 0; updateChatBadge();
   S.trip = { id: 't' + Date.now(), start: clock(), dist: 0, moving: 0, max: 0, last: null, tracks: {}, names: {}, colors: {}, dest: '' };
   S.plan = { v: 0, wps: [] }; S.passed = new Set(); S.arrived = false; S.route = null;
-  if (S.live) { S.leaderId = opts.creating ? me.id : null; S.leaderSeq = opts.creating ? 1 : 0; }
-  else S.leaderId = prefs.demoLeader === 'me' ? me.id : BOTS[0].id;
+  S.leaderId = opts.creating ? me.id : null; S.leaderSeq = opts.creating ? 1 : 0;
   Object.assign(member(me.id), { name: me.name, color: me.color, online: true });
 
   closeSheets();
@@ -810,25 +749,18 @@ function start(opts) {
   setFollow(true);
   keepAwake();
   updatePTT();
-  if (S.live) {
-    SIM.mode = 'live';
-    S.firstSync = true; S.joinTs = Date.now(); S.online = new Set([me.id]); S.joinedAt = {};
-    history.replaceState(null, '', location.pathname + '?c=' + S.code);
-    startGeo();
-    askMicOnce();
-    connect();
-    if (opts.creating) setTimeout(() => toast(t('created', { code: S.code }), 'ok', 8000), 500);
-  } else {
-    simInit();
-    if (SIM.mode === 'gps') startGeo();
-  }
+  S.firstSync = true; S.joinTs = Date.now(); S.online = new Set([me.id]); S.joinedAt = {};
+  history.replaceState(null, '', location.pathname + '?c=' + S.code);
+  startGeo();
+  askMicOnce();
+  connect();
+  if (opts.creating) setTimeout(() => toast(t('created', { code: S.code }), 'ok', 8000), 500);
   renderStrip();
   renderWaypoints();
   S.timers.push(setInterval(tick, 3000));
 }
 function leave() {
   talkStop(true);
-  simStop();
   disconnect();
   stopGeo();
   if (S.wake) { S.wake.release().catch(() => {}); S.wake = null; }
@@ -848,7 +780,7 @@ function leave() {
   show('home'); renderHome();
 }
 
-/* ---------- événements du convoi (fournis par la simulation) ---------- */
+/* ---------- événements reçus du convoi ---------- */
 const H = {
   pos(d) {
     if (!d.id || d.id === me.id) return;
@@ -909,20 +841,6 @@ const H = {
     if (S.sheet === 'route') renderRouteSheet();
     if (S.sheet === 'pin' && S.pinOpen === d.id) closeSheets();
   },
-  join(d) {
-    const m = member(d.id);
-    Object.assign(m, { name: d.n, color: d.c, online: true, stale: false });
-    toast(t('joined', { name: m.name }), 'ok', 3500); sfx('info');
-    updateMarker(m); renderStrip();
-    if (S.sheet === 'members') renderMembers();
-  },
-  leave(d) {
-    const m = member(d.id);
-    m.online = false; m.talking = false;
-    toast(t('leftConvoy', { name: m.name }), 'warn', 5000);
-    updateMarker(m); updateTalkBar(); renderStrip();
-    if (S.sheet === 'members') renderMembers();
-  },
 };
 
 /* ---------- leader ---------- */
@@ -940,14 +858,11 @@ function setLeader(id, quiet, seq) {
     else toast(t('newLeader', { name: member(id).name }), 'info', 4500);
   }
   for (const m of S.members.values()) updateMarker(m);
-  simAssignOffsets();
   renderStrip();
   if (S.sheet === 'route') renderRouteSheet();
   if (S.sheet === 'members') renderMembers();
-  if (!S.live && id !== me.id && !S.plan.wps.length) setTimeout(botSetPlan, 2500);
 }
 function giveLeader(id) {
-  if (!S.live) { setLeader(id); return; }
   const seq = S.leaderSeq + 1;
   setLeader(id, false, seq);
   send('leader', { id, seq });
@@ -986,8 +901,6 @@ function onFix(p) {
   checkWaypoints();
   if (S.route) navigate();
   else if (pendingWps().length && !S.routing && now - S.nav.last > 15000) computeRoute();
-  if (SIM.mode === 'gps' && SIM.needBuild) simRebuild();
-  if (SIM.mode === 'gps' && !SIM.parked) simParkAround(cur);
   updateSpeedo();
 }
 function updateStats(cur) {
@@ -1034,7 +947,7 @@ function recordTrack(id, lat, lng) {
 function initMap() {
   if (S.map) { S.map.resize(); return; }
   const m = new maplibregl.Map({
-    container: 'map', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 12,
+    container: 'map', style: mapPlaceholder(), center: [MAP_HOME[1], MAP_HOME[0]], zoom: 7,
     attributionControl: false, dragRotate: false, touchPitch: false, pitchWithRotate: false, maxPitch: 60,
   });
   m.touchZoomRotate.disableRotation();
@@ -1141,9 +1054,8 @@ function moveTo(m, lat, lng, spdMs) {
   const dt = Math.min(2500, Math.max(300, now - (m.lastFixT || now - 1000)));
   m.lastFixT = now;
   m.fixInt = m.fixInt ? m.fixInt * 0.7 + dt * 0.3 : dt;
-  const f = SIM.mode === 'sim' ? (SIM.paused ? 0 : SIM.factor) : 1;
-  const moving = spdMs * f > 1 && m.hdg != null;
-  const to = moving ? offsetPoint([lat, lng], spdMs * f * m.fixInt / 1000 * 0.9, m.hdg) : [lat, lng];
+  const moving = spdMs > 1 && m.hdg != null;
+  const to = moving ? offsetPoint([lat, lng], spdMs * m.fixInt / 1000 * 0.9, m.hdg) : [lat, lng];
   m.anim = { from: [m.dLat, m.dLng], to, t0: now, dur: m.fixInt, kMax: moving ? 1.6 : 1 };
   kick();
 }
@@ -1250,7 +1162,6 @@ function onPlanChanged() {
   if (S.trip && dest) S.trip.dest = dest.label;
   renderWaypoints();
   if (S.sheet === 'route') renderRouteSheet();
-  simRebuild();
   if (!pendingWps().length) { S.route = null; renderRoute(); updateNavSign(); return; }
   computeRoute();
 }
@@ -1550,7 +1461,6 @@ function savePin() {
   closeSheets();
   sfx('sent'); haptic('drop');
   toast(t('pinAdded'), 'ok', 3500);
-  if (!S.live && !isLeader()) setTimeout(() => botAcceptPin(pin.id), 6000);
 }
 function pinToRoute(id, asDest) {
   const p = S.pins.get(id);
@@ -1606,7 +1516,6 @@ function sendChat(text) {
   H.chat(msg);
   send('chat', msg);
   sfx('sent'); haptic('select');
-  if (!S.live && Math.random() < 0.75) setTimeout(() => botReply(text), rand(1800, 4200));
 }
 function shareMyPosition() {
   if (!S.pos) return;
@@ -1619,64 +1528,9 @@ function shareMyPosition() {
   ].join('\n'));
 }
 
-/* ---------- talkie (démo : écho de ta voix) ---------- */
-const REC = { stream: null, rec: null, chunks: [], token: 0 };
-async function talkStart() {
-  if (S.live) return talkStartLive();
-  if (S.talking || !S.active) return;
-  S.talking = true;
-  const token = ++REC.token;
-  sfx('talkStart'); haptic('talk');
-  clearTimeout(S.talkTimer);
-  S.talkTimer = setTimeout(() => talkStop(), 60000);
-  updatePTT();
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-  try {
-    setAudioSession('play-and-record');
-    const st = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
-    S.micOk = true;
-    if (!S.talking || token !== REC.token) { st.getTracks().forEach(x => x.stop()); return; }
-    REC.stream = st; REC.chunks = [];
-    if (window.MediaRecorder) {
-      REC.rec = new MediaRecorder(st);
-      REC.rec.ondataavailable = e => { if (e.data && e.data.size) REC.chunks.push(e.data); };
-      REC.rec.onstop = playEcho;
-      REC.rec.start();
-    }
-  } catch (e) {
-    S.micOk = false; S.talking = false; clearTimeout(S.talkTimer); updatePTT();
-    toast(t('micDenied'), 'warn', 8000);
-  }
-}
-function talkStop(silent) {
-  if (S.live) return talkStopLive(silent);
-  if (!S.talking) return;
-  S.talking = false;
-  clearTimeout(S.talkTimer);
-  if (!silent) { sfx('talkEnd'); haptic('talk'); }
-  updatePTT();
-  if (REC.rec && REC.rec.state !== 'inactive' && !silent) REC.rec.stop();
-  else releaseMic();
-}
-function releaseMic() {
-  if (REC.stream) REC.stream.getTracks().forEach(x => x.stop());
-  REC.stream = null; REC.rec = null;
-  setAudioSession('playback');
-}
-function playEcho() {
-  const type = (REC.rec && REC.rec.mimeType) || 'audio/mp4';
-  const blob = new Blob(REC.chunks, { type });
-  releaseMic();
-  if (!blob.size || !S.active) return;
-  const url = URL.createObjectURL(blob);
-  const audio = new Audio(url);
-  const done = () => { S.echoPlaying = false; updateTalkBar(); URL.revokeObjectURL(url); };
-  audio.onended = done; audio.onerror = done;
-  setTimeout(() => {
-    S.echoPlaying = true; updateTalkBar();
-    audio.play().catch(done);
-  }, 350);
-}
+/* ---------- talkie ---------- */
+function talkStart() { return talkStartLive(); }
+function talkStop(silent) { return talkStopLive(silent); }
 function updatePTT() {
   const b = $('#ptt'), l = $('#pttLabel');
   b.classList.toggle('nomic', S.micOk === false);
@@ -1691,7 +1545,6 @@ function updateTalkBar() {
   let txt = '';
   if (ts.length === 1) txt = t('talks1', { name: ts[0].name });
   else if (ts.length > 1) txt = t('talksN', { names: ts.map(m => m.name).join(t('and')) });
-  else if (S.echoPlaying) txt = t('echo');
   bar.hidden = !txt;
   if (txt) $('.who', bar).textContent = txt;
 }
@@ -1734,7 +1587,7 @@ function scheduleStrip() { if (!S.stripT) S.stripT = setTimeout(() => { S.stripT
 function memberMeta(m) {
   if (!m.online) return t('offline');
   if (m.stale) return t('lostSignal');
-  const parts = [m.st && m.st !== 'route' ? statusLabel(m.st) : Math.round(m.spd || 0) + ' km/h'];
+  const parts = [m.st && m.st !== 'route' ? statusLabel(m.st) : fmtSpd(m.spd)];
   if (S.pos && m.lat != null) parts.push(t('at', { d: fmtDist(hav([S.pos.lat, S.pos.lng], [m.lat, m.lng])) }));
   return parts.join(', ');
 }
@@ -1747,7 +1600,7 @@ function renderStrip() {
   const el = $('#strip');
   if (!S.active) { el.innerHTML = ''; return; }
   const others = sortedOthers();
-  if (!others.length) { el.innerHTML = `<div class="mchip glass wait">${esc(S.live ? t('waiting', { code: S.code }) : t('waitingDemo'))}</div>`; return; }
+  if (!others.length) { el.innerHTML = `<div class="mchip glass wait">${esc(t('waiting', { code: S.code }))}</div>`; return; }
   el.innerHTML = others.map(m => `<button class="mchip glass${m.online && !m.stale ? '' : ' off'}" data-id="${esc(m.id)}">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
     <span style="min-width:0"><span class="nm">${esc(m.name)}${m.id === S.leaderId ? '<i class="lead-tag" aria-label="' + esc(t('leader')) + '"></i>' : ''}</span><span class="meta">${esc(memberMeta(m))}</span></span>
@@ -1765,8 +1618,8 @@ function renderMembers() {
   $('#membersList').innerHTML = invite + list.map(m => `<div class="item">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
     <div class="grow"><div class="t">${esc(m.name)}${m.id === me.id ? esc(t('you')) : ''}${m.id === S.leaderId ? '<i class="lead-tag"></i>' : ''}</div>
-    <div class="s">${esc(m.id === me.id ? statusLabel(myStatus()) + ', ' + Math.round(m.spd || 0) + ' km/h' : memberMeta(m))}</div>
-    ${m.id !== me.id ? `<div class="s">${esc(S.live ? audio(m) : t('simulated'))}</div>` : ''}</div>
+    <div class="s">${esc(m.id === me.id ? statusLabel(myStatus()) + ', ' + fmtSpd(m.spd) : memberMeta(m))}</div>
+    ${m.id !== me.id ? `<div class="s">${esc(audio(m))}</div>` : ''}</div>
     ${m.lat != null ? `<button class="mini" data-see="${esc(m.id)}">${esc(t('see'))}</button>` : ''}
     ${lead && m.id !== me.id && m.online ? `<button class="mini" data-lead="${esc(m.id)}">${esc(t('makeLeader'))}</button>` : ''}
   </div>`).join('') + `<p class="s" style="margin-top:12px">${esc(t('currentLeader', { name: leaderName() }))}</p>`;
@@ -1838,12 +1691,12 @@ function tick() {
     for (const m of S.members.values()) {
       if (m.id === L.id || m.lat == null || (!m.online && m.id !== me.id)) continue;
       const d = hav([L.lat, L.lng], [m.lat, m.lng]);
-      if (d > prefs.lagKm * 1000) {
+      if (d > lagMeters()) {
         if (!S.alerts.lag[m.id]) {
           S.alerts.lag[m.id] = true;
           bigAlert('lag', t('convoyWho'), m.id === me.id ? t('lagYou', { d: fmtDist(d) }) : t('lagOther', { name: m.name, d: fmtDist(d) }), m.id === me.id ? null : m.id);
         }
-      } else if (d < prefs.lagKm * 600) delete S.alerts.lag[m.id];
+      } else if (d < lagMeters() * 0.6) delete S.alerts.lag[m.id];
     }
     if (L.id !== me.id && S.plan.wps.length && !S.arrived) {
       if ((L.spd || 0) < 3) {
@@ -1859,12 +1712,26 @@ function tick() {
   updateSpeedo();
 }
 
-/* ---------- compteur (0 à 300 km/h) ---------- */
+/* ---------- compteur : cadran ou numérique, graduation et seuil réglables ---------- */
 const GAUGE = { cx: 150, cy: 140, r: 116, max: 300, a0: 135, sweep: 270, step: 10, lbl: 50 };
+const GAUGE_SCALES = {
+  kmh: [{ max: 160, lbl: 20, step: 10 }, { max: 200, lbl: 25, step: 5 }, { max: 260, lbl: 20, step: 10 }, { max: 300, lbl: 50, step: 10 }],
+  mph: [{ max: 100, lbl: 10, step: 5 }, { max: 120, lbl: 20, step: 5 }, { max: 160, lbl: 20, step: 10 }, { max: 200, lbl: 25, step: 5 }],
+};
+const SPEED_WARN = { kmh: [0, 80, 100, 120], mph: [0, 50, 60, 75] };
 const polar = (r, deg) => [GAUGE.cx + r * Math.cos(deg * RAD), GAUGE.cy + r * Math.sin(deg * RAD)];
 let gaugeRaf = null;
 function buildGauge() {
   const G = GAUGE, f = n => n.toFixed(1);
+  Object.assign(G, GAUGE_SCALES[speedKey()][prefs.gaugeScale] || GAUGE_SCALES[speedKey()][3]);
+  const svg = $('#gaugeSvg');
+  svg.classList.toggle('digital', prefs.gaugeStyle === 'digital');
+  if (prefs.gaugeStyle === 'digital') {
+    svg.innerHTML = `<text class="g-num g-big" id="gNum" x="150" y="152" text-anchor="middle">–</text>
+      <text class="g-unit" x="150" y="192" text-anchor="middle">${spdUnit()}</text>
+      <text class="g-dir" id="gDir" x="150" y="228" text-anchor="middle"></text>`;
+    return;
+  }
   const [sx, sy] = polar(G.r, G.a0), [ex, ey] = polar(G.r, G.a0 + G.sweep);
   const arc = `M${f(sx)} ${f(sy)}A${G.r} ${G.r} 0 1 1 ${f(ex)} ${f(ey)}`;
   G.len = G.r * G.sweep * RAD;
@@ -1879,18 +1746,21 @@ function buildGauge() {
     <path class="g-val" id="gVal" d="${arc}" stroke-dasharray="${f(G.len)}" stroke-dashoffset="${f(G.len)}"/>
     ${ticks}<line class="g-needle" id="gNeedle" x1="0" y1="0" x2="0" y2="0"/>
     <text class="g-num" id="gNum" x="150" y="160" text-anchor="middle">–</text>
-    <text class="g-unit" x="150" y="184" text-anchor="middle">km/h</text>
+    <text class="g-unit" x="150" y="184" text-anchor="middle">${spdUnit()}</text>
     <text class="g-dir" id="gDir" x="150" y="232" text-anchor="middle"></text>`;
 }
 function drawGauge(v) {
   const G = GAUGE, frac = Math.max(0, Math.min(1, v / G.max));
+  const num = $('#gNum');
+  if (num) num.textContent = S.pos ? String(Math.round(v)) : '–';
+  const warn = SPEED_WARN[speedKey()][prefs.speedWarn] || 0;
+  $('#gaugeSvg').classList.toggle('over', !!(warn && S.pos && v > warn));
   const val = $('#gVal'), nd = $('#gNeedle');
   if (!val) return;
   val.setAttribute('stroke-dashoffset', (G.len * (1 - frac)).toFixed(1));
   val.style.opacity = frac > 0.002 ? 1 : 0;
   const a = G.a0 + frac * G.sweep, [x1, y1] = polar(G.r - 12, a), [x2, y2] = polar(G.r + 12, a);
   nd.setAttribute('x1', x1.toFixed(1)); nd.setAttribute('y1', y1.toFixed(1)); nd.setAttribute('x2', x2.toFixed(1)); nd.setAttribute('y2', y2.toFixed(1));
-  $('#gNum').textContent = S.pos ? String(Math.round(v)) : '–';
 }
 function gaugeLoop() {
   gaugeRaf = null;
@@ -1903,7 +1773,7 @@ function gaugeLoop() {
 function updateSpeedo() {
   if (prefs.view !== 'speed' || !S.active) return;
   const p = S.pos;
-  S.spTarget = p && clock() - p.t < 8000 ? p.spd * 3.6 : 0;
+  S.spTarget = p && clock() - p.t < 8000 ? kmhTo(p.spd * 3.6) : 0;
   if (!gaugeRaf) gaugeRaf = requestAnimationFrame(gaugeLoop);
   const dirs = DIRS[prefs.lang] || DIRS.fr;
   $('#gDir').textContent = p && p.hdg != null && p.spd > 1 ? t('heading', { d: dirs[Math.round(p.hdg / 45) % 8] }) : '';
@@ -1959,33 +1829,33 @@ function closeSheets() {
   S.sheet = null;
 }
 function syncSegs() {
+  const uk = speedKey();
+  $('#gaugeScaleSeg').innerHTML = GAUGE_SCALES[uk].map((g, i) => `<button data-v="${i}">${g.max}</button>`).join('');
+  $('#speedWarnSeg').innerHTML = SPEED_WARN[uk].map((w, i) => `<button data-v="${i}">${w ? w : esc(t('warnOff'))}</button>`).join('');
+  $('#lagSeg').innerHTML = [1, 2, 3, 5].map(v => `<button data-v="${v}">${v} ${useMiles() ? 'mi' : 'km'}</button>`).join('');
   $$('.seg[data-pref]').forEach(seg => {
     const k = seg.dataset.pref;
     $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(prefs[k]))));
-  });
-  const simVals = { factor: String(SIM.paused ? 0 : SIM.factor), auto: SIM.auto ? '1' : '0' };
-  $$('.seg[data-sim]').forEach(seg => {
-    $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === simVals[seg.dataset.sim])));
   });
   $('#accentRow').innerHTML = Object.keys(ACCENTS).map(k =>
     `<button style="--c:${ACCENTS[k]}" data-accent="${k}" aria-label="${k}" aria-pressed="${k === prefs.accent}"></button>`).join('');
   $('#accentField').hidden = prefs.theme === 'red';
   $('#themeNote').textContent = t('thn_' + prefs.theme);
-  $('#sessOnly').hidden = !S.active;
-  $('#btnDemoPanel').hidden = !S.active || S.live;
   $('#creditsText').innerHTML = t('creditsHtml');
   $$('#creditsText a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
   $('#versionText').textContent = t('version', { v: APP_VERSION });
   $$('#hapCats [data-hcat]').forEach(b => b.setAttribute('aria-pressed', String(prefs.hapticCats.includes(b.dataset.hcat))));
   $('#sndList').innerHTML = SND_PREVIEW.map(([k, l]) => `<button data-snd="${k}">${ic('<path d="M7 4.5v15l12-7.5z"/>', 14)}${esc(t(l))}</button>`).join('');
-  $('#simSpeedField').hidden = SIM.mode === 'gps';
 }
 function setPref(k, v) {
   if (prefs[k] === v) return;
   prefs[k] = v; savePrefs();
   if (k === 'talkMode') { talkStop(); updatePTT(); }
   if (k === 'mapTheme') applyMapStyle(S.map);
-  if (k === 'lagKm') S.alerts.lag = {};
+  if (k === 'lagKm' || k === 'distUnit') S.alerts.lag = {};
+  if (k === 'speedUnit' || k === 'gaugeScale' || k === 'gaugeStyle') { buildGauge(); S.spDisp = 0; updateSpeedo(); }
+  if (k === 'speedWarn') drawGauge(S.spDisp || 0);
+  if (k === 'speedUnit' || k === 'distUnit') applyLang();
   if (k === 'lang') { applyLang(); applyMapStyle(S.map); }
   if (k === 'accent') applyTheme();
   if (k === 'theme') {
@@ -1994,354 +1864,6 @@ function setPref(k, v) {
     if (prefs.mapTheme !== m) setPref('mapTheme', m); else applyMapStyle(S.map);
   }
   syncSegs();
-}
-function renderScenarios() {
-  $('#scList').innerHTML = SCENARIOS.map(k => `<button class="sc" data-sc="${k}"><span class="grow"><span class="t" style="display:block">${esc(t('sc_' + k))}</span><span class="s">${esc(t('scd_' + k))}</span></span>${ic(ICON.chev, 18)}</button>`).join('');
-}
-
-/* ---------- simulation du convoi ---------- */
-const SIM = { mode: 'sim', factor: 1, paused: false, auto: true, path: null, A: { s: 0, v: 0, stopUntil: 0 }, cars: new Map(),
-  timer: null, lastReal: 0, lastEmit: 0, lastSelfEmit: 0, nextEvent: 0, buildToken: 0, needBuild: false, parked: false };
-
-function mkCar(id, name, color, pitch) {
-  return { id, name, color, pitch, s: 0, v: 0, o: 0, rank: 0, var: id === me.id ? 1 : rand(0.97, 1.03), park: null,
-    offline: id !== me.id, stopUntil: 0, silentUntil: 0, ghost: null, ghostUntil: 0, manual: '', manualUntil: 0, stopT: 0, dist: 0, mv: 0, mx: 0 };
-}
-function simInit() {
-  SIM.mode = prefs.demoPos === 'gps' ? 'gps' : 'sim';
-  Object.assign(SIM, { factor: 1, paused: false, path: null, A: { s: 0, v: 0, stopUntil: 0 }, cars: new Map(), needBuild: false, parked: false, buildToken: SIM.buildToken + 1 });
-  SIM.nextEvent = clock() + 45000;
-  const taken = new Set([me.color]);
-  for (const b of BOTS) {
-    let color = b.color;
-    if (taken.has(color)) color = COLORS.find(c => !taken.has(c) && !BOTS.some(x => x.color === c)) || '#8B8B93';
-    taken.add(color);
-    SIM.cars.set(b.id, mkCar(b.id, b.name, color, b.pitch));
-  }
-  if (SIM.mode === 'sim') SIM.cars.set(me.id, mkCar(me.id, me.name, me.color, 1));
-  simAssignOffsets();
-  if (SIM.mode === 'sim') simParkAround(DEMO_START, true);
-  BOTS.forEach((b, i) => setTimeout(() => {
-    const c = SIM.cars.get(b.id);
-    if (!S.active || !c) return;
-    c.offline = false;
-    H.join({ id: c.id, n: c.name, c: c.color });
-    if (i === BOTS.length - 1) afterJoin();
-  }, 900 + i * 900));
-  SIM.lastReal = performance.now(); SIM.lastEmit = 0; SIM.lastSelfEmit = 0;
-  clearInterval(SIM.timer);
-  SIM.timer = setInterval(simStep, 250);
-  if (SIM.mode === 'sim') emitSelf();
-}
-function afterJoin() {
-  if (!isLeader()) setTimeout(botSetPlan, 1500);
-  else setTimeout(() => { if (S.active && !S.plan.wps.length) toast(t('hintAddDest'), 'info', 8000); }, 800);
-}
-function simStop() {
-  clearInterval(SIM.timer); SIM.timer = null;
-  SIM.buildToken++;
-  SIM.path = null; SIM.cars = new Map();
-  try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { /* ignoré */ }
-}
-function simAssignOffsets() {
-  const ids = [...SIM.cars.keys()];
-  const order = [S.leaderId, ...ids.filter(id => id !== S.leaderId)].filter(id => SIM.cars.has(id));
-  if (SIM.mode === 'sim') {
-    order.forEach((id, i) => { const c = SIM.cars.get(id); c.o = -i * 380; c.rank = i; });
-    const L = SIM.cars.get(S.leaderId);
-    if (SIM.path && L) { SIM.A.s = L.s; SIM.A.v = L.v; }
-  } else {
-    let k = 1;
-    for (const id of order) {
-      const c = SIM.cars.get(id);
-      if (id === S.leaderId) { c.o = 450; c.rank = 0; } else { c.o = -k * 380; c.rank = k; k++; }
-    }
-  }
-}
-function simParkAround(center, line) {
-  for (const c of SIM.cars.values()) c.park = line ? offsetPoint(center, 18 * c.rank, 225) : offsetPoint(center, rand(60, 160), rand(0, 360));
-  SIM.parked = true;
-}
-
-/* chemin : coordonnées, distances cumulées, caps et vitesses par segment */
-function mkPath(line, spd) {
-  const cum = [0], brg = [];
-  for (let i = 1; i < line.length; i++) { cum.push(cum[i - 1] + hav(line[i - 1], line[i])); brg.push(bearing(line[i - 1], line[i])); }
-  const sm = spd.map((_, i) => {
-    let a = 0, n = 0;
-    for (let j = Math.max(0, i - 3); j <= Math.min(spd.length - 1, i + 3); j++) { a += spd[j]; n++; }
-    return Math.max(5, Math.min(34, a / n));
-  });
-  return { coords: line, cum, brg, spd: sm, total: cum[cum.length - 1] };
-}
-function segIndex(P, s) {
-  if (s <= 0) return 0;
-  if (s >= P.total) return Math.max(0, P.cum.length - 2);
-  let lo = 0, hi = P.cum.length - 1;
-  while (hi - lo > 1) { const m = (lo + hi) >> 1; if (P.cum[m] <= s) lo = m; else hi = m; }
-  return lo;
-}
-function pointAt(P, s) {
-  const i = segIndex(P, s);
-  const a = P.coords[i], b = P.coords[i + 1] || a;
-  const L = (P.cum[i + 1] != null ? P.cum[i + 1] : P.cum[i]) - P.cum[i];
-  const f = L > 0 ? Math.max(0, Math.min(1, (s - P.cum[i]) / L)) : 0;
-  return { lat: a[0] + (b[0] - a[0]) * f, lng: a[1] + (b[1] - a[1]) * f, hdg: P.brg[i] != null ? P.brg[i] : null };
-}
-const roadSpeed = (P, s) => P.spd[segIndex(P, s)] || 15;
-function projectS(P, p) {
-  let best = { d: Infinity, s: 0 };
-  for (let i = 0; i < P.coords.length - 1; i++) {
-    const pr = projectOnSeg(p, P.coords[i], P.coords[i + 1]);
-    if (pr.d < best.d) best = { d: pr.d, s: P.cum[i] + pr.t * (P.cum[i + 1] - P.cum[i]) };
-  }
-  return best;
-}
-async function fetchPath(points) {
-  const coords = points.map(p => p[1].toFixed(6) + ',' + p[0].toFixed(6)).join(';');
-  try {
-    const j = await getJSON(`${CFG.routingUrl}/route/v1/driving/${coords}?overview=full&geometries=geojson&annotations=distance,duration`);
-    const rt = j.routes && j.routes[0];
-    if (!rt) throw new Error('no route');
-    const line = rt.geometry.coordinates.map(([x, y]) => [y, x]);
-    if (line.length < 2) throw new Error('short');
-    let spd = [];
-    for (const leg of rt.legs) {
-      const a = leg.annotation;
-      if (!a || !a.distance) { spd = []; break; }
-      a.distance.forEach((d, i) => spd.push(a.duration[i] > 0 ? d / a.duration[i] : 14));
-    }
-    if (spd.length !== line.length - 1) spd = new Array(line.length - 1).fill(rt.distance / Math.max(1, rt.duration));
-    return mkPath(line, spd);
-  } catch (e) {
-    const line = [];
-    for (let i = 0; i < points.length - 1; i++) {
-      const a = points[i], b = points[i + 1], n = Math.max(1, Math.ceil(hav(a, b) / 200));
-      for (let k = 0; k < n; k++) line.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
-    }
-    line.push(points[points.length - 1]);
-    return mkPath(line, new Array(line.length - 1).fill(22));
-  }
-}
-function carPoint(c) {
-  if (c.ghost && c.ghostUntil > clock()) return { lat: c.ghost[0], lng: c.ghost[1], hdg: null };
-  if (SIM.path) return pointAt(SIM.path, c.s);
-  if (c.park) return { lat: c.park[0], lng: c.park[1], hdg: null };
-  return null;
-}
-async function simRebuild() {
-  const wps = pendingWps();
-  SIM.needBuild = false;
-  if (!wps.length || !S.active) return;
-  let from;
-  if (SIM.mode === 'gps') {
-    if (!S.pos) { SIM.needBuild = true; return; }
-    from = [S.pos.lat, S.pos.lng];
-  } else {
-    let rear = null;
-    for (const c of SIM.cars.values()) {
-      const p = carPoint(c);
-      if (!p) continue;
-      const key = SIM.path ? c.s : -c.rank;
-      if (!rear || key < rear.key) rear = { key, p };
-    }
-    from = rear ? [rear.p.lat, rear.p.lng] : DEMO_START;
-  }
-  const token = ++SIM.buildToken;
-  const P = await fetchPath([from, ...wps.map(w => [w.lat, w.lng])]);
-  if (token !== SIM.buildToken || !S.active) return;
-  for (const c of SIM.cars.values()) {
-    const p = carPoint(c);
-    c.s = p ? projectS(P, [p.lat, p.lng]).s : 0;
-    c.ghost = null;
-  }
-  SIM.path = P;
-  if (SIM.mode === 'sim') {
-    const L = SIM.cars.get(S.leaderId);
-    SIM.A.s = L ? L.s : 0; SIM.A.v = L ? L.v : 0;
-  }
-}
-function approach(v, vt, dt) {
-  const a = vt > v ? 2.0 : 3.5;
-  return v + Math.max(-a * dt, Math.min(a * dt, vt - v));
-}
-function moveCars(dt) {
-  const P = SIM.path, now = clock(), A = SIM.A;
-  if (!P) return;
-  if (SIM.mode === 'gps') { if (S.pos) A.s = projectS(P, [S.pos.lat, S.pos.lng]).s; }
-  else {
-    const stopped = A.stopUntil > now;
-    A.v = approach(A.v, stopped ? 0 : roadSpeed(P, A.s), dt);
-    A.s = Math.min(P.total, A.s + A.v * dt);
-  }
-  for (const c of SIM.cars.values()) {
-    const road = roadSpeed(P, c.s) * c.var;
-    const cap = Math.max(0, P.total - c.rank * 25);
-    let vt = 0;
-    if (!(c.stopUntil > now) && !(c.offline && c.id !== me.id)) {
-      const err = A.s + c.o - c.s;
-      vt = Math.max(0, Math.min(road * 1.35, road + 0.06 * err));
-      vt = Math.min(vt, Math.max(0, (cap - c.s) * 0.4));
-    }
-    c.v = approach(c.v, vt, dt);
-    const before = c.s;
-    c.s = Math.max(0, Math.min(cap, c.s + c.v * dt));
-    const moved = c.s - before;
-    if (c.s >= cap) c.v = 0;
-    if (c.id !== me.id) { c.dist += moved; if (c.v > 1.5) c.mv += dt * 1000; if (c.v > c.mx) c.mx = c.v; }
-  }
-}
-function emitBots() {
-  const now = clock();
-  for (const c of SIM.cars.values()) {
-    if (c.id === me.id || c.offline || c.silentUntil > now) continue;
-    const p = carPoint(c);
-    if (!p) continue;
-    let st = c.manual && c.manualUntil > now ? c.manual : '';
-    if (!st) {
-      if (c.v < 0.8) { if (!c.stopT) c.stopT = now; st = now - c.stopT > 45000 ? 'arret' : 'route'; }
-      else { c.stopT = 0; st = 'route'; }
-    }
-    H.pos({ id: c.id, n: c.name, c: c.color, la: p.lat, ln: p.lng, s: Math.round(c.v * 3.6), h: c.v > 1 && p.hdg != null ? Math.round(p.hdg) : null,
-      st, d: Math.round(c.dist), mv: Math.round(c.mv), mx: +c.mx.toFixed(1) });
-  }
-}
-function emitSelf() {
-  const c = SIM.cars.get(me.id);
-  if (!c) return;
-  const p = carPoint(c);
-  if (!p) return;
-  onFix({ coords: { latitude: p.lat, longitude: p.lng, speed: c.v, heading: c.v > 0.5 ? p.hdg : null, accuracy: 5, altitude: null } });
-}
-function simStep() {
-  if (!S.active) return;
-  const nowR = performance.now();
-  const dtR = Math.min(1, (nowR - SIM.lastReal) / 1000);
-  SIM.lastReal = nowR;
-  const dt = dtR * (SIM.mode === 'gps' ? 1 : (SIM.paused ? 0 : SIM.factor));
-  S.simT += dt * 1000;
-  if (dt > 0) moveCars(dt);
-  if (nowR - SIM.lastEmit >= 950) { SIM.lastEmit = nowR; emitBots(); }
-  if (SIM.mode === 'sim' && nowR - SIM.lastSelfEmit >= 450) { SIM.lastSelfEmit = nowR; emitSelf(); }
-  if (SIM.auto && clock() >= SIM.nextEvent) {
-    SIM.nextEvent = clock() + rand(70000, 140000);
-    const r = Math.random();
-    scenario(r < 0.4 ? 'talk' : r < 0.65 ? 'alert' : r < 0.85 ? 'chat' : 'pin', true);
-  }
-}
-
-/* amis simulés : paroles, alertes, parcours */
-function botSay(c) {
-  const lines = PHRASES[prefs.lang] || PHRASES.fr;
-  const text = lines[Math.floor(Math.random() * lines.length)];
-  H.talk({ id: c.id, on: true });
-  let done = false;
-  const end = () => { if (done) return; done = true; if (S.active) H.talk({ id: c.id, on: false }); };
-  const synth = window.speechSynthesis;
-  if (!synth || !window.SpeechSynthesisUtterance) { setTimeout(end, 2500); return; }
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang = { en: 'en-GB', de: 'de-DE' }[prefs.lang] || 'fr-FR';
-  const voices = synth.getVoices().filter(v => (v.lang || '').toLowerCase().startsWith(prefs.lang));
-  if (voices.length) u.voice = voices[Math.max(0, BOTS.findIndex(b => b.id === c.id)) % voices.length];
-  u.pitch = c.pitch || 1; u.rate = 1.02;
-  u.onend = end; u.onerror = end;
-  setTimeout(() => { try { synth.speak(u); } catch (e) { end(); } }, 400);
-  setTimeout(end, 12000);
-}
-function botMsg(c, kind) {
-  const p = carPoint(c), q = QUICK[kind], now = clock();
-  if (q.status) { c.manual = q.status; c.manualUntil = now + (kind === 'sos' ? 90000 : 60000); }
-  H.msg({ id: c.id, k: kind, la: p ? p.lat : null, ln: p ? p.lng : null });
-}
-function botSetPlan() {
-  if (!S.active || isLeader() || S.plan.wps.length) return;
-  const wps = DEMO_PLAN.map(w => Object.assign({ id: rid() }, w));
-  H.plan({ plan: { v: S.plan.v + 1, wps }, by: S.leaderId });
-}
-function botAcceptPin(id) {
-  if (!S.active || isLeader()) return;
-  const p = S.pins.get(id), L = SIM.cars.get(S.leaderId);
-  if (!p || p.inRoute || !L) return;
-  const wps = [...S.plan.wps];
-  const wp = { id: rid(), lat: p.lat, lng: p.lng, label: pinLabel(p) };
-  if (wps.length && !S.passed.has(wps[wps.length - 1].id)) wps.splice(wps.length - 1, 0, wp); else wps.push(wp);
-  p.inRoute = true;
-  H.plan({ plan: { v: S.plan.v + 1, wps }, by: S.leaderId });
-  renderPins();
-  toast(t('pinAccepted', { name: L.name }), 'ok', 5000);
-}
-function botReply(text) {
-  if (!S.active) return;
-  const c = pickBot(); if (!c) return;
-  const R = CHAT_REPLY, L = R[prefs.lang] ? prefs.lang : 'fr';
-  const reply = text.startsWith(t('myPosition')) ? R[L + 'Pos'] : /https?:\/\/|www\./.test(text) ? R[L + 'Link'] : R[L][Math.floor(Math.random() * R[L].length)];
-  H.chat({ id: rid(), by: c.id, text: reply, at: clock() });
-}
-function pickBot(filter) {
-  const l = [...SIM.cars.values()].filter(c => c.id !== me.id && !c.offline && (!filter || filter(c)));
-  return l.length ? l[Math.floor(Math.random() * l.length)] : null;
-}
-function scenario(k, auto) {
-  if (!S.active) return;
-  const now = clock();
-  if (!auto) closeSheets();
-  const noBot = () => { if (!auto) toast(t('noBot'), 'info', 4000); };
-  if (k === 'talk') { const c = pickBot(); if (!c) return noBot(); botSay(c); }
-  else if (k === 'alert') {
-    const c = pickBot(); if (!c) return noBot();
-    const kinds = ['pause', 'essence', 'ralentir', 'perdu'];
-    botMsg(c, kinds[Math.floor(Math.random() * kinds.length)]);
-  } else if (k === 'chat') {
-    const c = pickBot(); if (!c) return noBot();
-    const lines = CHAT_BOT[prefs.lang] || CHAT_BOT.fr;
-    let text = lines[Math.floor(Math.random() * lines.length)];
-    if (text.includes('{link}')) {
-      const dest = S.plan.wps[S.plan.wps.length - 1];
-      const base = dest ? [dest.lat, dest.lng] : (S.pos ? [S.pos.lat, S.pos.lng] : DEMO_START);
-      const pt = offsetPoint(base, rand(400, 1500), rand(0, 360));
-      text = text.replace('{link}', OSM_LINK(pt[0], pt[1]));
-    }
-    H.chat({ id: rid(), by: c.id, text, at: now });
-  } else if (k === 'pin') {
-    const c = pickBot(); if (!c) return noBot();
-    let pt = null;
-    if (SIM.path) { const q = pointAt(SIM.path, Math.min(SIM.path.total, c.s + rand(1500, 4000))); pt = offsetPoint([q.lat, q.lng], 40, (q.hdg || 0) + 90); }
-    else { const p = carPoint(c); if (p) pt = offsetPoint([p.lat, p.lng], rand(150, 400), rand(0, 360)); }
-    if (!pt) return noBot();
-    const types = ['view', 'food', 'fuel', 'parking', 'danger'];
-    H.pin({ id: rid(), lat: pt[0], lng: pt[1], type: types[Math.floor(Math.random() * types.length)], label: '', by: c.id, at: now });
-  } else if (k === 'lag') {
-    const c = pickBot(x => x.id !== S.leaderId); if (!c) return noBot();
-    const X = prefs.lagKm * 1000 + 600;
-    if (SIM.path && c.s > X) c.s -= X;
-    else { const p = carPoint(c); if (p) { c.ghost = offsetPoint([p.lat, p.lng], X, rand(0, 360)); c.ghostUntil = now + 60000; } }
-    emitBots();
-    toast(t('lagStarted', { name: c.name, d: fmtDist(X) }), 'info', 6000);
-  } else if (k === 'stop') {
-    if (isLeader()) { toast(t('needFollower'), 'info', 6000); return; }
-    if (!S.plan.wps.length) { toast(t('needRoute'), 'info', 5000); return; }
-    const L = SIM.cars.get(S.leaderId); if (!L) return noBot();
-    L.stopUntil = now + 80000;
-    if (SIM.mode === 'sim') SIM.A.stopUntil = now + 80000;
-    toast(t('stopStarted', { name: L.name }), 'info', 7000);
-  } else if (k === 'sos') {
-    const c = pickBot(); if (!c) return noBot();
-    c.stopUntil = now + 90000;
-    botMsg(c, 'sos');
-  } else if (k === 'signal') {
-    const c = pickBot(); if (!c) return noBot();
-    c.silentUntil = now + 75000;
-    toast(t('signalStarted', { name: c.name }), 'info', 5000);
-  } else if (k === 'leave') {
-    const c = pickBot(x => x.id !== S.leaderId); if (!c) return noBot();
-    c.offline = true;
-    H.leave({ id: c.id });
-    setTimeout(() => { if (!S.active || !SIM.cars.has(c.id)) return; c.offline = false; H.join({ id: c.id, n: c.name, c: c.color }); }, 30000);
-  } else if (k === 'leader') {
-    const order = [me.id, ...BOTS.map(b => b.id)].filter(id => id === me.id || (SIM.cars.get(id) && !SIM.cars.get(id).offline));
-    const i = order.indexOf(S.leaderId);
-    setLeader(order[(i + 1) % order.length]);
-  }
 }
 
 /* ---------- convoi réel : Supabase Realtime + WebRTC ---------- */
@@ -2607,7 +2129,7 @@ async function openHistory() {
     const mine = tr.stats.find(r => r.me) || {};
     const n = tr.stats.length;
     return `<button class="item" data-trip="${esc(tr.id)}"><div class="grow">
-      <div class="t">${esc(tr.dest || t('demoTrip'))}</div>
+      <div class="t">${esc(tr.dest || t('tripDefault'))}</div>
       <div class="s">${esc(fmtDate(tr.start))}</div>
       <div class="s">${esc(t('tripLine', { dist: fmtDist(mine.dist || 0), dur: fmtDur(tr.end - tr.start), cars: n > 1 ? t('carsN', { n }) : t('cars1') }))}</div>
     </div><span class="chev">${ic(ICON.chev, 18)}</span></button>`;
@@ -2618,7 +2140,7 @@ async function openTrip(id) {
   try { tr = (await DB.allTrips()).find(x => x.id === id); } catch (e) { /* ignoré */ }
   if (!tr) return;
   show('trip');
-  $('#tripTitle').textContent = tr.dest || t('demoTrip');
+  $('#tripTitle').textContent = tr.dest || t('tripDefault');
   const mine = tr.stats.find(r => r.me) || { dist: 0, mv: 0, mx: 0 };
   $('#tripStats').innerHTML = `<p class="s">${esc(t('fromTo', { date: fmtDate(tr.start), a: fmtClock(tr.start), b: fmtClock(tr.end) }))}</p>`
     + bigStats(mine, 0)
@@ -2630,7 +2152,7 @@ async function openTrip(id) {
   const speeds = [10, 30, 60, 120, 300, 600];
   const target = dur / 60;
   const speed = speeds.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
-  const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [DEMO_START[1], DEMO_START[0]], zoom: 9, attributionControl: false, dragRotate: false });
+  const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [MAP_HOME[1], MAP_HOME[0]], zoom: 7, attributionControl: false, dragRotate: false });
   map.touchZoomRotate.disableRotation();
   RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0 };
   $('#rpSlider').max = dur; $('#rpSlider').value = 0;
@@ -2710,20 +2232,18 @@ function bind() {
     me.color = b.dataset.c; store.set('color', me.color);
     $$('.swatch').forEach(s => s.setAttribute('aria-pressed', String(s === b)));
   });
-  $('#btnStart').addEventListener('click', () => start());
   $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
-  $('#btnCreate').addEventListener('click', () => { if (!configOk()) { homeErr(t('cfgWarn')); return; } start({ live: true, creating: true, code: newCode() }); });
+  $('#btnCreate').addEventListener('click', () => { if (!configOk()) { homeErr(t('cfgWarn')); return; } start({ creating: true, code: newCode() }); });
   $('#btnJoin').addEventListener('click', () => {
     if (!configOk()) { homeErr(t('cfgWarn')); return; }
     const c = $('#code').value.trim().toUpperCase();
     if (c.length !== 6) { homeErr(t('errCode')); $('#code').focus(); return; }
-    start({ live: true, code: c });
+    start({ code: c });
   });
   $('#code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); });
   $('#code').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); $('#btnJoin').click(); } });
   $('#btnHistory').addEventListener('click', () => openHistory());
   $('#btnHomeSettings').addEventListener('click', () => openSheet('settings'));
-  $('#btnDemoPanel').addEventListener('click', () => openSheet('demo'));
   $('#btnChat').addEventListener('click', () => openSheet('chat'));
   $('#chatSend').addEventListener('click', () => { const i = $('#chatInput'); sendChat(i.value); i.value = ''; });
   $('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(e.target.value); e.target.value = ''; } });
@@ -2731,18 +2251,9 @@ function bind() {
 
   document.addEventListener('click', e => {
     const segBtn = e.target.closest('.seg[data-pref] button');
-    if (segBtn) { const k = segBtn.closest('.seg').dataset.pref; setPref(k, k === 'lagKm' ? +segBtn.dataset.v : segBtn.dataset.v); return; }
-    const simBtn = e.target.closest('.seg[data-sim] button');
-    if (simBtn) {
-      const k = simBtn.closest('.seg').dataset.sim, v = +simBtn.dataset.v;
-      if (k === 'factor') { SIM.paused = v === 0; if (v) SIM.factor = v; }
-      if (k === 'auto') { SIM.auto = !!v; SIM.nextEvent = clock() + 30000; }
-      syncSegs(); return;
-    }
+    if (segBtn) { const k = segBtn.closest('.seg').dataset.pref; setPref(k, ['lagKm', 'gaugeScale', 'speedWarn'].includes(k) ? +segBtn.dataset.v : segBtn.dataset.v); return; }
     const acc = e.target.closest('[data-accent]');
     if (acc) { setPref('accent', acc.dataset.accent); return; }
-    const sc = e.target.closest('[data-sc]');
-    if (sc) { scenario(sc.dataset.sc); return; }
     if (e.target.closest('[data-close]')) closeSheets();
   });
 
@@ -2910,9 +2421,9 @@ function bind() {
   document.addEventListener('visibilitychange', () => {
     if (!S.active) return;
     if (document.visibilityState === 'visible') {
-      keepAwake(); unlockAudio(); SIM.lastReal = performance.now();
-      if (S.live || SIM.mode === 'gps') startGeo();
-      if (S.live) { if (!S.conn) reconnect(); setTimeout(checkPeers, 1500); maybeSendPos(true); }
+      keepAwake(); unlockAudio(); startGeo();
+      if (!S.conn) reconnect();
+      setTimeout(checkPeers, 1500); maybeSendPos(true);
     }
     else talkStop(true);
   });
