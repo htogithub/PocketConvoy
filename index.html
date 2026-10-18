@@ -310,7 +310,7 @@ svg{display:block}
 #main.view-speed .strip-row{display:none}
 @media (max-height:720px){.sp-tile.opt{display:none}}
 
-/* voitures */
+/* véhicules */
 .car{width:44px;height:44px;--c:#4C9EFF;cursor:pointer}
 .car-dot{position:absolute;inset:10px;border-radius:50%;background:var(--c);border:2px solid var(--ring);display:grid;place-items:center;color:#0F0F10;font-weight:600;font-size:12px}
 .car.me .car-dot{inset:7px;font-size:14px;box-shadow:0 0 0 2px var(--text)}
@@ -439,7 +439,7 @@ setTimeout(out,6000);})();</script>
 
     <label class="field">
       <span class="field-label" data-i18n="nickname">Ton pseudo</span>
-      <input id="name" class="text" maxlength="16" autocomplete="nickname" placeholder="Nitsu" data-i18n-ph="nicknamePh">
+      <input id="name" class="text" maxlength="16" autocomplete="nickname" placeholder="Pseudo" data-i18n-ph="nicknamePh">
     </label>
     <div class="field">
       <span class="field-label" data-i18n="colour">Ta couleur sur la carte</span>
@@ -662,7 +662,7 @@ setTimeout(out,6000);})();</script>
       <div class="toggles" id="sndList"></div></div>
     <div class="field"><span class="field-label" data-i18n="talkBtn">Bouton du talkie</span>
       <div class="seg" data-pref="talkMode"><button data-v="hold" data-i18n="hold">Maintenir</button><button data-v="toggle" data-i18n="toggle">Appui simple</button></div></div>
-    <div class="field"><span class="field-label" data-i18n="lagAlert">Alerte quand une voiture est loin du leader</span>
+    <div class="field"><span class="field-label" data-i18n="lagAlert">Alerte quand un véhicule est loin du leader</span>
       <div class="seg" data-pref="lagKm" id="lagSeg"></div></div>
     <div class="field"><span class="field-label" data-i18n="units">Unités</span>
       <div class="seg" data-pref="distUnit"><button data-v="km">km</button><button data-v="mi" data-i18n="miles">miles</button></div>
@@ -676,6 +676,10 @@ setTimeout(out,6000);})();</script>
       <div class="seg" data-pref="speedWarn" id="speedWarnSeg"></div>
       <p class="s" data-i18n="gWarnNote"></p></div>
     <button class="btn btn-ghost" id="btnTuto" data-i18n="tutoAgain">Revoir le tutoriel</button>
+    <div class="field">
+      <button class="btn btn-ghost" id="btnExport" data-i18n="exportData">Exporter mes données</button>
+      <p class="s" data-i18n="exportNote"></p>
+    </div>
     <div class="credits">
       <span class="field-label" data-i18n="credits">Crédits</span>
       <p class="s" id="creditsText"></p>

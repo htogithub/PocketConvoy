@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -105,7 +105,7 @@ const MAP_HOME = [46.8, 8.23];
 const I18N = {
   fr: {
     tagline: 'Rouler ensemble, sans se perdre',
-    nickname: 'Ton pseudo', nicknamePh: 'Nitsu', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
+    nickname: 'Ton pseudo', nicknamePh: 'Pseudo', colour: 'Ta couleur sur la carte', colourAria: 'Couleur',
     history: 'Historique', settings: 'Réglages',
     homeNote: 'Pendant le trajet, garde l’app ouverte au premier plan, écran allumé : sur iPhone, une web app s’arrête quand l’écran se verrouille.',
     tabMap: 'Carte', tabSpeed: 'Compteur', viewAria: 'Vue', pickHint: 'Touche la carte pour placer l’étape', cancel: 'Annuler',
@@ -115,7 +115,7 @@ const I18N = {
     qSos: 'Panne ou urgence', qSosConfirm: 'Toucher encore pour confirmer',
     quickNote: 'Chaque alerte part à tout le convoi avec un son. Une panne s’affiche en plein écran chez les autres.',
     convoy: 'Convoi', lang: 'Langue', theme: 'Thème', accent: 'Couleur d’accent', talkBtn: 'Bouton du talkie', hold: 'Maintenir', toggle: 'Appui simple',
-    map: 'Carte', night: 'Sombre', day: 'Claire', lagAlert: 'Alerte quand une voiture est loin du leader',
+    map: 'Carte', night: 'Sombre', day: 'Claire', lagAlert: 'Alerte quand un véhicule est loin du leader',
     endTrip: 'Terminer le trajet', quit: 'Quitter sans enregistrer', yourTrip: 'Ton trajet',
     th_graphite: 'Graphite', th_light: 'Clair', th_oled: 'OLED', th_red: 'Nuit rouge',
     thn_graphite: 'Gris neutres, une seule couleur vive pour l’essentiel.', thn_light: 'Pour rouler en plein jour.',
@@ -144,20 +144,20 @@ const I18N = {
     talks1: '{name} parle', talksN: '{names} parlent', and: ' et ', sent: 'Envoyé au convoi : {text}',
     offline: 'Hors ligne', lostSignal: 'Signal perdu', at: 'à {d}', leader: 'Leader',
     you: ' (toi)', see: 'Voir', makeLeader: 'Nommer leader', currentLeader: 'Leader actuel : {name}. Le leader choisit la destination et les étapes.',
-    youShort: 'toi', nobody: 'personne', car: 'Voiture', distance: 'Distance', driving: 'Conduite', avgShort: 'Moy.', max: 'Max',
+    youShort: 'toi', nobody: 'personne', car: 'Véhicule', distance: 'Distance', driving: 'Conduite', avgShort: 'Moy.', max: 'Max',
     rankTitle: 'Le convoi, classé par distance', drivingOf: 'Temps de conduite sur {t}', drivingTime: 'Temps de conduite',
     avgMoving: 'Vitesse moyenne en roulant', maxSpeed: 'Vitesse max', saveQuit: 'Enregistrer et quitter', keepDriving: 'Continuer à rouler',
     lagYou: 'Tu es à {d} du leader', lagOther: '{name} est à {d} du leader', leaderStopped: 'Le leader {name} est à l’arrêt',
-    heading: 'Cap {d}', itsYou: 'C’est toi', carsOnline: 'Voitures connectées', average: 'Moyenne', gapLeader: 'Écart au leader', altitude: 'Altitude',
+    heading: 'Cap {d}', itsYou: 'C’est toi', carsOnline: 'Véhicules connectés', average: 'Moyenne', gapLeader: 'Écart au leader', altitude: 'Altitude',
     noTrips: 'Aucun trajet enregistré pour l’instant. Ils apparaissent ici quand tu termines un trajet.', tripDefault: 'Trajet',
-    cars1: '1 voiture', carsN: '{n} voitures', tripLine: '{dist} en {dur}, {cars}', fromTo: '{date}, de {a} à {b}', delTrip: 'Supprimer ce trajet',
+    cars1: '1 véhicule', carsN: '{n} véhicules', tripLine: '{dist} en {dur}, {cars}', fromTo: '{date}, de {a} à {b}', delTrip: 'Supprimer ce trajet',
     confirmQuit: 'Quitter sans enregistrer ce trajet ?', confirmDel: 'Supprimer ce trajet de l’historique ?',
     viewConvoy: 'Vue du convoi', followMe: 'Me suivre',
     on: 'Activés', off: 'Désactivés',
     haptics: 'Retour haptique', hapOff: 'Désactivé', hapLight: 'Léger', hapNormal: 'Normal', hapStrong: 'Fort', hapFor: 'Utiliser pour',
     hapUi: 'Boutons', hapTalk: 'Talkie', hapAlerts: 'Alertes', hapTest: 'Tester',
     hapNote: 'Sur iPhone, Safari ne permet qu’un léger tic (iOS 18 et plus) : l’intensité règle le nombre de tics. Sur Android, la vibration suit l’intensité.',
-    sounds: 'Sons', sndPreview: 'Écouter le son de chaque alerte', sndLag: 'Voiture distancée', sndLeaderStop: 'Leader arrêté', sndPin: 'Nouveau pin', convoyWho: 'Convoi',
+    sounds: 'Sons', sndPreview: 'Écouter le son de chaque alerte', sndLag: 'Véhicule distancé', sndLeaderStop: 'Leader arrêté', sndPin: 'Nouveau pin', convoyWho: 'Convoi',
     pins: 'Pins du convoi', noPins: 'Aucun pin pour l’instant. Garde le doigt appuyé sur la carte pour en placer un.', newPin: 'Nouveau pin', pinType: 'Type',
     pinLabelPh: 'Nom (facultatif)', addPin: 'Ajouter le pin', pinHere: 'Pin à ma position', pinOnMap: 'Placer un pin sur la carte', pinHint: 'Touche la carte pour placer le pin',
     pinBy: 'Ajouté par {name}, {ago}', agoNow: 'à l’instant', agoMin: 'il y a {n} min', pinAdded: 'Pin ajouté, visible par tout le convoi',
@@ -171,11 +171,12 @@ const I18N = {
     gNeedle: 'Aiguille', gRing: 'Anneau', gBar: 'Barre', gHud: 'Pare-brise',
     gHudNote: 'Pare-brise : chiffres inversés qui se reflètent dans le pare-brise la nuit. Pose le téléphone à plat sous la vitre.',
     tutoSkip: 'Passer', tutoNext: 'Suivant', tutoGo: 'C’est parti', tutoAgain: 'Revoir le tutoriel',
-    tuto1t: 'Bienvenue sur PocketConvoy', tuto1d: 'Roulez à plusieurs voitures sans vous perdre : chacun voit les autres en direct sur la carte.',
+    tuto1t: 'Bienvenue sur PocketConvoy', tuto1d: 'Roulez à plusieurs véhicules, voitures ou motos, sans vous perdre : chacun voit les autres en direct sur la carte.',
     tuto2t: 'Créer ou rejoindre', tuto2d: 'Une personne crée le convoi. Les autres le rejoignent avec le code, le lien d’invitation ou en scannant le QR code.',
     tuto3t: 'Le leader guide', tuto3d: 'Le leader choisit la destination et les étapes, et tout le monde reçoit le guidage. Garde le doigt appuyé sur la carte pour poser un pin.',
     tuto4t: 'Parler et prévenir', tuto4d: 'Maintiens le gros bouton pour parler au talkie. Alertes prévient tout le convoi en un geste, et le chat sert pour les messages et les liens.',
     tuto5t: 'Avant de partir', tuto5d: 'Autorise la localisation et le micro. Garde l’app ouverte, écran allumé, sur un support : sur iPhone, une web app s’arrête quand l’écran se verrouille.',
+    exportData: 'Exporter mes données', exportNote: 'Pseudo, réglages et historique des trajets, dans un fichier JSON.',
     units: 'Unités', miles: 'miles', gauge: 'Compteur', gDial: 'Cadran', gDigital: 'Numérique', gMax: 'Graduation maximale',
     gWarn: 'Seuil de vitesse', warnOff: 'Aucun', gWarnNote: 'Au-delà du seuil choisi, la vitesse et l’aiguille passent au rouge.',
     create: 'Créer un convoi', orJoin: 'ou rejoindre avec un code', join: 'Rejoindre', errCode: 'Le code du convoi fait 6 caractères.',
@@ -183,14 +184,14 @@ const I18N = {
     errLive: 'La connexion au serveur n’a pas pu se charger. Vérifie ta connexion.', invite: 'Inviter des amis', codeLabel: 'Code du convoi', shareLink: 'Partager le lien d’invitation',
     shareText: 'Rejoins mon convoi sur PocketConvoy avec le code {code}', linkCopied: 'Lien d’invitation copié',
     created: 'Convoi créé. Invite tes amis depuis Convoi, code {code}.', connLost: 'Connexion au convoi perdue, reconnexion…',
-    waiting: 'En attente des autres voitures. Code {code}', endAll: 'Terminer pour tout le convoi', endedAll: '{name} a terminé le trajet pour tout le convoi',
+    waiting: 'En attente des autres véhicules. Code {code}', endAll: 'Terminer pour tout le convoi', endedAll: '{name} a terminé le trajet pour tout le convoi',
     audioOk: 'Talkie connecté', audioFail: 'Talkie en échec', audioWait: 'Talkie en connexion', tapForSound: 'Touche l’écran pour entendre le talkie de tes amis.',
     chat: 'Chat', chatPh: 'Message ou lien', chatEmpty: 'Aucun message pour l’instant. Le chat repart à zéro à chaque nouveau convoi.',
     chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot.',
   },
   en: {
     tagline: 'Drive together, never lose each other',
-    nickname: 'Your nickname', nicknamePh: 'Nitsu', colour: 'Your colour on the map', colourAria: 'Colour',
+    nickname: 'Your nickname', nicknamePh: 'Nickname', colour: 'Your colour on the map', colourAria: 'Colour',
     history: 'History', settings: 'Settings',
     homeNote: 'While driving, keep the app open in the foreground with the screen on: on iPhone, a web app stops when the screen locks.',
     tabMap: 'Map', tabSpeed: 'Speed', viewAria: 'View', pickHint: 'Tap the map to place the stop', cancel: 'Cancel',
@@ -200,7 +201,7 @@ const I18N = {
     qSos: 'Breakdown or emergency', qSosConfirm: 'Tap again to confirm',
     quickNote: 'Every alert goes to the whole convoy with a sound. A breakdown shows full screen on the other phones.',
     convoy: 'Convoy', lang: 'Language', theme: 'Theme', accent: 'Accent colour', talkBtn: 'Walkie-talkie button', hold: 'Hold', toggle: 'Tap',
-    map: 'Map', night: 'Dark', day: 'Light', lagAlert: 'Alert when a car is far from the leader',
+    map: 'Map', night: 'Dark', day: 'Light', lagAlert: 'Alert when a vehicle is far from the leader',
     endTrip: 'End the trip', quit: 'Leave without saving', yourTrip: 'Your trip',
     th_graphite: 'Graphite', th_light: 'Light', th_oled: 'OLED', th_red: 'Red night',
     thn_graphite: 'Neutral greys, a single bright colour for what matters.', thn_light: 'For driving in daylight.',
@@ -229,20 +230,20 @@ const I18N = {
     talks1: '{name} is talking', talksN: '{names} are talking', and: ' and ', sent: 'Sent to the convoy: {text}',
     offline: 'Offline', lostSignal: 'Signal lost', at: '{d} away', leader: 'Leader',
     you: ' (you)', see: 'Show', makeLeader: 'Make leader', currentLeader: 'Current leader: {name}. The leader picks the destination and the stops.',
-    youShort: 'you', nobody: 'nobody', car: 'Car', distance: 'Distance', driving: 'Driving', avgShort: 'Avg.', max: 'Max',
+    youShort: 'you', nobody: 'nobody', car: 'Vehicle', distance: 'Distance', driving: 'Driving', avgShort: 'Avg.', max: 'Max',
     rankTitle: 'The convoy, ranked by distance', drivingOf: 'Driving time out of {t}', drivingTime: 'Driving time',
     avgMoving: 'Average speed while moving', maxSpeed: 'Top speed', saveQuit: 'Save and leave', keepDriving: 'Keep driving',
     lagYou: 'You are {d} from the leader', lagOther: '{name} is {d} from the leader', leaderStopped: 'The leader {name} has stopped',
-    heading: 'Heading {d}', itsYou: 'It’s you', carsOnline: 'Cars connected', average: 'Average', gapLeader: 'Gap to leader', altitude: 'Altitude',
+    heading: 'Heading {d}', itsYou: 'It’s you', carsOnline: 'Vehicles connected', average: 'Average', gapLeader: 'Gap to leader', altitude: 'Altitude',
     noTrips: 'No trips saved yet. They appear here when you end a trip.', tripDefault: 'Trip',
-    cars1: '1 car', carsN: '{n} cars', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, from {a} to {b}', delTrip: 'Delete this trip',
+    cars1: '1 vehicle', carsN: '{n} vehicles', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, from {a} to {b}', delTrip: 'Delete this trip',
     confirmQuit: 'Leave without saving this trip?', confirmDel: 'Delete this trip from the history?',
     viewConvoy: 'Convoy view', followMe: 'Follow me',
     on: 'On', off: 'Off',
     haptics: 'Haptic feedback', hapOff: 'Off', hapLight: 'Light', hapNormal: 'Normal', hapStrong: 'Strong', hapFor: 'Use for',
     hapUi: 'Buttons', hapTalk: 'Walkie-talkie', hapAlerts: 'Alerts', hapTest: 'Test',
     hapNote: 'On iPhone, Safari only allows a light tick (iOS 18 and later): the strength sets how many ticks you feel. On Android, the vibration follows the strength.',
-    sounds: 'Sounds', sndPreview: 'Listen to each alert sound', sndLag: 'Car falling behind', sndLeaderStop: 'Leader stopped', sndPin: 'New pin', convoyWho: 'Convoy',
+    sounds: 'Sounds', sndPreview: 'Listen to each alert sound', sndLag: 'Vehicle falling behind', sndLeaderStop: 'Leader stopped', sndPin: 'New pin', convoyWho: 'Convoy',
     pins: 'Convoy pins', noPins: 'No pins yet. Press and hold on the map to drop one.', newPin: 'New pin', pinType: 'Type',
     pinLabelPh: 'Name (optional)', addPin: 'Drop the pin', pinHere: 'Pin at my position', pinOnMap: 'Place a pin on the map', pinHint: 'Tap the map to place the pin',
     pinBy: 'Added by {name}, {ago}', agoNow: 'just now', agoMin: '{n} min ago', pinAdded: 'Pin dropped, visible to the whole convoy',
@@ -256,11 +257,12 @@ const I18N = {
     gNeedle: 'Needle', gRing: 'Ring', gBar: 'Bar', gHud: 'Windshield',
     gHudNote: 'Windshield: mirrored digits that reflect in the windshield at night. Lay the phone flat under the glass.',
     tutoSkip: 'Skip', tutoNext: 'Next', tutoGo: 'Let’s go', tutoAgain: 'Show the tutorial again',
-    tuto1t: 'Welcome to PocketConvoy', tuto1d: 'Drive in a group of cars without losing each other: everyone sees the others live on the map.',
+    tuto1t: 'Welcome to PocketConvoy', tuto1d: 'Travel as a group of vehicles, cars or motorbikes, without losing each other: everyone sees the others live on the map.',
     tuto2t: 'Create or join', tuto2d: 'One person creates the convoy. The others join with the code, the invite link or by scanning the QR code.',
     tuto3t: 'The leader guides', tuto3d: 'The leader picks the destination and the stops, and everyone gets the guidance. Press and hold on the map to drop a pin.',
     tuto4t: 'Talk and warn', tuto4d: 'Hold the big button to talk on the walkie-talkie. Alerts warns the whole convoy in one tap, and the chat is for messages and links.',
     tuto5t: 'Before you leave', tuto5d: 'Allow location and microphone. Keep the app open with the screen on, on a mount: on iPhone, a web app stops when the screen locks.',
+    exportData: 'Export my data', exportNote: 'Nickname, settings and trip history, in a JSON file.',
     units: 'Units', miles: 'miles', gauge: 'Speedometer', gDial: 'Dial', gDigital: 'Digital', gMax: 'Maximum on the dial',
     gWarn: 'Speed threshold', warnOff: 'None', gWarnNote: 'Above the chosen threshold, the speed and the needle turn red.',
     create: 'Create a convoy', orJoin: 'or join with a code', join: 'Join', errCode: 'The convoy code has 6 characters.',
@@ -268,14 +270,14 @@ const I18N = {
     errLive: 'The server connection could not load. Check your connection.', invite: 'Invite friends', codeLabel: 'Convoy code', shareLink: 'Share the invite link',
     shareText: 'Join my convoy on PocketConvoy with the code {code}', linkCopied: 'Invite link copied',
     created: 'Convoy created. Invite your friends from Convoy, code {code}.', connLost: 'Lost connection to the convoy, reconnecting…',
-    waiting: 'Waiting for the other cars. Code {code}', endAll: 'End for the whole convoy', endedAll: '{name} ended the trip for the whole convoy',
+    waiting: 'Waiting for the other vehicles. Code {code}', endAll: 'End for the whole convoy', endedAll: '{name} ended the trip for the whole convoy',
     audioOk: 'Walkie-talkie connected', audioFail: 'Walkie-talkie failed', audioWait: 'Walkie-talkie connecting', tapForSound: 'Tap the screen to hear your friends on the walkie-talkie.',
     chat: 'Chat', chatPh: 'Message or link', chatEmpty: 'No messages yet. The chat starts fresh with every new convoy.',
     chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot.',
   },
   de: {
     tagline: 'Gemeinsam fahren, ohne sich zu verlieren',
-    nickname: 'Dein Name', nicknamePh: 'Nitsu', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
+    nickname: 'Dein Name', nicknamePh: 'Name', colour: 'Deine Farbe auf der Karte', colourAria: 'Farbe',
     history: 'Verlauf', settings: 'Einstellungen',
     homeNote: 'Lass die App während der Fahrt im Vordergrund und den Bildschirm an: Auf dem iPhone stoppt eine Web-App, wenn der Bildschirm sperrt.',
     tabMap: 'Karte', tabSpeed: 'Tacho', viewAria: 'Ansicht', pickHint: 'Tippe auf die Karte, um den Zwischenstopp zu setzen', cancel: 'Abbrechen',
@@ -285,7 +287,7 @@ const I18N = {
     qSos: 'Panne oder Notfall', qSosConfirm: 'Zum Bestätigen nochmals tippen',
     quickNote: 'Jede Warnung geht mit einem Ton an den ganzen Konvoi. Eine Panne erscheint bei den anderen im Vollbild.',
     convoy: 'Konvoi', lang: 'Sprache', theme: 'Design', accent: 'Akzentfarbe', talkBtn: 'Funkgerät-Taste', hold: 'Halten', toggle: 'Antippen',
-    map: 'Karte', night: 'Dunkel', day: 'Hell', lagAlert: 'Warnung, wenn ein Auto weit vom Konvoiführer entfernt ist',
+    map: 'Karte', night: 'Dunkel', day: 'Hell', lagAlert: 'Warnung, wenn ein Fahrzeug weit vom Konvoiführer entfernt ist',
     endTrip: 'Fahrt beenden', quit: 'Ohne Speichern verlassen', yourTrip: 'Deine Fahrt',
     th_graphite: 'Graphit', th_light: 'Hell', th_oled: 'OLED', th_red: 'Rote Nacht',
     thn_graphite: 'Neutrale Grautöne, eine einzige kräftige Farbe für das Wichtigste.', thn_light: 'Zum Fahren bei Tageslicht.',
@@ -314,20 +316,20 @@ const I18N = {
     talks1: '{name} spricht', talksN: '{names} sprechen', and: ' und ', sent: 'An den Konvoi gesendet: {text}',
     offline: 'Offline', lostSignal: 'Signal verloren', at: '{d} entfernt', leader: 'Konvoiführer',
     you: ' (du)', see: 'Zeigen', makeLeader: 'Zum Führer machen', currentLeader: 'Aktueller Konvoiführer: {name}. Er wählt das Ziel und die Zwischenstopps.',
-    youShort: 'du', nobody: 'niemand', car: 'Auto', distance: 'Distanz', driving: 'Fahrzeit', avgShort: 'Ø', max: 'Max',
+    youShort: 'du', nobody: 'niemand', car: 'Fahrzeug', distance: 'Distanz', driving: 'Fahrzeit', avgShort: 'Ø', max: 'Max',
     rankTitle: 'Der Konvoi, nach Distanz geordnet', drivingOf: 'Fahrzeit von {t}', drivingTime: 'Fahrzeit',
     avgMoving: 'Durchschnitt während der Fahrt', maxSpeed: 'Höchstgeschwindigkeit', saveQuit: 'Speichern und verlassen', keepDriving: 'Weiterfahren',
     lagYou: 'Du bist {d} vom Konvoiführer entfernt', lagOther: '{name} ist {d} vom Konvoiführer entfernt', leaderStopped: 'Konvoiführer {name} steht',
-    heading: 'Richtung {d}', itsYou: 'Du', average: 'Durchschnitt', gapLeader: 'Abstand zum Führer', altitude: 'Höhe', carsOnline: 'Verbundene Autos',
+    heading: 'Richtung {d}', itsYou: 'Du', average: 'Durchschnitt', gapLeader: 'Abstand zum Führer', altitude: 'Höhe', carsOnline: 'Verbundene Fahrzeuge',
     noTrips: 'Noch keine gespeicherten Fahrten. Sie erscheinen hier, wenn du eine Fahrt beendest.', tripDefault: 'Fahrt',
-    cars1: '1 Auto', carsN: '{n} Autos', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, von {a} bis {b}', delTrip: 'Diese Fahrt löschen',
+    cars1: '1 Fahrzeug', carsN: '{n} Fahrzeuge', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, von {a} bis {b}', delTrip: 'Diese Fahrt löschen',
     confirmQuit: 'Ohne Speichern dieser Fahrt verlassen?', confirmDel: 'Diese Fahrt aus dem Verlauf löschen?',
     viewConvoy: 'Konvoi-Ansicht', followMe: 'Mir folgen',
     on: 'An', off: 'Aus',
     haptics: 'Haptisches Feedback', hapOff: 'Aus', hapLight: 'Leicht', hapNormal: 'Normal', hapStrong: 'Stark', hapFor: 'Verwenden für',
     hapUi: 'Tasten', hapTalk: 'Funkgerät', hapAlerts: 'Warnungen', hapTest: 'Testen',
     hapNote: 'Auf dem iPhone erlaubt Safari nur ein leichtes Ticken (ab iOS 18): Die Stärke bestimmt die Anzahl der Ticks. Auf Android folgt die Vibration der Stärke.',
-    sounds: 'Töne', sndPreview: 'Den Ton jeder Warnung anhören', sndLag: 'Auto zurückgefallen', sndLeaderStop: 'Konvoiführer steht', sndPin: 'Neuer Pin', convoyWho: 'Konvoi',
+    sounds: 'Töne', sndPreview: 'Den Ton jeder Warnung anhören', sndLag: 'Fahrzeug zurückgefallen', sndLeaderStop: 'Konvoiführer steht', sndPin: 'Neuer Pin', convoyWho: 'Konvoi',
     pins: 'Pins des Konvois', noPins: 'Noch keine Pins. Halte den Finger auf der Karte gedrückt, um einen zu setzen.', newPin: 'Neuer Pin', pinType: 'Art',
     pinLabelPh: 'Name (optional)', addPin: 'Pin setzen', pinHere: 'Pin an meiner Position', pinOnMap: 'Pin auf der Karte setzen', pinHint: 'Tippe auf die Karte, um den Pin zu setzen',
     pinBy: 'Gesetzt von {name}, {ago}', agoNow: 'gerade eben', agoMin: 'vor {n} Min.', pinAdded: 'Pin gesetzt, für den ganzen Konvoi sichtbar',
@@ -341,11 +343,12 @@ const I18N = {
     gNeedle: 'Zeiger', gRing: 'Ring', gBar: 'Balken', gHud: 'Frontscheibe',
     gHudNote: 'Frontscheibe: gespiegelte Ziffern, die sich nachts in der Frontscheibe spiegeln. Leg das Handy flach unter die Scheibe.',
     tutoSkip: 'Überspringen', tutoNext: 'Weiter', tutoGo: 'Los geht’s', tutoAgain: 'Anleitung erneut ansehen',
-    tuto1t: 'Willkommen bei PocketConvoy', tuto1d: 'Fahrt mit mehreren Autos, ohne euch zu verlieren: Alle sehen die anderen live auf der Karte.',
+    tuto1t: 'Willkommen bei PocketConvoy', tuto1d: 'Fahrt mit mehreren Fahrzeugen, Autos oder Motorrädern, ohne euch zu verlieren: Alle sehen die anderen live auf der Karte.',
     tuto2t: 'Erstellen oder beitreten', tuto2d: 'Eine Person erstellt den Konvoi. Die anderen treten mit dem Code, dem Einladungslink oder per QR-Code bei.',
     tuto3t: 'Der Konvoiführer leitet', tuto3d: 'Der Konvoiführer wählt Ziel und Zwischenstopps, alle erhalten die Navigation. Halte den Finger auf der Karte gedrückt, um einen Pin zu setzen.',
     tuto4t: 'Sprechen und warnen', tuto4d: 'Halte die grosse Taste gedrückt, um über das Funkgerät zu sprechen. Warnungen informiert den ganzen Konvoi mit einem Tipp, der Chat ist für Nachrichten und Links.',
     tuto5t: 'Vor der Abfahrt', tuto5d: 'Erlaube Standort und Mikrofon. Lass die App mit eingeschaltetem Bildschirm in einer Halterung offen: Auf dem iPhone stoppt eine Web-App, wenn der Bildschirm sperrt.',
+    exportData: 'Meine Daten exportieren', exportNote: 'Name, Einstellungen und Fahrtenverlauf in einer JSON-Datei.',
     units: 'Einheiten', miles: 'Meilen', gauge: 'Tacho', gDial: 'Zifferblatt', gDigital: 'Digital', gMax: 'Höchstwert der Skala',
     gWarn: 'Tempogrenze', warnOff: 'Keine', gWarnNote: 'Über der gewählten Grenze werden Tempo und Zeiger rot.',
     create: 'Konvoi erstellen', orJoin: 'oder mit einem Code beitreten', join: 'Beitreten', errCode: 'Der Konvoi-Code hat 6 Zeichen.',
@@ -353,7 +356,7 @@ const I18N = {
     errLive: 'Die Serververbindung konnte nicht geladen werden. Prüfe deine Verbindung.', invite: 'Freunde einladen', codeLabel: 'Konvoi-Code', shareLink: 'Einladungslink teilen',
     shareText: 'Tritt meinem Konvoi auf PocketConvoy bei, Code {code}', linkCopied: 'Einladungslink kopiert',
     created: 'Konvoi erstellt. Lade deine Freunde unter Konvoi ein, Code {code}.', connLost: 'Verbindung zum Konvoi verloren, neuer Versuch…',
-    waiting: 'Warte auf die anderen Autos. Code {code}', endAll: 'Für den ganzen Konvoi beenden', endedAll: '{name} hat die Fahrt für den ganzen Konvoi beendet',
+    waiting: 'Warte auf die anderen Fahrzeuge. Code {code}', endAll: 'Für den ganzen Konvoi beenden', endedAll: '{name} hat die Fahrt für den ganzen Konvoi beendet',
     audioOk: 'Funkgerät verbunden', audioFail: 'Funkgerät-Fehler', audioWait: 'Funkgerät verbindet', tapForSound: 'Tippe auf den Bildschirm, um deine Freunde im Funkgerät zu hören.',
     chat: 'Chat', chatPh: 'Nachricht oder Link', chatEmpty: 'Noch keine Nachrichten. Der Chat beginnt bei jedem neuen Konvoi von vorn.',
     chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot.',
@@ -710,21 +713,29 @@ function sfx(name, force) {
 }
 /* retour haptique : vibration sur Android, petit tic du contrôle switch sur iPhone (iOS 18 et plus) */
 const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-let lastTick = 0;
+/* Safari n'a pas d'API de vibration : on bascule un interrupteur iOS (input switch), ce qui produit le tic.
+   Les iOS récents ignorent un interrupteur non affiché ou hors de l'écran : il est donc rendu dans la page,
+   en haut à gauche, presque transparent et sans interaction, et le focus est rendu au champ actif. */
+let lastTick = 0, hapticEl = null;
 function iosTick() {
   const now = performance.now();
   if (now - lastTick < 40) return;
   lastTick = now;
-  const label = document.createElement('label');
-  label.setAttribute('aria-hidden', 'true');
-  label.style.display = 'none';
-  const input = document.createElement('input');
-  input.type = 'checkbox';
-  input.setAttribute('switch', '');
-  label.appendChild(input);
-  document.head.appendChild(label);
-  label.click();
-  label.remove();
+  if (!hapticEl || !hapticEl.isConnected) {
+    hapticEl = document.createElement('label');
+    hapticEl.setAttribute('aria-hidden', 'true');
+    hapticEl.style.cssText = 'position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:.01;pointer-events:none;z-index:-1;contain:strict';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    input.tabIndex = -1;
+    input.style.cssText = 'margin:0;width:2px;height:2px';
+    hapticEl.appendChild(input);
+    document.body.appendChild(hapticEl);
+  }
+  const active = document.activeElement;
+  hapticEl.click();
+  if (active && active !== document.activeElement && active.focus) { try { active.focus({ preventScroll: true }); } catch (e) { /* ignoré */ } }
 }
 const HAPTIC = {
   tap: { cat: 'ui', vib: [10], ticks: 1 },
@@ -1109,7 +1120,7 @@ function updateCone(m) {
   if (on) c.style.transform = `rotate(${(m.dHdg != null ? m.dHdg : m.hdg) - (S.map ? S.map.getBearing() : 0)}deg)`;
 }
 /* Le GPS ne donne qu'un point par seconde environ. Pour un mouvement fluide comme une app de navigation,
-   chaque voiture glisse en continu vers sa position prévue (vitesse et cap) et la caméra suit image par image. */
+   chaque véhicule glisse en continu vers sa position prévue (vitesse et cap) et la caméra suit image par image. */
 const ANIM = { raf: 0 };
 const angDiff = (a, b) => ((a - b + 540) % 360) - 180;
 function kick() { if (!ANIM.raf) ANIM.raf = requestAnimationFrame(frame); }
@@ -1651,7 +1662,7 @@ function showSOS(m, la, ln) {
   o.classList.add('on');
 }
 
-/* ---------- bandeau et liste des voitures ---------- */
+/* ---------- bandeau et liste des véhicules ---------- */
 function scheduleStrip() { if (!S.stripT) S.stripT = setTimeout(() => { S.stripT = null; renderStrip(); }, 800); }
 function memberMeta(m) {
   if (!m.online) return t('offline');
@@ -1933,6 +1944,7 @@ function openSheet(id) {
   if (id === 'end') renderEnd();
   if (id === 'pin') renderPinSheet();
   if (id === 'chat') renderChat();
+  if (id === 'settings') DB.allTrips().then(tr => { S.tripsCache = tr; }).catch(() => { S.tripsCache = []; });
   syncSegs();
   $('#scrim').classList.add('open');
   $('#sheet-' + id).classList.add('open');
@@ -2099,7 +2111,7 @@ async function shareInvite() {
   try { await navigator.clipboard.writeText(text + ' ' + url); toast(t('linkCopied'), 'ok', 3000); } catch (e) { toast(S.code, 'info', 6000); }
 }
 
-/* talkie en direct : une liaison audio avec chaque voiture ; le micro n'est branché que pendant l'appui */
+/* talkie en direct : une liaison audio avec chaque véhicule ; le micro n'est branché que pendant l'appui */
 const RTC = { peers: new Map(), pending: new Map(), stream: null, track: null, token: 0 };
 async function askMicOnce() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
@@ -2331,6 +2343,30 @@ function onScanned(text) {
   $('#btnJoin').click();
 }
 
+/* ---------- export : pseudo, réglages et historique ---------- */
+function exportData() {
+  const data = {
+    app: 'PocketConvoy', version: APP_VERSION, exportedAt: new Date().toISOString(),
+    profile: { name: me.name || $('#name').value.trim(), color: me.color, hue: me.hue },
+    settings: Object.assign({}, prefs),
+    trips: S.tripsCache || [],
+  };
+  const name = 'pocketconvoy-' + new Date().toISOString().slice(0, 10) + '.json';
+  const file = new File([JSON.stringify(data, null, 2)], name, { type: 'application/json' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: 'PocketConvoy' }).catch(err => { if (!err || err.name !== 'AbortError') downloadFile(file); });
+    return;
+  }
+  downloadFile(file);
+}
+function downloadFile(file) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = file.name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
 /* ---------- tutoriel de la première utilisation ---------- */
 const TUTO_ICONS = [
   '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v6M19.6 9.2l-5.6 2.1M16.8 18.9l-3.4-5M7.2 18.9l3.4-5M4.4 9.2l5.6 2.1"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
@@ -2486,6 +2522,7 @@ function bind() {
   $('#tutoNext').addEventListener('click', () => tutoStep(1));
   $('#tutoSkip').addEventListener('click', closeTuto);
   $('#btnTuto').addEventListener('click', () => { closeSheets(); openTuto(); });
+  $('#btnExport').addEventListener('click', exportData);
   let tx = null;
   $('#tuto').addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
   $('#tuto').addEventListener('touchend', e => {
@@ -2607,9 +2644,9 @@ function bind() {
     b.classList.add('playing');
     setTimeout(() => b.classList.remove('playing'), 900);
   });
-  document.addEventListener('pointerdown', e => {
+  document.addEventListener('click', e => {
     const b = e.target.closest('button');
-    if (b && b.id !== 'ptt' && !b.closest('#hapCats')) haptic('tap');
+    if (b && b.id !== 'ptt' && b.id !== 'hapTest') haptic('tap');
   }, { capture: true });
   if (window.visualViewport) {
     const vv = window.visualViewport, app = $('#app');
