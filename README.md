@@ -2,7 +2,7 @@
 
 A mobile-first web app that keeps a group of cars together on a road trip: live map of every car, push-to-talk walkie-talkie, a shared route set by the convoy leader, quick alerts, a speedometer and trip statistics with replay.
 
-Create a convoy, share the invite link or the 6-character code, and every phone sees the others in real time.
+Create a convoy, share the invite link, the QR code or the 6-character code, and every phone sees the others in real time.
 
 ## Setup
 
@@ -20,7 +20,8 @@ Create a convoy, share the invite link or the 6-character code, and every phone 
 - Speedometer view, 0 to 300 km/h, with heading and live trip figures.
 - Trip statistics and a convoy table at the end of the trip; trips are saved on the device with an animated replay of every car.
 - French, English and German interface; metric or imperial units.
-- Animated launch screen.
+- Animated launch screen and a short tutorial on first launch.
+- Built-in QR code scanner to join a convoy, continuous colour pickers for your car and the accent colour.
 - Four themes (Graphite, Light, OLED, Red night) and five accent colours.
 - Installable on the iPhone home screen, opens full screen.
 
@@ -34,3 +35,5 @@ All free and without keys: MapLibre GL JS with OpenFreeMap vector tiles built on
 - `app.js`: application logic and convoy simulation
 - `sw.js`: offline app shell
 - `manifest.webmanifest` and `icons/`: home screen install
+
+© HMD Studios

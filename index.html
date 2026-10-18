@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Convoy">
 <title>PocketConvoy</title>
-<script>try{var p=JSON.parse(localStorage.getItem('pc_prefs')||'{}'),A={orange:'#FF5B1F',yellow:'#FFD60A',lime:'#B6F23A',cyan:'#00D1FF',magenta:'#FF2E88'},r=document.documentElement;if(p.theme)r.dataset.theme=p.theme;if(A[p.accent])r.style.setProperty('--accent',A[p.accent]);if(p.lang)r.lang=p.lang;}catch(e){}</script>
+<script>(function(){try{var p=JSON.parse(localStorage.getItem('pc_prefs')||'{}'),m={orange:15,yellow:51,lime:85,cyan:191,magenta:333},r=document.documentElement,h=p.accentHue!=null?p.accentHue:m[p.accent];if(p.theme)r.dataset.theme=p.theme;if(h!=null)r.style.setProperty('--accent','hsl('+h+',100%,56%)');if(p.lang)r.lang=p.lang;}catch(e){}})();</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -64,7 +64,64 @@ svg{display:block}
 .text{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--text);font:inherit;font-size:18px;padding:13px 14px;outline:none;-webkit-appearance:none;appearance:none}
 .text:focus{border-color:var(--muted)}
 .text::placeholder{color:var(--faint)}
-.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.hue-row{display:flex;align-items:center;gap:12px}
+.hue{-webkit-appearance:none;appearance:none;flex:1;min-width:0;height:30px;border-radius:999px;border:1px solid var(--line);outline:none;margin:0;
+  background:linear-gradient(90deg,hsl(0,90%,58%),hsl(60,90%,58%),hsl(120,90%,58%),hsl(180,90%,58%),hsl(240,90%,58%),hsl(300,90%,58%),hsl(360,90%,58%))}
+.hue::-webkit-slider-thumb{-webkit-appearance:none;width:32px;height:32px;border-radius:50%;background:var(--thumb,#fff);border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45)}
+.hue::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:var(--thumb,#fff);border:3px solid #fff}
+.hue-preview{width:40px;height:40px;flex:none;border-radius:50%;background:var(--c);border:2px solid var(--ring);box-shadow:0 0 0 1px var(--line);display:grid;place-items:center;color:#0F0F10;font-weight:700}
+.scan-btn{width:52px!important;padding:0!important}
+.copy{margin:4px 0 0;text-align:center;font-size:13px;color:var(--faint)}
+.sp-copy{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 26px);text-align:center;font-size:13px;color:var(--muted);opacity:0}
+#splash.go .sp-copy{animation:spName .5s ease-out 1.15s forwards}
+.seg.grid3{display:grid;grid-template-columns:repeat(3,1fr)}
+.seg.grid4{display:grid;grid-template-columns:repeat(4,1fr)}
+.invite-row{display:flex;align-items:center;gap:14px}
+.qr{width:116px;height:116px;flex:none;border-radius:12px;overflow:hidden;background:#fff;display:grid;place-items:center;padding:0}
+.qr svg{width:100%;height:100%}
+.qr .s{color:#555;font-size:12px;padding:6px;text-align:center}
+.invite-code{min-width:0;display:flex;flex-direction:column;gap:4px}
+.overlay{position:absolute;inset:0;z-index:60}
+#scanner{background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#scanVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.scan-frame{position:relative;width:min(70vw,280px);aspect-ratio:1;border-radius:22px;box-shadow:0 0 0 9999px rgba(0,0,0,.45)}
+.scan-frame i{position:absolute;width:38px;height:38px;border:4px solid var(--accent)}
+.scan-frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0;border-top-left-radius:22px}
+.scan-frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0;border-top-right-radius:22px}
+.scan-frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0;border-bottom-left-radius:22px}
+.scan-frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0;border-bottom-right-radius:22px}
+.scan-msg{position:relative;margin:22px 28px 0;color:#fff;text-align:center;font-weight:600;font-size:16px;text-shadow:0 1px 3px #000}
+.scan-close{position:absolute!important;left:24px;right:24px;width:auto!important;bottom:calc(var(--sab) + 24px);background:rgba(0,0,0,.55);border-color:rgba(255,255,255,.4)!important;color:#fff!important}
+#qrBig{background:rgba(0,0,0,.82);display:grid;place-items:center}
+.qr-big{display:flex;flex-direction:column;align-items:center;gap:16px}
+#qrBigImg{width:min(80vw,360px);aspect-ratio:1;border-radius:18px;overflow:hidden;background:#fff}
+#qrBigImg svg{width:100%;height:100%}
+#qrBigCode{color:#fff}
+#tuto{background:var(--bg);display:flex;flex-direction:column;justify-content:space-between;padding:calc(var(--sat) + 16px) calc(var(--sar) + 24px) calc(var(--sab) + 24px) calc(var(--sal) + 24px)}
+.tuto-skip{align-self:flex-end;color:var(--muted);font-weight:600;padding:10px 4px;min-height:44px}
+.tuto-card{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;max-width:420px;margin:0 auto}
+.tuto-card.in{animation:tutoIn .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes tutoIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+.tuto-icon{width:104px;height:104px;border-radius:30px;background:var(--surface-2);display:grid;place-items:center;color:var(--accent-fg)}
+.tuto-card h2{margin:0;font-family:var(--font-display);font-size:25px;font-weight:600;letter-spacing:-.02em}
+.tuto-card p{margin:0;font-size:17px;line-height:1.5;color:var(--muted)}
+.tuto-foot{display:flex;flex-direction:column;gap:20px;max-width:420px;width:100%;margin:0 auto}
+.tuto-dots{display:flex;justify-content:center;gap:8px}
+.tuto-dots i{width:7px;height:7px;border-radius:50%;background:var(--line-2);transition:width .25s}
+.tuto-dots i.on{width:22px;border-radius:4px;background:var(--accent)}
+.g-rim{fill:none;stroke:var(--line-2);stroke-width:2}
+.g-hand{stroke:var(--accent);stroke-width:4;stroke-linecap:round}
+.g-hub{fill:var(--text)}
+#gaugeSvg.over .g-hand{stroke:var(--danger)}
+.g-small{font-size:34px!important;letter-spacing:-1px}
+.g-mid{font-size:96px!important;letter-spacing:-3px}
+.g-huge{font-size:150px!important;letter-spacing:-5px}
+.g-seg{fill:var(--surface-2)}
+.g-seg.on{fill:var(--accent)}
+.g-seg.on.hot{fill:var(--danger)}
+.gs-ring .g-track,.gs-ring .g-val{stroke-width:12;stroke-linecap:round}
+#gaugeSvg.gs-hud{transform:scaleX(-1)}
+#speedo.hud .sp-stats{display:none}
 .swatch{width:32px;height:32px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px var(--bg),0 0 0 3px transparent}
 .swatch[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
 .btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:12px;padding:0 18px;font-size:16px;font-weight:700;width:100%;text-align:center}
@@ -75,7 +132,7 @@ svg{display:block}
 .divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:14px}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line)}
 .join-row{display:flex;gap:10px}
-.join-row .text{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.2em;font-weight:700;text-align:center}
+.join-row .text{flex:1;min-width:0;text-transform:uppercase;letter-spacing:.12em;font-weight:700;text-align:center;padding-left:8px;padding-right:8px}
 .join-row .btn{width:auto;flex:none}
 .warn-note{border-left:3px solid var(--accent);padding-left:12px}
 .invite{display:flex;flex-direction:column;gap:12px;padding:4px 0 16px;border-bottom:1px solid var(--line);margin-bottom:4px}
@@ -296,9 +353,6 @@ svg{display:block}
 .qbtn.wide{grid-column:1/-1;min-height:58px}
 .qbtn.sos{grid-column:1/-1;min-height:62px;border-color:var(--danger);color:var(--danger);font-weight:600}
 .qbtn.sos.confirm{background:var(--danger);color:#fff}
-.accents{display:flex;gap:12px}
-.accents button{width:34px;height:34px;border-radius:50%;background:var(--c);box-shadow:0 0 0 2px var(--surface),0 0 0 3px transparent}
-.accents button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--text)}
 .big-stats{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;border-top:1px solid var(--line)}
 .stat{padding:12px 0;border-bottom:1px solid var(--line)}
 .stat .v{font-family:var(--font-display);font-size:26px;font-weight:600;letter-spacing:-.02em;white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.1}
@@ -362,6 +416,7 @@ table.rank{width:100%;border-collapse:collapse;font-size:14px;font-variant-numer
 <div id="splash" aria-hidden="true">
   <svg class="sp-wheel" viewBox="0 0 100 100"><circle class="sp-tire" cx="50" cy="50" r="38"/><g class="sp-spokes"><path d="M50 41V16"/><path d="M58.6 47.2 82.3 39.5"/><path d="M55.3 57.3 70 77.5"/><path d="M44.7 57.3 30 77.5"/><path d="M41.4 47.2 17.7 39.5"/></g><circle class="sp-hub" cx="50" cy="50" r="8"/></svg>
   <div class="sp-name">PocketConvoy</div>
+  <div class="sp-copy">© HMD Studios</div>
 </div>
 <script>(function(){var sp=document.getElementById('splash'),started=false,done=false,
 rm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -388,7 +443,7 @@ setTimeout(out,6000);})();</script>
     </label>
     <div class="field">
       <span class="field-label" data-i18n="colour">Ta couleur sur la carte</span>
-      <div class="swatches" id="swatches"></div>
+      <div class="hue-row"><span class="hue-preview" id="colorPreview"></span><input type="range" class="hue" id="colorHue" min="0" max="359" step="1" aria-label="Couleur" data-i18n-aria="colourAria"></div>
     </div>
     <p class="err" id="homeErr" hidden></p>
 
@@ -396,6 +451,7 @@ setTimeout(out,6000);})();</script>
     <div class="divider" data-i18n="orJoin">ou rejoindre avec un code</div>
     <div class="join-row">
       <input id="code" class="text" maxlength="6" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE" enterkeyhint="go">
+      <button class="btn btn-ghost scan-btn" id="btnScan" aria-label="Scanner un QR code" data-i18n-aria="scanQr"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8V5a1.5 1.5 0 0 1 1.5-1.5h3M16 3.5h3A1.5 1.5 0 0 1 20.5 5v3M20.5 16v3a1.5 1.5 0 0 1-1.5 1.5h-3M8 20.5H5A1.5 1.5 0 0 1 3.5 19v-3M7 12h10"/></svg></button>
       <button class="btn btn-ghost" id="btnJoin" data-i18n="join">Rejoindre</button>
     </div>
     <p class="note warn-note" id="cfgWarn" hidden data-i18n="cfgWarn"></p>
@@ -405,6 +461,7 @@ setTimeout(out,6000);})();</script>
     </div>
 
     <p class="note" data-i18n="homeNote"></p>
+    <p class="copy">© HMD Studios</p>
   </div>
 </section>
 
@@ -494,6 +551,33 @@ setTimeout(out,6000);})();</script>
   <div class="scroll"><div class="scroll-inner" id="tripStats"></div></div>
 </section>
 
+<!-- Scanner de QR code -->
+<div id="scanner" class="overlay" hidden>
+  <video id="scanVideo" playsinline muted autoplay></video>
+  <div class="scan-frame"><i></i><i></i><i></i><i></i></div>
+  <p id="scanMsg" class="scan-msg"></p>
+  <button class="btn btn-ghost scan-close" id="scanClose" data-i18n="cancel">Annuler</button>
+</div>
+
+<!-- QR code agrandi -->
+<div id="qrBig" class="overlay" hidden>
+  <div class="qr-big"><div id="qrBigImg"></div><div class="code-big" id="qrBigCode"></div></div>
+</div>
+
+<!-- Tutoriel -->
+<div id="tuto" class="overlay" hidden>
+  <button class="tuto-skip" id="tutoSkip"></button>
+  <div class="tuto-card" id="tutoCard">
+    <div class="tuto-icon" id="tutoIcon"></div>
+    <h2 id="tutoTitle"></h2>
+    <p id="tutoText"></p>
+  </div>
+  <div class="tuto-foot">
+    <div class="tuto-dots" id="tutoDots"></div>
+    <button class="btn btn-primary" id="tutoNext"></button>
+  </div>
+</div>
+
 <!-- Feuilles -->
 <div id="scrim"></div>
 
@@ -564,7 +648,7 @@ setTimeout(out,6000);})();</script>
       <div class="seg" data-pref="theme"><button data-v="graphite" data-i18n="th_graphite">Graphite</button><button data-v="light" data-i18n="th_light">Clair</button><button data-v="oled" data-i18n="th_oled">OLED</button><button data-v="red" data-i18n="th_red">Nuit rouge</button></div>
       <p class="s" id="themeNote"></p></div>
     <div class="field" id="accentField"><span class="field-label" data-i18n="accent">Couleur d’accent</span>
-      <div class="accents" id="accentRow"></div></div>
+      <div class="hue-row"><input type="range" class="hue" id="accentHue" min="0" max="359" step="1" aria-label="Couleur d’accent" data-i18n-aria="accent"></div></div>
     <div class="field"><span class="field-label" data-i18n="map">Carte</span>
       <div class="seg" data-pref="mapTheme"><button data-v="night" data-i18n="night">Sombre</button><button data-v="day" data-i18n="day">Claire</button></div></div>
     <div class="field"><span class="field-label" data-i18n="haptics">Retour haptique</span>
@@ -584,16 +668,19 @@ setTimeout(out,6000);})();</script>
       <div class="seg" data-pref="distUnit"><button data-v="km">km</button><button data-v="mi" data-i18n="miles">miles</button></div>
       <div class="seg" data-pref="speedUnit"><button data-v="kmh">km/h</button><button data-v="mph">mph</button></div></div>
     <div class="field"><span class="field-label" data-i18n="gauge">Compteur</span>
-      <div class="seg" data-pref="gaugeStyle"><button data-v="dial" data-i18n="gDial">Cadran</button><button data-v="digital" data-i18n="gDigital">Numérique</button></div>
+      <div class="seg grid3" data-pref="gaugeStyle"><button data-v="dial" data-i18n="gDial">Cadran</button><button data-v="digital" data-i18n="gDigital">Numérique</button><button data-v="needle" data-i18n="gNeedle">Aiguille</button><button data-v="ring" data-i18n="gRing">Anneau</button><button data-v="bar" data-i18n="gBar">Barre</button><button data-v="hud" data-i18n="gHud">Pare-brise</button></div>
+      <p class="s" id="gaugeNote"></p>
       <span class="field-label" data-i18n="gMax">Graduation maximale</span>
-      <div class="seg" data-pref="gaugeScale" id="gaugeScaleSeg"></div>
+      <div class="seg grid4" data-pref="gaugeIdx" id="gaugeScaleSeg"></div>
       <span class="field-label" data-i18n="gWarn">Seuil de vitesse</span>
       <div class="seg" data-pref="speedWarn" id="speedWarnSeg"></div>
       <p class="s" data-i18n="gWarnNote"></p></div>
+    <button class="btn btn-ghost" id="btnTuto" data-i18n="tutoAgain">Revoir le tutoriel</button>
     <div class="credits">
       <span class="field-label" data-i18n="credits">Crédits</span>
       <p class="s" id="creditsText"></p>
       <p class="s version" id="versionText"></p>
+      <p class="s version">© HMD Studios</p>
     </div>
   </div>
 </section>

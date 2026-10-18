@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -24,7 +24,29 @@ const MAP_PAL = {
     motorway: '#FFFFFF', casing: '#D2D2CC', rail: '#CFCFCA', boundary: '#B5B5AF', label: '#5F5F66', labelStrong: '#18181B', labelRoad: '#6B6B72', labelWater: '#5A7F99', halo: '#F3F3F1' },
 };
 const COLORS = ['#4C9EFF', '#FF4D6D', '#2BD9A0', '#FFC53D', '#B07CFF', '#00C2FF', '#FF8A3D', '#E8E8E8'];
-const ACCENTS = { orange: '#FF5B1F', yellow: '#FFD60A', lime: '#B6F23A', cyan: '#00D1FF', magenta: '#FF2E88' };
+const ACCENT_HUES = { orange: 15, yellow: 51, lime: 85, cyan: 191, magenta: 333 };
+function hslHex(h, s, l) {
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = n => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))))).toString(16).padStart(2, '0');
+  return '#' + f(0) + f(8) + f(4);
+}
+function hexHue(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return 215;
+  const n = parseInt(m[1], 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  if (!d) return 0;
+  const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return Math.round((h * 60 + 360) % 360);
+}
+function luminance(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const c = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+  return 0.2126 * c(n >> 16) + 0.7152 * c((n >> 8) & 255) + 0.0722 * c(n & 255);
+}
+const memberColor = h => hslHex(h, 85, 62);
+const accentColor = h => hslHex(h, 100, 56);
 const THEMES = { graphite: { map: 'night', meta: '#0F0F10' }, light: { map: 'day', meta: '#F4F4F2' }, oled: { map: 'night', meta: '#000000' }, red: { map: 'night', meta: '#050000' } };
 const STATUSES = ['route', 'arret', 'pause', 'essence', 'perdu', 'panne'];
 const QUICK = {
@@ -143,6 +165,17 @@ const I18N = {
     pinInRoute: 'Ce pin fait partie du parcours.', pinLeaderNote: 'Le leader peut l’ajouter au parcours.', pinAccepted: '{name} a ajouté ton pin au parcours', pinRemoved: 'Pin supprimé',
     pin_view: 'Point de vue', pin_food: 'Restaurant', pin_fuel: 'Station-service', pin_parking: 'Parking', pin_danger: 'Danger', pin_other: 'Autre',
     credits: 'Crédits', version: 'Version {v}',
+    scanQr: 'Scanner un QR code', scanHint: 'Vise le QR code du convoi', scanBad: 'Ce QR code n’est pas un convoi PocketConvoy.',
+    camDenied: 'Caméra refusée. Autorise la caméra pour Safari dans les réglages de l’iPhone.', camFail: 'Impossible d’ouvrir la caméra.',
+    qrHint: 'Tes amis le scannent depuis l’accueil de PocketConvoy. Touche-le pour l’agrandir.', qrFail: 'QR code indisponible sans connexion.',
+    gNeedle: 'Aiguille', gRing: 'Anneau', gBar: 'Barre', gHud: 'Pare-brise',
+    gHudNote: 'Pare-brise : chiffres inversés qui se reflètent dans le pare-brise la nuit. Pose le téléphone à plat sous la vitre.',
+    tutoSkip: 'Passer', tutoNext: 'Suivant', tutoGo: 'C’est parti', tutoAgain: 'Revoir le tutoriel',
+    tuto1t: 'Bienvenue sur PocketConvoy', tuto1d: 'Roulez à plusieurs voitures sans vous perdre : chacun voit les autres en direct sur la carte.',
+    tuto2t: 'Créer ou rejoindre', tuto2d: 'Une personne crée le convoi. Les autres le rejoignent avec le code, le lien d’invitation ou en scannant le QR code.',
+    tuto3t: 'Le leader guide', tuto3d: 'Le leader choisit la destination et les étapes, et tout le monde reçoit le guidage. Garde le doigt appuyé sur la carte pour poser un pin.',
+    tuto4t: 'Parler et prévenir', tuto4d: 'Maintiens le gros bouton pour parler au talkie. Alertes prévient tout le convoi en un geste, et le chat sert pour les messages et les liens.',
+    tuto5t: 'Avant de partir', tuto5d: 'Autorise la localisation et le micro. Garde l’app ouverte, écran allumé, sur un support : sur iPhone, une web app s’arrête quand l’écran se verrouille.',
     units: 'Unités', miles: 'miles', gauge: 'Compteur', gDial: 'Cadran', gDigital: 'Numérique', gMax: 'Graduation maximale',
     gWarn: 'Seuil de vitesse', warnOff: 'Aucun', gWarnNote: 'Au-delà du seuil choisi, la vitesse et l’aiguille passent au rouge.',
     create: 'Créer un convoi', orJoin: 'ou rejoindre avec un code', join: 'Rejoindre', errCode: 'Le code du convoi fait 6 caractères.',
@@ -217,6 +250,17 @@ const I18N = {
     pinInRoute: 'This pin is part of the route.', pinLeaderNote: 'The leader can add it to the route.', pinAccepted: '{name} added your pin to the route', pinRemoved: 'Pin deleted',
     pin_view: 'Viewpoint', pin_food: 'Restaurant', pin_fuel: 'Fuel station', pin_parking: 'Parking', pin_danger: 'Hazard', pin_other: 'Other',
     credits: 'Credits', version: 'Version {v}',
+    scanQr: 'Scan a QR code', scanHint: 'Point at the convoy QR code', scanBad: 'This QR code is not a PocketConvoy convoy.',
+    camDenied: 'Camera blocked. Allow the camera for Safari in the iPhone settings.', camFail: 'Could not open the camera.',
+    qrHint: 'Your friends scan it from the PocketConvoy home screen. Tap it to enlarge.', qrFail: 'QR code unavailable offline.',
+    gNeedle: 'Needle', gRing: 'Ring', gBar: 'Bar', gHud: 'Windshield',
+    gHudNote: 'Windshield: mirrored digits that reflect in the windshield at night. Lay the phone flat under the glass.',
+    tutoSkip: 'Skip', tutoNext: 'Next', tutoGo: 'Let’s go', tutoAgain: 'Show the tutorial again',
+    tuto1t: 'Welcome to PocketConvoy', tuto1d: 'Drive in a group of cars without losing each other: everyone sees the others live on the map.',
+    tuto2t: 'Create or join', tuto2d: 'One person creates the convoy. The others join with the code, the invite link or by scanning the QR code.',
+    tuto3t: 'The leader guides', tuto3d: 'The leader picks the destination and the stops, and everyone gets the guidance. Press and hold on the map to drop a pin.',
+    tuto4t: 'Talk and warn', tuto4d: 'Hold the big button to talk on the walkie-talkie. Alerts warns the whole convoy in one tap, and the chat is for messages and links.',
+    tuto5t: 'Before you leave', tuto5d: 'Allow location and microphone. Keep the app open with the screen on, on a mount: on iPhone, a web app stops when the screen locks.',
     units: 'Units', miles: 'miles', gauge: 'Speedometer', gDial: 'Dial', gDigital: 'Digital', gMax: 'Maximum on the dial',
     gWarn: 'Speed threshold', warnOff: 'None', gWarnNote: 'Above the chosen threshold, the speed and the needle turn red.',
     create: 'Create a convoy', orJoin: 'or join with a code', join: 'Join', errCode: 'The convoy code has 6 characters.',
@@ -291,6 +335,17 @@ const I18N = {
     pinInRoute: 'Dieser Pin ist Teil der Route.', pinLeaderNote: 'Der Konvoiführer kann ihn zur Route hinzufügen.', pinAccepted: '{name} hat deinen Pin zur Route hinzugefügt', pinRemoved: 'Pin gelöscht',
     pin_view: 'Aussichtspunkt', pin_food: 'Restaurant', pin_fuel: 'Tankstelle', pin_parking: 'Parkplatz', pin_danger: 'Gefahr', pin_other: 'Anderes',
     credits: 'Quellen', version: 'Version {v}',
+    scanQr: 'QR-Code scannen', scanHint: 'Richte die Kamera auf den QR-Code des Konvois', scanBad: 'Dieser QR-Code ist kein PocketConvoy-Konvoi.',
+    camDenied: 'Kamera blockiert. Erlaube die Kamera für Safari in den iPhone-Einstellungen.', camFail: 'Die Kamera konnte nicht geöffnet werden.',
+    qrHint: 'Deine Freunde scannen ihn auf dem Startbildschirm von PocketConvoy. Tippe darauf, um ihn zu vergrössern.', qrFail: 'QR-Code ohne Verbindung nicht verfügbar.',
+    gNeedle: 'Zeiger', gRing: 'Ring', gBar: 'Balken', gHud: 'Frontscheibe',
+    gHudNote: 'Frontscheibe: gespiegelte Ziffern, die sich nachts in der Frontscheibe spiegeln. Leg das Handy flach unter die Scheibe.',
+    tutoSkip: 'Überspringen', tutoNext: 'Weiter', tutoGo: 'Los geht’s', tutoAgain: 'Anleitung erneut ansehen',
+    tuto1t: 'Willkommen bei PocketConvoy', tuto1d: 'Fahrt mit mehreren Autos, ohne euch zu verlieren: Alle sehen die anderen live auf der Karte.',
+    tuto2t: 'Erstellen oder beitreten', tuto2d: 'Eine Person erstellt den Konvoi. Die anderen treten mit dem Code, dem Einladungslink oder per QR-Code bei.',
+    tuto3t: 'Der Konvoiführer leitet', tuto3d: 'Der Konvoiführer wählt Ziel und Zwischenstopps, alle erhalten die Navigation. Halte den Finger auf der Karte gedrückt, um einen Pin zu setzen.',
+    tuto4t: 'Sprechen und warnen', tuto4d: 'Halte die grosse Taste gedrückt, um über das Funkgerät zu sprechen. Warnungen informiert den ganzen Konvoi mit einem Tipp, der Chat ist für Nachrichten und Links.',
+    tuto5t: 'Vor der Abfahrt', tuto5d: 'Erlaube Standort und Mikrofon. Lass die App mit eingeschaltetem Bildschirm in einer Halterung offen: Auf dem iPhone stoppt eine Web-App, wenn der Bildschirm sperrt.',
     units: 'Einheiten', miles: 'Meilen', gauge: 'Tacho', gDial: 'Zifferblatt', gDigital: 'Digital', gMax: 'Höchstwert der Skala',
     gWarn: 'Tempogrenze', warnOff: 'Keine', gWarnNote: 'Über der gewählten Grenze werden Tempo und Zeiger rot.',
     create: 'Konvoi erstellen', orJoin: 'oder mit einem Code beitreten', join: 'Beitreten', errCode: 'Der Konvoi-Code hat 6 Zeichen.',
@@ -355,10 +410,10 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('pc_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('pc_' + k, JSON.stringify(v)); } catch (e) { /* plein */ } },
 };
-const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', haptics: 'normal', hapticCats: ['ui', 'talk', 'alerts'], sound: 'on', distUnit: 'km', speedUnit: 'kmh', gaugeStyle: 'dial', gaugeScale: 3, speedWarn: 0 }, store.get('prefs', {}));
+const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', haptics: 'normal', hapticCats: ['ui', 'talk', 'alerts'], sound: 'on', distUnit: 'km', speedUnit: 'kmh', gaugeStyle: 'dial', gaugeIdx: 5, speedWarn: 0 }, store.get('prefs', {}));
 if (!I18N[prefs.lang]) prefs.lang = 'fr';
 if (!THEMES[prefs.theme]) prefs.theme = 'graphite';
-if (!ACCENTS[prefs.accent]) prefs.accent = 'orange';
+if (prefs.accentHue == null) prefs.accentHue = ACCENT_HUES[prefs.accent] != null ? ACCENT_HUES[prefs.accent] : 15;
 if (!Array.isArray(prefs.hapticCats)) prefs.hapticCats = ['ui', 'talk', 'alerts'];
 const savePrefs = () => store.set('prefs', prefs);
 
@@ -471,7 +526,9 @@ function placeLabel(p) {
 }
 
 /* ---------- état ---------- */
-const me = { id: store.get('id', null), name: store.get('name', ''), color: store.get('color', COLORS[0]) };
+const me = { id: store.get('id', null), name: store.get('name', ''), hue: store.get('hue', null) };
+if (me.hue == null) me.hue = hexHue(store.get('color', COLORS[0]));
+me.color = memberColor(me.hue);
 if (!me.id) { me.id = 'me-' + rid(); store.set('id', me.id); }
 
 const S = {
@@ -529,7 +586,6 @@ function applyLang() {
   $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
   $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
   $$('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
-  $$('.swatch').forEach(el => el.setAttribute('aria-label', t('colourAria')));
   updatePTT();
   setFollow(S.follow, true);
   updatePlayBtn();
@@ -544,12 +600,18 @@ function applyLang() {
     renderPinList();
   }
   if ($('#history').classList.contains('on')) openHistory();
+  if (!$('#tuto').hidden) renderTuto();
   syncSegs();
 }
 function applyTheme() {
   const root = document.documentElement;
   root.dataset.theme = prefs.theme;
-  root.style.setProperty('--accent', ACCENTS[prefs.accent]);
+  const acc = accentColor(prefs.accentHue);
+  root.style.setProperty('--accent', acc);
+  if (prefs.theme === 'red') root.style.removeProperty('--accent-ink');
+  else root.style.setProperty('--accent-ink', luminance(acc) > 0.3 ? '#0F0F10' : '#FFFFFF');
+  const ah = document.getElementById('accentHue');
+  if (ah) { ah.value = prefs.accentHue; ah.style.setProperty('--thumb', acc); }
   $('#metaTheme').setAttribute('content', THEMES[prefs.theme].meta);
   styleRouteLayers();
 }
@@ -707,13 +769,20 @@ async function keepAwake() {
 /* ---------- accueil ---------- */
 function renderHome() {
   $('#name').value = me.name;
-  $('#swatches').innerHTML = COLORS.map(c =>
-    `<button class="swatch" style="--c:${c}" data-c="${c}" aria-label="${esc(t('colourAria'))}" aria-pressed="${c === me.color}"></button>`).join('');
+  $('#colorHue').value = me.hue;
+  updateColorPreview();
   const c = (new URLSearchParams(location.search).get('c') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (c) $('#code').value = c.slice(0, 6);
   $('#cfgWarn').hidden = configOk();
   homeErr('');
   syncSegs();
+}
+function updateColorPreview() {
+  me.color = memberColor(me.hue);
+  const pv = $('#colorPreview');
+  pv.style.setProperty('--c', me.color);
+  pv.textContent = initial($('#name').value || me.name || '?');
+  $('#colorHue').style.setProperty('--thumb', me.color);
 }
 function newCode() {
   const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -730,7 +799,7 @@ function start(opts) {
   if (typeof maplibregl === 'undefined') { homeErr(t('errLibs')); return; }
   if (typeof supabase === 'undefined') { homeErr(t('errLive')); return; }
   me.name = name.slice(0, 16);
-  store.set('name', me.name); store.set('color', me.color);
+  store.set('name', me.name); store.set('hue', me.hue); store.set('color', me.color);
   homeErr('');
   unlockAudio(); unlockSpeech();
 
@@ -1613,8 +1682,10 @@ function renderMembers() {
     const p = RTC.peers.get(m.id), st = p && p.pc.connectionState;
     return st === 'connected' ? t('audioOk') : st === 'failed' ? t('audioFail') : m.online ? t('audioWait') : '';
   };
-  const invite = S.live ? `<div class="invite"><div><span class="field-label">${esc(t('codeLabel'))}</span><div class="code-big">${esc(S.code)}</div></div>
+  const invite = S.live ? `<div class="invite"><div class="invite-row"><button class="qr" id="qrBox" aria-label="QR"></button>
+    <div class="invite-code"><span class="field-label">${esc(t('codeLabel'))}</span><div class="code-big">${esc(S.code)}</div><p class="s">${esc(t('qrHint'))}</p></div></div>
     <button class="btn btn-primary" id="btnInvite">${esc(t('shareLink'))}</button></div>` : '';
+  const qrOld = S.live && $('#qrBox') ? $('#qrBox').innerHTML : '';
   $('#membersList').innerHTML = invite + list.map(m => `<div class="item">
     <span class="av" style="--c:${esc(m.color)}">${esc(initial(m.name))}</span>
     <div class="grow"><div class="t">${esc(m.name)}${m.id === me.id ? esc(t('you')) : ''}${m.id === S.leaderId ? '<i class="lead-tag"></i>' : ''}</div>
@@ -1623,6 +1694,7 @@ function renderMembers() {
     ${m.lat != null ? `<button class="mini" data-see="${esc(m.id)}">${esc(t('see'))}</button>` : ''}
     ${lead && m.id !== me.id && m.online ? `<button class="mini" data-lead="${esc(m.id)}">${esc(t('makeLeader'))}</button>` : ''}
   </div>`).join('') + `<p class="s" style="margin-top:12px">${esc(t('currentLeader', { name: leaderName() }))}</p>`;
+  if (S.live) { if (qrOld) $('#qrBox').innerHTML = qrOld; else drawInviteQr($('#qrBox')); }
 }
 
 /* ---------- statistiques et fin de trajet ---------- */
@@ -1713,54 +1785,96 @@ function tick() {
 }
 
 /* ---------- compteur : cadran ou numérique, graduation et seuil réglables ---------- */
-const GAUGE = { cx: 150, cy: 140, r: 116, max: 300, a0: 135, sweep: 270, step: 10, lbl: 50 };
+const GAUGE = { cx: 150, cy: 140, r: 116, max: 300, a0: 135, sweep: 270, step: 10, lbl: 50, len: 0 };
+const GAUGE_STYLES = ['dial', 'digital', 'needle', 'ring', 'bar', 'hud'];
 const GAUGE_SCALES = {
-  kmh: [{ max: 160, lbl: 20, step: 10 }, { max: 200, lbl: 25, step: 5 }, { max: 260, lbl: 20, step: 10 }, { max: 300, lbl: 50, step: 10 }],
-  mph: [{ max: 100, lbl: 10, step: 5 }, { max: 120, lbl: 20, step: 5 }, { max: 160, lbl: 20, step: 10 }, { max: 200, lbl: 25, step: 5 }],
+  kmh: [{ max: 120, lbl: 20, step: 10 }, { max: 160, lbl: 20, step: 10 }, { max: 200, lbl: 25, step: 5 }, { max: 240, lbl: 40, step: 10 },
+    { max: 260, lbl: 20, step: 10 }, { max: 300, lbl: 50, step: 10 }, { max: 350, lbl: 50, step: 10 }, { max: 400, lbl: 50, step: 10 }],
+  mph: [{ max: 80, lbl: 10, step: 5 }, { max: 100, lbl: 10, step: 5 }, { max: 120, lbl: 20, step: 5 }, { max: 140, lbl: 20, step: 10 },
+    { max: 160, lbl: 20, step: 10 }, { max: 200, lbl: 25, step: 5 }, { max: 220, lbl: 20, step: 10 }, { max: 250, lbl: 50, step: 10 }],
 };
 const SPEED_WARN = { kmh: [0, 80, 100, 120], mph: [0, 50, 60, 75] };
 const polar = (r, deg) => [GAUGE.cx + r * Math.cos(deg * RAD), GAUGE.cy + r * Math.sin(deg * RAD)];
 let gaugeRaf = null;
-function buildGauge() {
+function gaugeTicks(rIn, rMaj, rMin, rLbl) {
   const G = GAUGE, f = n => n.toFixed(1);
-  Object.assign(G, GAUGE_SCALES[speedKey()][prefs.gaugeScale] || GAUGE_SCALES[speedKey()][3]);
-  const svg = $('#gaugeSvg');
-  svg.classList.toggle('digital', prefs.gaugeStyle === 'digital');
-  if (prefs.gaugeStyle === 'digital') {
-    svg.innerHTML = `<text class="g-num g-big" id="gNum" x="150" y="152" text-anchor="middle">–</text>
-      <text class="g-unit" x="150" y="192" text-anchor="middle">${spdUnit()}</text>
-      <text class="g-dir" id="gDir" x="150" y="228" text-anchor="middle"></text>`;
-    return;
-  }
-  const [sx, sy] = polar(G.r, G.a0), [ex, ey] = polar(G.r, G.a0 + G.sweep);
-  const arc = `M${f(sx)} ${f(sy)}A${G.r} ${G.r} 0 1 1 ${f(ex)} ${f(ey)}`;
-  G.len = G.r * G.sweep * RAD;
-  let ticks = '';
+  let out = '';
   for (let v = 0; v <= G.max; v += G.step) {
     const a = G.a0 + v / G.max * G.sweep, major = v % G.lbl === 0;
-    const [x1, y1] = polar(103, a), [x2, y2] = polar(major ? 92 : 97, a);
-    ticks += `<line class="g-tick${major ? ' major' : ''}" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}"/>`;
-    if (major) { const [lx, ly] = polar(78, a); ticks += `<text class="g-lbl" x="${f(lx)}" y="${f(ly + 4)}" text-anchor="middle">${v}</text>`; }
+    const [x1, y1] = polar(rIn, a), [x2, y2] = polar(major ? rMaj : rMin, a);
+    out += `<line class="g-tick${major ? ' major' : ''}" x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}"/>`;
+    if (major) { const [lx, ly] = polar(rLbl, a); out += `<text class="g-lbl" x="${f(lx)}" y="${f(ly + 4)}" text-anchor="middle">${v}</text>`; }
   }
-  $('#gaugeSvg').innerHTML = `<path class="g-track" d="${arc}"/>
-    <path class="g-val" id="gVal" d="${arc}" stroke-dasharray="${f(G.len)}" stroke-dashoffset="${f(G.len)}"/>
-    ${ticks}<line class="g-needle" id="gNeedle" x1="0" y1="0" x2="0" y2="0"/>
-    <text class="g-num" id="gNum" x="150" y="160" text-anchor="middle">–</text>
-    <text class="g-unit" x="150" y="184" text-anchor="middle">${spdUnit()}</text>
-    <text class="g-dir" id="gDir" x="150" y="232" text-anchor="middle"></text>`;
+  return out;
+}
+function buildGauge() {
+  const G = GAUGE, f = n => n.toFixed(1), unit = spdUnit();
+  const st = GAUGE_STYLES.includes(prefs.gaugeStyle) ? prefs.gaugeStyle : 'dial';
+  Object.assign(G, GAUGE_SCALES[speedKey()][prefs.gaugeIdx] || GAUGE_SCALES[speedKey()][5]);
+  const svg = $('#gaugeSvg');
+  svg.setAttribute('class', 'gs-' + st);
+  $('#speedo').classList.toggle('hud', st === 'hud');
+  const dir = y => `<text class="g-dir" id="gDir" x="150" y="${y}" text-anchor="middle"></text>`;
+  const [sx, sy] = polar(G.r, G.a0), [ex, ey] = polar(G.r, G.a0 + G.sweep);
+  const arc = `M${f(sx)} ${f(sy)}A${G.r} ${G.r} 0 1 1 ${f(ex)} ${f(ey)}`;
+  let html;
+  if (st === 'digital' || st === 'hud') {
+    html = `<text class="g-num ${st === 'hud' ? 'g-huge' : 'g-big'}" id="gNum" x="150" y="${st === 'hud' ? 160 : 152}" text-anchor="middle">–</text>
+      <text class="g-unit" x="150" y="${st === 'hud' ? 200 : 192}" text-anchor="middle">${unit}</text>${st === 'hud' ? '' : dir(228)}`;
+  } else if (st === 'needle') {
+    html = `<path class="g-rim" d="${arc}"/>${gaugeTicks(112, 98, 104, 82)}
+      <line class="g-hand" id="gHand" x1="150" y1="140" x2="150" y2="140"/><circle class="g-hub" cx="150" cy="140" r="8"/>
+      <text class="g-num g-small" id="gNum" x="150" y="206" text-anchor="middle">–</text>
+      <text class="g-unit" x="150" y="226" text-anchor="middle">${unit}</text>`;
+  } else if (st === 'ring') {
+    const R = 100;
+    G.len = 2 * Math.PI * R;
+    html = `<circle class="g-track" cx="150" cy="120" r="${R}"/>
+      <circle class="g-val" id="gVal" cx="150" cy="120" r="${R}" stroke-dasharray="${f(G.len)}" stroke-dashoffset="${f(G.len)}" transform="rotate(-90 150 120)"/>
+      <text class="g-num" id="gNum" x="150" y="138" text-anchor="middle">–</text>
+      <text class="g-unit" x="150" y="164" text-anchor="middle">${unit}</text>${dir(236)}`;
+  } else if (st === 'bar') {
+    const N = 24, x0 = 22, w = 256, gap = 3, sw = (w - gap * (N - 1)) / N;
+    const warn = SPEED_WARN[speedKey()][prefs.speedWarn] || 0;
+    let segs = '';
+    for (let i = 0; i < N; i++) {
+      const hot = warn && (i + 1) / N * G.max > warn;
+      segs += `<rect class="g-seg${hot ? ' hot' : ''}" x="${f(x0 + i * (sw + gap))}" y="166" width="${f(sw)}" height="28" rx="2"/>`;
+    }
+    html = `<text class="g-num g-mid" id="gNum" x="150" y="118" text-anchor="middle">–</text>
+      <text class="g-unit" x="150" y="146" text-anchor="middle">${unit}</text>${segs}
+      <text class="g-lbl" x="${x0}" y="214">0</text><text class="g-lbl" x="${x0 + w}" y="214" text-anchor="end">${G.max}</text>${dir(236)}`;
+  } else {
+    G.len = G.r * G.sweep * RAD;
+    html = `<path class="g-track" d="${arc}"/>
+      <path class="g-val" id="gVal" d="${arc}" stroke-dasharray="${f(G.len)}" stroke-dashoffset="${f(G.len)}"/>
+      ${gaugeTicks(103, 92, 97, 78)}<line class="g-needle" id="gNeedle" x1="0" y1="0" x2="0" y2="0"/>
+      <text class="g-num" id="gNum" x="150" y="160" text-anchor="middle">–</text>
+      <text class="g-unit" x="150" y="184" text-anchor="middle">${unit}</text>${dir(232)}`;
+  }
+  svg.innerHTML = html;
 }
 function drawGauge(v) {
-  const G = GAUGE, frac = Math.max(0, Math.min(1, v / G.max));
+  const G = GAUGE, frac = Math.max(0, Math.min(1, v / G.max)), svg = $('#gaugeSvg'), f = n => n.toFixed(1);
   const num = $('#gNum');
   if (num) num.textContent = S.pos ? String(Math.round(v)) : '–';
   const warn = SPEED_WARN[speedKey()][prefs.speedWarn] || 0;
-  $('#gaugeSvg').classList.toggle('over', !!(warn && S.pos && v > warn));
-  const val = $('#gVal'), nd = $('#gNeedle');
-  if (!val) return;
-  val.setAttribute('stroke-dashoffset', (G.len * (1 - frac)).toFixed(1));
-  val.style.opacity = frac > 0.002 ? 1 : 0;
-  const a = G.a0 + frac * G.sweep, [x1, y1] = polar(G.r - 12, a), [x2, y2] = polar(G.r + 12, a);
-  nd.setAttribute('x1', x1.toFixed(1)); nd.setAttribute('y1', y1.toFixed(1)); nd.setAttribute('x2', x2.toFixed(1)); nd.setAttribute('y2', y2.toFixed(1));
+  svg.classList.toggle('over', !!(warn && S.pos && v > warn));
+  const val = $('#gVal');
+  if (val) { val.setAttribute('stroke-dashoffset', f(G.len * (1 - frac))); val.style.opacity = frac > 0.002 ? 1 : 0; }
+  const a = G.a0 + frac * G.sweep;
+  const nd = $('#gNeedle');
+  if (nd) {
+    const [x1, y1] = polar(G.r - 12, a), [x2, y2] = polar(G.r + 12, a);
+    nd.setAttribute('x1', f(x1)); nd.setAttribute('y1', f(y1)); nd.setAttribute('x2', f(x2)); nd.setAttribute('y2', f(y2));
+  }
+  const hand = $('#gHand');
+  if (hand) {
+    const [x1, y1] = polar(-16, a), [x2, y2] = polar(G.r - 26, a);
+    hand.setAttribute('x1', f(x1)); hand.setAttribute('y1', f(y1)); hand.setAttribute('x2', f(x2)); hand.setAttribute('y2', f(y2));
+  }
+  const segs = svg.querySelectorAll('.g-seg');
+  if (segs.length) { const lit = Math.round(frac * segs.length); segs.forEach((el, i) => el.classList.toggle('on', i < lit)); }
 }
 function gaugeLoop() {
   gaugeRaf = null;
@@ -1776,7 +1890,8 @@ function updateSpeedo() {
   S.spTarget = p && clock() - p.t < 8000 ? kmhTo(p.spd * 3.6) : 0;
   if (!gaugeRaf) gaugeRaf = requestAnimationFrame(gaugeLoop);
   const dirs = DIRS[prefs.lang] || DIRS.fr;
-  $('#gDir').textContent = p && p.hdg != null && p.spd > 1 ? t('heading', { d: dirs[Math.round(p.hdg / 45) % 8] }) : '';
+  const gd = $('#gDir');
+  if (gd) gd.textContent = p && p.hdg != null && p.spd > 1 ? t('heading', { d: dirs[Math.round(p.hdg / 45) % 8] }) : '';
   const T = S.trip || { dist: 0, moving: 0, max: 0 };
   const avg = T.moving > 60000 ? T.dist / (T.moving / 1000) : 0;
   let lead = '–';
@@ -1831,14 +1946,13 @@ function closeSheets() {
 function syncSegs() {
   const uk = speedKey();
   $('#gaugeScaleSeg').innerHTML = GAUGE_SCALES[uk].map((g, i) => `<button data-v="${i}">${g.max}</button>`).join('');
+  $('#gaugeNote').textContent = prefs.gaugeStyle === 'hud' ? t('gHudNote') : '';
   $('#speedWarnSeg').innerHTML = SPEED_WARN[uk].map((w, i) => `<button data-v="${i}">${w ? w : esc(t('warnOff'))}</button>`).join('');
   $('#lagSeg').innerHTML = [1, 2, 3, 5].map(v => `<button data-v="${v}">${v} ${useMiles() ? 'mi' : 'km'}</button>`).join('');
   $$('.seg[data-pref]').forEach(seg => {
     const k = seg.dataset.pref;
     $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(prefs[k]))));
   });
-  $('#accentRow').innerHTML = Object.keys(ACCENTS).map(k =>
-    `<button style="--c:${ACCENTS[k]}" data-accent="${k}" aria-label="${k}" aria-pressed="${k === prefs.accent}"></button>`).join('');
   $('#accentField').hidden = prefs.theme === 'red';
   $('#themeNote').textContent = t('thn_' + prefs.theme);
   $('#creditsText').innerHTML = t('creditsHtml');
@@ -1853,8 +1967,7 @@ function setPref(k, v) {
   if (k === 'talkMode') { talkStop(); updatePTT(); }
   if (k === 'mapTheme') applyMapStyle(S.map);
   if (k === 'lagKm' || k === 'distUnit') S.alerts.lag = {};
-  if (k === 'speedUnit' || k === 'gaugeScale' || k === 'gaugeStyle') { buildGauge(); S.spDisp = 0; updateSpeedo(); }
-  if (k === 'speedWarn') drawGauge(S.spDisp || 0);
+  if (['speedUnit', 'gaugeIdx', 'gaugeStyle', 'speedWarn'].includes(k)) { buildGauge(); S.spDisp = 0; updateSpeedo(); drawGauge(0); }
   if (k === 'speedUnit' || k === 'distUnit') applyLang();
   if (k === 'lang') { applyLang(); applyMapStyle(S.map); }
   if (k === 'accent') applyTheme();
@@ -2116,6 +2229,142 @@ function talkStopLive(silent) {
   updatePTT();
 }
 
+/* ---------- QR code : affichage de l'invitation et scanner intégré ---------- */
+const LIBS = {
+  qr: 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js',
+  jsqr: 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
+};
+const libLoads = {};
+function loadLib(k) {
+  if (!libLoads[k]) libLoads[k] = new Promise((res, rej) => {
+    const sc = document.createElement('script');
+    sc.src = LIBS[k]; sc.onload = res;
+    sc.onerror = () => { delete libLoads[k]; rej(new Error('lib')); };
+    document.head.appendChild(sc);
+  });
+  return libLoads[k];
+}
+const inviteUrl = () => location.origin + location.pathname + '?c=' + S.code;
+async function qrSvg(text) {
+  await loadLib('qr');
+  const q = qrcode(0, 'M');
+  q.addData(text); q.make();
+  const n = q.getModuleCount();
+  let d = '';
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) d += `M${c} ${r}h1v1h-1z`;
+  return `<svg viewBox="-3 -3 ${n + 6} ${n + 6}" shape-rendering="crispEdges" aria-hidden="true"><rect x="-3" y="-3" width="${n + 6}" height="${n + 6}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+async function drawInviteQr(el) {
+  if (!el) return;
+  try { el.innerHTML = await qrSvg(inviteUrl()); } catch (e) { el.innerHTML = `<span class="s">${esc(t('qrFail'))}</span>`; }
+}
+async function showBigQr() {
+  const o = $('#qrBig');
+  $('#qrBigCode').textContent = S.code;
+  try { $('#qrBigImg').innerHTML = await qrSvg(inviteUrl()); } catch (e) { return; }
+  o.hidden = false;
+}
+const SCAN = { stream: null, raf: 0, last: 0, badT: 0, detector: null, canvas: null };
+async function openScanner() {
+  const o = $('#scanner');
+  $('#scanMsg').textContent = t('scanHint');
+  o.hidden = false;
+  try {
+    if ('BarcodeDetector' in window) {
+      try { SCAN.detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch (e) { SCAN.detector = null; }
+    }
+    if (!SCAN.detector) await loadLib('jsqr');
+    SCAN.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    const v = $('#scanVideo');
+    v.srcObject = SCAN.stream;
+    await v.play().catch(() => {});
+    SCAN.raf = requestAnimationFrame(scanFrame);
+  } catch (e) {
+    $('#scanMsg').textContent = e && e.name === 'NotAllowedError' ? t('camDenied') : t('camFail');
+  }
+}
+function closeScanner() {
+  cancelAnimationFrame(SCAN.raf); SCAN.raf = 0;
+  if (SCAN.stream) SCAN.stream.getTracks().forEach(x => x.stop());
+  SCAN.stream = null;
+  $('#scanVideo').srcObject = null;
+  $('#scanner').hidden = true;
+}
+async function scanFrame(now) {
+  if (!SCAN.stream) return;
+  SCAN.raf = requestAnimationFrame(scanFrame);
+  if (now - SCAN.last < 160) return;
+  SCAN.last = now;
+  const v = $('#scanVideo');
+  if (!v.videoWidth) return;
+  let text = null;
+  try {
+    if (SCAN.detector) {
+      const r = await SCAN.detector.detect(v);
+      if (r && r[0]) text = r[0].rawValue;
+    } else if (window.jsQR) {
+      const scale = Math.min(1, 480 / Math.max(v.videoWidth, v.videoHeight));
+      const w = Math.round(v.videoWidth * scale), h = Math.round(v.videoHeight * scale);
+      const c = SCAN.canvas || (SCAN.canvas = document.createElement('canvas'));
+      c.width = w; c.height = h;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(v, 0, 0, w, h);
+      const r = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+      if (r) text = r.data;
+    }
+  } catch (e) { /* image suivante */ }
+  if (text) onScanned(text);
+}
+function onScanned(text) {
+  let code = null;
+  try { code = new URL(text).searchParams.get('c'); } catch (e) { /* pas une adresse */ }
+  if (!code && /^[A-Z0-9]{6}$/i.test(text.trim())) code = text.trim();
+  code = code ? code.toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+  if (code.length !== 6) {
+    if (Date.now() - SCAN.badT > 2500) { SCAN.badT = Date.now(); $('#scanMsg').textContent = t('scanBad'); }
+    return;
+  }
+  closeScanner();
+  haptic('select', true);
+  $('#code').value = code;
+  if (!$('#name').value.trim()) { homeErr(t('errName')); $('#name').focus(); return; }
+  $('#btnJoin').click();
+}
+
+/* ---------- tutoriel de la première utilisation ---------- */
+const TUTO_ICONS = [
+  '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v6M19.6 9.2l-5.6 2.1M16.8 18.9l-3.4-5M7.2 18.9l3.4-5M4.4 9.2l5.6 2.1"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
+  '<rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM18 14h2.5M14 18v2.5"/>',
+  '<path d="M6 21V4M6 4h11l-2.5 4L17 12H6"/>',
+  '<rect x="9" y="2.5" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/>',
+  '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 5.5h3M12 18.5v.01"/>',
+];
+let tutoIdx = 0;
+function openTuto() {
+  tutoIdx = 0;
+  renderTuto();
+  $('#tuto').hidden = false;
+}
+function renderTuto() {
+  const n = TUTO_ICONS.length, i = tutoIdx;
+  $('#tutoIcon').innerHTML = ic(TUTO_ICONS[i], 44);
+  $('#tutoTitle').textContent = t('tuto' + (i + 1) + 't');
+  $('#tutoText').textContent = t('tuto' + (i + 1) + 'd');
+  $('#tutoDots').innerHTML = TUTO_ICONS.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('');
+  $('#tutoNext').textContent = t(i === n - 1 ? 'tutoGo' : 'tutoNext');
+  $('#tutoSkip').textContent = t('tutoSkip');
+  $('#tutoSkip').style.visibility = i === n - 1 ? 'hidden' : '';
+  const card = $('#tutoCard');
+  card.classList.remove('in'); void card.offsetWidth; card.classList.add('in');
+}
+function tutoStep(d) {
+  const n = TUTO_ICONS.length;
+  if (tutoIdx + d >= n) { closeTuto(); return; }
+  tutoIdx = Math.max(0, tutoIdx + d);
+  renderTuto();
+}
+function closeTuto() { $('#tuto').hidden = true; store.set('tutoDone', true); }
+
 /* ---------- historique et replay ---------- */
 let RP = null;
 async function openHistory() {
@@ -2226,11 +2475,23 @@ function bind() {
   document.addEventListener('click', e => {
     if (Date.now() < (S.ignoreClickUntil || 0)) { e.stopPropagation(); e.preventDefault(); }
   }, true);
-  $('#swatches').addEventListener('click', e => {
-    const b = e.target.closest('.swatch');
-    if (!b) return;
-    me.color = b.dataset.c; store.set('color', me.color);
-    $$('.swatch').forEach(s => s.setAttribute('aria-pressed', String(s === b)));
+  $('#colorHue').addEventListener('input', e => { me.hue = +e.target.value; updateColorPreview(); });
+  $('#colorHue').addEventListener('change', () => { store.set('hue', me.hue); store.set('color', me.color); haptic('select'); });
+  $('#name').addEventListener('input', updateColorPreview);
+  $('#accentHue').addEventListener('input', e => { prefs.accentHue = +e.target.value; applyTheme(); });
+  $('#accentHue').addEventListener('change', () => { savePrefs(); haptic('select'); });
+  $('#btnScan').addEventListener('click', openScanner);
+  $('#scanClose').addEventListener('click', closeScanner);
+  $('#qrBig').addEventListener('click', () => { $('#qrBig').hidden = true; });
+  $('#tutoNext').addEventListener('click', () => tutoStep(1));
+  $('#tutoSkip').addEventListener('click', closeTuto);
+  $('#btnTuto').addEventListener('click', () => { closeSheets(); openTuto(); });
+  let tx = null;
+  $('#tuto').addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  $('#tuto').addEventListener('touchend', e => {
+    if (tx == null) return;
+    const dx = e.changedTouches[0].clientX - tx; tx = null;
+    if (Math.abs(dx) > 50) tutoStep(dx < 0 ? 1 : -1);
   });
   $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
   $('#btnCreate').addEventListener('click', () => { if (!configOk()) { homeErr(t('cfgWarn')); return; } start({ creating: true, code: newCode() }); });
@@ -2251,9 +2512,7 @@ function bind() {
 
   document.addEventListener('click', e => {
     const segBtn = e.target.closest('.seg[data-pref] button');
-    if (segBtn) { const k = segBtn.closest('.seg').dataset.pref; setPref(k, ['lagKm', 'gaugeScale', 'speedWarn'].includes(k) ? +segBtn.dataset.v : segBtn.dataset.v); return; }
-    const acc = e.target.closest('[data-accent]');
-    if (acc) { setPref('accent', acc.dataset.accent); return; }
+    if (segBtn) { const k = segBtn.closest('.seg').dataset.pref; setPref(k, ['lagKm', 'gaugeIdx', 'speedWarn'].includes(k) ? +segBtn.dataset.v : segBtn.dataset.v); return; }
     if (e.target.closest('[data-close]')) closeSheets();
   });
 
@@ -2382,6 +2641,7 @@ function bind() {
   $('#strip').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) focusMember(b.dataset.id); });
   $('#membersList').addEventListener('click', e => {
     if (e.target.closest('#btnInvite')) { shareInvite(); return; }
+    if (e.target.closest('#qrBox')) { showBigQr(); return; }
     const s = e.target.closest('[data-see]'), l = e.target.closest('[data-lead]');
     if (s) focusMember(s.dataset.see);
     if (l && isLeader()) { giveLeader(l.dataset.lead); renderMembers(); }
@@ -2434,5 +2694,6 @@ buildGauge();
 bind();
 renderHome();
 applyLang();
+if (!store.get('tutoDone', false)) openTuto();
 setFollow(true, true);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
