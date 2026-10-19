@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -176,6 +176,10 @@ const I18N = {
     tuto3t: 'Le leader guide', tuto3d: 'Le leader choisit la destination et les étapes, et tout le monde reçoit le guidage. Garde le doigt appuyé sur la carte pour poser un pin.',
     tuto4t: 'Parler et prévenir', tuto4d: 'Maintiens le gros bouton pour parler au talkie. Alertes prévient tout le convoi en un geste, et le chat sert pour les messages et les liens.',
     tuto5t: 'Avant de partir', tuto5d: 'Autorise la localisation et le micro. Garde l’app ouverte, écran allumé, sur un support : sur iPhone, une web app s’arrête quand l’écran se verrouille.',
+    importConfirm1: 'Importer ce fichier ? Ton pseudo et tes réglages seront remplacés, et son trajet ajouté à ton historique.', importDone1: 'Import terminé : 1 trajet ajouté ou mis à jour.',
+    importData: 'Importer', exportShort: 'Exporter', importBad: 'Ce fichier n’est pas un export PocketConvoy.',
+    importConfirm: 'Importer ce fichier ? Ton pseudo et tes réglages seront remplacés, et ses {n} trajets ajoutés à ton historique.',
+    importDone: 'Import terminé : {n} trajets ajoutés ou mis à jour.', importNote: 'L’import reprend le pseudo et les réglages du fichier et ajoute ses trajets à ton historique, sans effacer les autres.',
     exportData: 'Exporter mes données', exportNote: 'Pseudo, réglages et historique des trajets, dans un fichier JSON.',
     tripAll: 'Tous', tripWho: 'Afficher le trajet de', speedLegend: 'Vitesse sur le trajet (part du temps)', gapLegend: 'Signal perdu',
     units: 'Unités', miles: 'miles', gauge: 'Compteur', gDial: 'Cadran', gDigital: 'Numérique', gMax: 'Graduation maximale',
@@ -263,6 +267,10 @@ const I18N = {
     tuto3t: 'The leader guides', tuto3d: 'The leader picks the destination and the stops, and everyone gets the guidance. Press and hold on the map to drop a pin.',
     tuto4t: 'Talk and warn', tuto4d: 'Hold the big button to talk on the walkie-talkie. Alerts warns the whole convoy in one tap, and the chat is for messages and links.',
     tuto5t: 'Before you leave', tuto5d: 'Allow location and microphone. Keep the app open with the screen on, on a mount: on iPhone, a web app stops when the screen locks.',
+    importConfirm1: 'Import this file? Your nickname and settings will be replaced, and its trip added to your history.', importDone1: 'Import complete: 1 trip added or updated.',
+    importData: 'Import', exportShort: 'Export', importBad: 'This file is not a PocketConvoy export.',
+    importConfirm: 'Import this file? Your nickname and settings will be replaced, and its {n} trips added to your history.',
+    importDone: 'Import complete: {n} trips added or updated.', importNote: 'Importing takes the nickname and settings from the file and adds its trips to your history, without deleting the others.',
     exportData: 'Export my data', exportNote: 'Nickname, settings and trip history, in a JSON file.',
     tripAll: 'All', tripWho: 'Show the trip of', speedLegend: 'Speed along the trip (share of time)', gapLegend: 'Signal lost',
     units: 'Units', miles: 'miles', gauge: 'Speedometer', gDial: 'Dial', gDigital: 'Digital', gMax: 'Maximum on the dial',
@@ -350,6 +358,10 @@ const I18N = {
     tuto3t: 'Der Konvoiführer leitet', tuto3d: 'Der Konvoiführer wählt Ziel und Zwischenstopps, alle erhalten die Navigation. Halte den Finger auf der Karte gedrückt, um einen Pin zu setzen.',
     tuto4t: 'Sprechen und warnen', tuto4d: 'Halte die grosse Taste gedrückt, um über das Funkgerät zu sprechen. Warnungen informiert den ganzen Konvoi mit einem Tipp, der Chat ist für Nachrichten und Links.',
     tuto5t: 'Vor der Abfahrt', tuto5d: 'Erlaube Standort und Mikrofon. Lass die App mit eingeschaltetem Bildschirm in einer Halterung offen: Auf dem iPhone stoppt eine Web-App, wenn der Bildschirm sperrt.',
+    importConfirm1: 'Diese Datei importieren? Dein Name und deine Einstellungen werden ersetzt, und ihre Fahrt zu deinem Verlauf hinzugefügt.', importDone1: 'Import abgeschlossen: 1 Fahrt hinzugefügt oder aktualisiert.',
+    importData: 'Importieren', exportShort: 'Exportieren', importBad: 'Diese Datei ist kein PocketConvoy-Export.',
+    importConfirm: 'Diese Datei importieren? Dein Name und deine Einstellungen werden ersetzt, und ihre {n} Fahrten zu deinem Verlauf hinzugefügt.',
+    importDone: 'Import abgeschlossen: {n} Fahrten hinzugefügt oder aktualisiert.', importNote: 'Der Import übernimmt Name und Einstellungen aus der Datei und fügt ihre Fahrten zu deinem Verlauf hinzu, ohne die anderen zu löschen.',
     exportData: 'Meine Daten exportieren', exportNote: 'Name, Einstellungen und Fahrtenverlauf in einer JSON-Datei.',
     tripAll: 'Alle', tripWho: 'Fahrt anzeigen von', speedLegend: 'Tempo entlang der Fahrt (Zeitanteil)', gapLegend: 'Signal verloren',
     units: 'Einheiten', miles: 'Meilen', gauge: 'Tacho', gDial: 'Zifferblatt', gDigital: 'Digital', gMax: 'Höchstwert der Skala',
@@ -2370,6 +2382,35 @@ function downloadFile(file) {
   setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
+/* ---------- import d'un fichier exporté ---------- */
+async function importData(file) {
+  const msg = $('#importMsg');
+  msg.hidden = true;
+  let data = null;
+  try { data = JSON.parse(await file.text()); } catch (e) { data = null; }
+  const trips = data && Array.isArray(data.trips) ? data.trips.filter(tr => tr && tr.id && tr.start && tr.end && tr.tracks && Array.isArray(tr.stats)) : null;
+  if (!data || data.app !== 'PocketConvoy' || !trips) { msg.textContent = t('importBad'); msg.hidden = false; return; }
+  if (!confirm(t(trips.length === 1 ? 'importConfirm1' : 'importConfirm', { n: trips.length }))) return;
+  const pr = data.profile || {};
+  if (typeof pr.name === 'string' && pr.name.trim()) { me.name = pr.name.trim().slice(0, 16); store.set('name', me.name); }
+  if (typeof pr.hue === 'number') { me.hue = Math.round(pr.hue) % 360; me.color = memberColor(me.hue); store.set('hue', me.hue); store.set('color', me.color); }
+  const st = data.settings || {};
+  for (const k of Object.keys(prefs)) {
+    if (!(k in st) || k === 'view') continue;
+    const v = st[k];
+    if (Array.isArray(prefs[k]) ? Array.isArray(v) : typeof v === typeof prefs[k]) prefs[k] = v;
+  }
+  if (!I18N[prefs.lang]) prefs.lang = 'fr';
+  if (!THEMES[prefs.theme]) prefs.theme = 'graphite';
+  savePrefs();
+  let n = 0;
+  for (const tr of trips) { try { await DB.putTrip(tr); n++; } catch (e) { /* trajet ignoré */ } }
+  S.tripsCache = null;
+  applyTheme(); applyLang(); buildGauge(); applyMapStyle(S.map);
+  $('#name').value = me.name; $('#colorHue').value = me.hue; updateColorPreview();
+  msg.textContent = t(n === 1 ? 'importDone1' : 'importDone', { n }); msg.hidden = false;
+}
+
 /* ---------- tutoriel de la première utilisation ---------- */
 const TUTO_ICONS = [
   '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v6M19.6 9.2l-5.6 2.1M16.8 18.9l-3.4-5M7.2 18.9l3.4-5M4.4 9.2l5.6 2.1"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
@@ -2593,6 +2634,8 @@ function bind() {
   $('#tutoSkip').addEventListener('click', closeTuto);
   $('#btnTuto').addEventListener('click', () => { closeSheets(); openTuto(); });
   $('#btnExport').addEventListener('click', exportData);
+  $('#btnImport').addEventListener('click', () => { $('#importFile').value = ''; $('#importFile').click(); });
+  $('#importFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) importData(f); });
   let tx = null;
   $('#tuto').addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
   $('#tuto').addEventListener('touchend', e => {

@@ -268,6 +268,7 @@ svg{display:block}
 .lg i{width:26px;height:6px;border-radius:3px;background:var(--c);flex:none}
 .lg span{flex:1}
 .lg b{font-variant-numeric:tabular-nums;font-weight:600}
+.import-msg{color:var(--text);font-weight:600}
 .toggles .t-test{color:var(--accent-fg);border-color:var(--accent)}
 .credits{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:16px;margin-top:4px}
 .credits a{color:var(--text);text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:2px}
@@ -684,8 +685,14 @@ setTimeout(out,6000);})();</script>
       <p class="s" data-i18n="gWarnNote"></p></div>
     <button class="btn btn-ghost" id="btnTuto" data-i18n="tutoAgain">Revoir le tutoriel</button>
     <div class="field">
-      <button class="btn btn-ghost" id="btnExport" data-i18n="exportData">Exporter mes données</button>
+      <div class="home-row">
+        <button class="btn btn-ghost" id="btnExport" data-i18n="exportShort">Exporter</button>
+        <button class="btn btn-ghost" id="btnImport" data-i18n="importData">Importer</button>
+      </div>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
       <p class="s" data-i18n="exportNote"></p>
+      <p class="s" data-i18n="importNote"></p>
+      <p class="s import-msg" id="importMsg" hidden></p>
     </div>
     <div class="credits">
       <span class="field-label" data-i18n="credits">Crédits</span>
