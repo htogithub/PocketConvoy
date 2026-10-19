@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -177,6 +177,7 @@ const I18N = {
     tuto4t: 'Parler et prévenir', tuto4d: 'Maintiens le gros bouton pour parler au talkie. Alertes prévient tout le convoi en un geste, et le chat sert pour les messages et les liens.',
     tuto5t: 'Avant de partir', tuto5d: 'Autorise la localisation et le micro. Garde l’app ouverte, écran allumé, sur un support : sur iPhone, une web app s’arrête quand l’écran se verrouille.',
     exportData: 'Exporter mes données', exportNote: 'Pseudo, réglages et historique des trajets, dans un fichier JSON.',
+    tripAll: 'Tous', tripWho: 'Afficher le trajet de', speedLegend: 'Vitesse sur le trajet (part du temps)', gapLegend: 'Signal perdu',
     units: 'Unités', miles: 'miles', gauge: 'Compteur', gDial: 'Cadran', gDigital: 'Numérique', gMax: 'Graduation maximale',
     gWarn: 'Seuil de vitesse', warnOff: 'Aucun', gWarnNote: 'Au-delà du seuil choisi, la vitesse et l’aiguille passent au rouge.',
     create: 'Créer un convoi', orJoin: 'ou rejoindre avec un code', join: 'Rejoindre', errCode: 'Le code du convoi fait 6 caractères.',
@@ -263,6 +264,7 @@ const I18N = {
     tuto4t: 'Talk and warn', tuto4d: 'Hold the big button to talk on the walkie-talkie. Alerts warns the whole convoy in one tap, and the chat is for messages and links.',
     tuto5t: 'Before you leave', tuto5d: 'Allow location and microphone. Keep the app open with the screen on, on a mount: on iPhone, a web app stops when the screen locks.',
     exportData: 'Export my data', exportNote: 'Nickname, settings and trip history, in a JSON file.',
+    tripAll: 'All', tripWho: 'Show the trip of', speedLegend: 'Speed along the trip (share of time)', gapLegend: 'Signal lost',
     units: 'Units', miles: 'miles', gauge: 'Speedometer', gDial: 'Dial', gDigital: 'Digital', gMax: 'Maximum on the dial',
     gWarn: 'Speed threshold', warnOff: 'None', gWarnNote: 'Above the chosen threshold, the speed and the needle turn red.',
     create: 'Create a convoy', orJoin: 'or join with a code', join: 'Join', errCode: 'The convoy code has 6 characters.',
@@ -349,6 +351,7 @@ const I18N = {
     tuto4t: 'Sprechen und warnen', tuto4d: 'Halte die grosse Taste gedrückt, um über das Funkgerät zu sprechen. Warnungen informiert den ganzen Konvoi mit einem Tipp, der Chat ist für Nachrichten und Links.',
     tuto5t: 'Vor der Abfahrt', tuto5d: 'Erlaube Standort und Mikrofon. Lass die App mit eingeschaltetem Bildschirm in einer Halterung offen: Auf dem iPhone stoppt eine Web-App, wenn der Bildschirm sperrt.',
     exportData: 'Meine Daten exportieren', exportNote: 'Name, Einstellungen und Fahrtenverlauf in einer JSON-Datei.',
+    tripAll: 'Alle', tripWho: 'Fahrt anzeigen von', speedLegend: 'Tempo entlang der Fahrt (Zeitanteil)', gapLegend: 'Signal verloren',
     units: 'Einheiten', miles: 'Meilen', gauge: 'Tacho', gDial: 'Zifferblatt', gDigital: 'Digital', gMax: 'Höchstwert der Skala',
     gWarn: 'Tempogrenze', warnOff: 'Keine', gWarnNote: 'Über der gewählten Grenze werden Tempo und Zeiger rot.',
     create: 'Konvoi erstellen', orJoin: 'oder mit einem Code beitreten', join: 'Beitreten', errCode: 'Der Konvoi-Code hat 6 Zeichen.',
@@ -2420,18 +2423,36 @@ async function openHistory() {
     </div><span class="chev">${ic(ICON.chev, 18)}</span></button>`;
   }).join('');
 }
+/* tranches de vitesse de l'historique (km/h) et leurs couleurs */
+const SPEED_BANDS = [50, 120, 180, 220];
+const BAND_COLORS = ['#4C9EFF', '#2BD9A0', '#FFC53D', '#FF8A3D', '#FF2E88'];
+const GAP_COLOR = '#8B8B93';
+const bandOf = kmh => { let i = 0; while (i < SPEED_BANDS.length && kmh >= SPEED_BANDS[i]) i++; return i; };
+function speedSegments(track) {
+  const feats = [], time = [0, 0, 0, 0, 0];
+  let cur = null;
+  for (let i = 1; i < track.length; i++) {
+    const a = track[i - 1], b = track[i], dt = b[0] - a[0];
+    const band = dt <= 0 || dt > 120 ? -1 : bandOf(hav([a[1], a[2]], [b[1], b[2]]) / dt * 3.6);
+    if (band >= 0) time[band] += dt;
+    const pa = [a[2], a[1]], pb = [b[2], b[1]];
+    if (cur && cur.properties.band === band) cur.geometry.coordinates.push(pb);
+    else { cur = { type: 'Feature', properties: { band }, geometry: { type: 'LineString', coordinates: [pa, pb] } }; feats.push(cur); }
+  }
+  return { geo: { type: 'FeatureCollection', features: feats }, time };
+}
+function bandLabel(i) {
+  const v = x => Math.round(kmhTo(x));
+  if (i === 0) return `0–${v(SPEED_BANDS[0])}`;
+  if (i === SPEED_BANDS.length) return `> ${v(SPEED_BANDS[i - 1])}`;
+  return `${v(SPEED_BANDS[i - 1])}–${v(SPEED_BANDS[i])}`;
+}
 async function openTrip(id) {
   let tr = null;
   try { tr = (await DB.allTrips()).find(x => x.id === id); } catch (e) { /* ignoré */ }
   if (!tr) return;
   show('trip');
   $('#tripTitle').textContent = tr.dest || t('tripDefault');
-  const mine = tr.stats.find(r => r.me) || { dist: 0, mv: 0, mx: 0 };
-  $('#tripStats').innerHTML = `<p class="s">${esc(t('fromTo', { date: fmtDate(tr.start), a: fmtClock(tr.start), b: fmtClock(tr.end) }))}</p>`
-    + bigStats(mine, 0)
-    + (tr.stats.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(tr.stats)}</div>` : '')
-    + `<button class="btn btn-danger" data-deltrip="${esc(tr.id)}">${esc(t('delTrip'))}</button>`;
-
   if (RP && RP.map) RP.map.remove();
   const dur = Math.max(1, Math.round((tr.end - tr.start) / 1000));
   const speeds = [10, 30, 60, 120, 300, 600];
@@ -2439,20 +2460,18 @@ async function openTrip(id) {
   const speed = speeds.reduce((a, b) => Math.abs(b - target) < Math.abs(a - target) ? b : a);
   const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [MAP_HOME[1], MAP_HOME[0]], zoom: 7, attributionControl: false, dragRotate: false });
   map.touchZoomRotate.disableRotation();
-  RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0 };
+  const ids = Object.keys(tr.tracks).filter(mid => tr.tracks[mid] && tr.tracks[mid].length >= 2);
+  RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0, ids, sel: 'all', segs: {} };
+  for (const mid of ids) RP.segs[mid] = speedSegments(tr.tracks[mid]);
   $('#rpSlider').max = dur; $('#rpSlider').value = 0;
   updatePlayBtn();
+  renderTripPanel();
   let first = true;
   map.on('style.load', () => {
-    const b = new maplibregl.LngLatBounds();
-    let any = false;
-    for (const [mid, track] of Object.entries(tr.tracks)) {
-      if (!track || track.length < 2) continue;
-      any = true;
-      const col = tr.colors[mid] || '#8B8B93';
+    for (const mid of ids) {
+      const track = tr.tracks[mid], col = tr.colors[mid] || '#8B8B93';
       if (!map.getSource('tr-' + mid)) map.addSource('tr-' + mid, { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: track.map(p => [p[2], p[1]]) } } });
       if (!map.getLayer('tr-' + mid)) map.addLayer({ id: 'tr-' + mid, type: 'line', source: 'tr-' + mid, layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': col, 'line-width': 3, 'line-opacity': 0.85 } });
-      track.forEach(p => b.extend([p[2], p[1]]));
       if (!RP.markers[mid]) {
         const el = document.createElement('div');
         el.className = 'car rp';
@@ -2461,9 +2480,60 @@ async function openTrip(id) {
         RP.markers[mid] = new maplibregl.Marker({ element: el }).setLngLat([track[0][2], track[0][1]]).addTo(map);
       }
     }
-    if (first) { first = false; if (any) map.fitBounds(b, { padding: 40, duration: 0 }); setReplay(0); }
+    const empty = { type: 'FeatureCollection', features: [] };
+    if (!map.getSource('spd')) map.addSource('spd', { type: 'geojson', data: empty });
+    if (!map.getLayer('spd-casing')) map.addLayer({ id: 'spd-casing', type: 'line', source: 'spd', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#000000', 'line-width': 9, 'line-opacity': 0.45 } });
+    if (!map.getLayer('spd-line')) map.addLayer({ id: 'spd-line', type: 'line', source: 'spd', layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: { 'line-color': ['match', ['get', 'band'], 0, BAND_COLORS[0], 1, BAND_COLORS[1], 2, BAND_COLORS[2], 3, BAND_COLORS[3], 4, BAND_COLORS[4], GAP_COLOR], 'line-width': 5 } });
+    applyTripSelection(first);
+    if (first) { first = false; setReplay(0); }
   });
   applyMapStyle(map);
+}
+function tripRow(mid) {
+  const tr = RP.t;
+  return tr.stats.find(r => r.id === mid) || (mid === me.id ? tr.stats.find(r => r.me) : null) || { dist: 0, mv: 0, mx: 0 };
+}
+function renderTripPanel() {
+  const tr = RP.t, sel = RP.sel;
+  const chips = [`<button data-tsel="all" aria-pressed="${sel === 'all'}">${esc(t('tripAll'))}</button>`]
+    .concat(RP.ids.map(mid => `<button data-tsel="${esc(mid)}" aria-pressed="${sel === mid}"><i style="--c:${esc(tr.colors[mid] || '#8B8B93')}"></i>${esc(tr.names[mid] || '?')}</button>`));
+  let legend = '';
+  if (sel !== 'all' && RP.segs[sel]) {
+    const time = RP.segs[sel].time, tot = time.reduce((a, b) => a + b, 0) || 1;
+    legend = `<div class="field"><span class="field-label">${esc(t('speedLegend'))}</span><div class="legend">`
+      + BAND_COLORS.map((c, i) => `<div class="lg"><i style="--c:${c}"></i><span>${bandLabel(i)} ${spdUnit()}</span><b>${Math.round(time[i] / tot * 100)} %</b></div>`).join('')
+      + `<div class="lg"><i class="gap" style="--c:${GAP_COLOR}"></i><span>${esc(t('gapLegend'))}</span><b></b></div></div></div>`;
+  }
+  const mine = sel === 'all' ? (tr.stats.find(r => r.me) || { dist: 0, mv: 0, mx: 0 }) : tripRow(sel);
+  $('#tripStats').innerHTML = `<p class="s">${esc(t('fromTo', { date: fmtDate(tr.start), a: fmtClock(tr.start), b: fmtClock(tr.end) }))}</p>`
+    + (RP.ids.length ? `<div class="field"><span class="field-label">${esc(t('tripWho'))}</span><div class="toggles trip-chips">${chips.join('')}</div></div>` : '')
+    + legend
+    + bigStats(mine, 0)
+    + (tr.stats.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(tr.stats)}</div>` : '')
+    + `<button class="btn btn-danger" data-deltrip="${esc(tr.id)}">${esc(t('delTrip'))}</button>`;
+}
+function applyTripSelection(fit) {
+  if (!RP) return;
+  const map = RP.map, sel = RP.sel, tr = RP.t;
+  for (const mid of RP.ids) {
+    if (map.getLayer && map.getLayer('tr-' + mid)) map.setLayoutProperty('tr-' + mid, 'visibility', sel === 'all' ? 'visible' : 'none');
+    if (RP.markers[mid]) RP.markers[mid].getElement().style.display = sel === 'all' || sel === mid ? '' : 'none';
+  }
+  const src = map.getSource && map.getSource('spd');
+  if (src) src.setData(sel !== 'all' && RP.segs[sel] ? RP.segs[sel].geo : { type: 'FeatureCollection', features: [] });
+  if (fit) {
+    const b = new maplibregl.LngLatBounds();
+    let any = false;
+    for (const mid of (sel === 'all' ? RP.ids : [sel])) for (const p of tr.tracks[mid] || []) { b.extend([p[2], p[1]]); any = true; }
+    if (any) map.fitBounds(b, { padding: 40, duration: sel === 'all' && fit === true ? 0 : 600 });
+  }
+}
+function selectTripMember(mid) {
+  if (!RP) return;
+  RP.sel = mid;
+  renderTripPanel();
+  applyTripSelection('anim');
 }
 function interp(tr, T) {
   if (T <= tr[0][0]) return [tr[0][1], tr[0][2]];
@@ -2695,6 +2765,8 @@ function bind() {
   $('#histList').addEventListener('click', e => { const b = e.target.closest('[data-trip]'); if (b) openTrip(b.dataset.trip); });
   $('#tripBack').addEventListener('click', closeTrip);
   $('#tripStats').addEventListener('click', async e => {
+    const sel = e.target.closest('[data-tsel]');
+    if (sel) { selectTripMember(sel.dataset.tsel); return; }
     const b = e.target.closest('[data-deltrip]');
     if (!b || !confirm(t('confirmDel'))) return;
     await DB.delTrip(b.dataset.deltrip);
