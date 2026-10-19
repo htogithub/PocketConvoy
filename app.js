@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.1';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -116,7 +116,7 @@ const I18N = {
     quickNote: 'Chaque alerte part à tout le convoi avec un son. Une panne s’affiche en plein écran chez les autres.',
     convoy: 'Convoi', lang: 'Langue', theme: 'Thème', accent: 'Couleur d’accent', talkBtn: 'Bouton du talkie', hold: 'Maintenir', toggle: 'Appui simple',
     map: 'Carte', night: 'Sombre', day: 'Claire', lagAlert: 'Alerte quand un véhicule est loin du leader',
-    endTrip: 'Terminer le trajet', quit: 'Quitter sans enregistrer', yourTrip: 'Ton trajet',
+    endTrip: 'Terminer le trajet', yourTrip: 'Ton trajet',
     th_graphite: 'Graphite', th_light: 'Clair', th_oled: 'OLED', th_red: 'Nuit rouge',
     thn_graphite: 'Gris neutres, une seule couleur vive pour l’essentiel.', thn_light: 'Pour rouler en plein jour.',
     thn_oled: 'Noir pur : moins d’éblouissement et de batterie sur les écrans OLED.', thn_red: 'Tout en rouge sombre pour garder les yeux habitués à la nuit. L’accent est fixé au rouge.',
@@ -126,7 +126,6 @@ const I18N = {
     q_pause: 'Je fais une pause', q_essence: 'Je m’arrête faire le plein', q_perdu: 'Je suis perdu', q_ralentir: 'Attention, ralentissez',
     q_ok: 'Tout va bien, je repars', q_sos: 'Panne ou urgence', msgFrom: '{name} : {text}',
     errName: 'Choisis un pseudo pour que les autres te reconnaissent.', errLibs: 'La carte n’a pas pu se charger. Vérifie ta connexion.',
-    tooShort: 'Trajet trop court : il n’a pas été enregistré.',
     micDenied: 'Micro refusé. Autorise le micro pour Safari dans les réglages de l’iPhone pour tester le talkie.',
     planChanged: '{name} a modifié le parcours', joined: '{name} a rejoint le convoi', leftConvoy: '{name} n’est plus connecté',
     youLeader: 'Tu es maintenant le leader du convoi', newLeader: '{name} est le nouveau leader',
@@ -146,12 +145,12 @@ const I18N = {
     you: ' (toi)', see: 'Voir', makeLeader: 'Nommer leader', currentLeader: 'Leader actuel : {name}. Le leader choisit la destination et les étapes.',
     youShort: 'toi', nobody: 'personne', car: 'Véhicule', distance: 'Distance', driving: 'Conduite', avgShort: 'Moy.', max: 'Max',
     rankTitle: 'Le convoi, classé par distance', drivingOf: 'Temps de conduite sur {t}', drivingTime: 'Temps de conduite',
-    avgMoving: 'Vitesse moyenne en roulant', maxSpeed: 'Vitesse max', saveQuit: 'Enregistrer et quitter', keepDriving: 'Continuer à rouler',
+    avgMoving: 'Vitesse moyenne en roulant', maxSpeed: 'Vitesse max', keepDriving: 'Continuer à rouler',
     lagYou: 'Tu es à {d} du leader', lagOther: '{name} est à {d} du leader', leaderStopped: 'Le leader {name} est à l’arrêt',
     heading: 'Cap {d}', itsYou: 'C’est toi', carsOnline: 'Véhicules connectés', average: 'Moyenne', gapLeader: 'Écart au leader', altitude: 'Altitude',
     noTrips: 'Aucun trajet enregistré pour l’instant. Ils apparaissent ici quand tu termines un trajet.', tripDefault: 'Trajet',
     cars1: '1 véhicule', carsN: '{n} véhicules', tripLine: '{dist} en {dur}, {cars}', fromTo: '{date}, de {a} à {b}', delTrip: 'Supprimer ce trajet',
-    confirmQuit: 'Quitter sans enregistrer ce trajet ?', confirmDel: 'Supprimer ce trajet de l’historique ?',
+    confirmDel: 'Supprimer ce trajet de l’historique ?',
     viewConvoy: 'Vue du convoi', followMe: 'Me suivre',
     on: 'Activés', off: 'Désactivés',
     haptics: 'Retour haptique', hapOff: 'Désactivé', hapLight: 'Léger', hapNormal: 'Normal', hapStrong: 'Fort', hapFor: 'Utiliser pour',
@@ -207,7 +206,7 @@ const I18N = {
     quickNote: 'Every alert goes to the whole convoy with a sound. A breakdown shows full screen on the other phones.',
     convoy: 'Convoy', lang: 'Language', theme: 'Theme', accent: 'Accent colour', talkBtn: 'Walkie-talkie button', hold: 'Hold', toggle: 'Tap',
     map: 'Map', night: 'Dark', day: 'Light', lagAlert: 'Alert when a vehicle is far from the leader',
-    endTrip: 'End the trip', quit: 'Leave without saving', yourTrip: 'Your trip',
+    endTrip: 'End the trip', yourTrip: 'Your trip',
     th_graphite: 'Graphite', th_light: 'Light', th_oled: 'OLED', th_red: 'Red night',
     thn_graphite: 'Neutral greys, a single bright colour for what matters.', thn_light: 'For driving in daylight.',
     thn_oled: 'Pure black: less glare and less battery on OLED screens.', thn_red: 'Everything in dim red to keep your eyes adapted to the dark. The accent is locked to red.',
@@ -217,7 +216,6 @@ const I18N = {
     q_pause: 'I’m taking a break', q_essence: 'I’m stopping for fuel', q_perdu: 'I’m lost', q_ralentir: 'Careful, slow down',
     q_ok: 'All good, moving on', q_sos: 'Breakdown or emergency', msgFrom: '{name}: {text}',
     errName: 'Pick a nickname so the others recognise you.', errLibs: 'The map could not load. Check your connection.',
-    tooShort: 'Trip too short: it was not saved.',
     micDenied: 'Microphone blocked. Allow the microphone for Safari in the iPhone settings to test the walkie-talkie.',
     planChanged: '{name} changed the route', joined: '{name} joined the convoy', leftConvoy: '{name} is no longer connected',
     youLeader: 'You are now the convoy leader', newLeader: '{name} is the new leader',
@@ -237,12 +235,12 @@ const I18N = {
     you: ' (you)', see: 'Show', makeLeader: 'Make leader', currentLeader: 'Current leader: {name}. The leader picks the destination and the stops.',
     youShort: 'you', nobody: 'nobody', car: 'Vehicle', distance: 'Distance', driving: 'Driving', avgShort: 'Avg.', max: 'Max',
     rankTitle: 'The convoy, ranked by distance', drivingOf: 'Driving time out of {t}', drivingTime: 'Driving time',
-    avgMoving: 'Average speed while moving', maxSpeed: 'Top speed', saveQuit: 'Save and leave', keepDriving: 'Keep driving',
+    avgMoving: 'Average speed while moving', maxSpeed: 'Top speed', keepDriving: 'Keep driving',
     lagYou: 'You are {d} from the leader', lagOther: '{name} is {d} from the leader', leaderStopped: 'The leader {name} has stopped',
     heading: 'Heading {d}', itsYou: 'It’s you', carsOnline: 'Vehicles connected', average: 'Average', gapLeader: 'Gap to leader', altitude: 'Altitude',
     noTrips: 'No trips saved yet. They appear here when you end a trip.', tripDefault: 'Trip',
     cars1: '1 vehicle', carsN: '{n} vehicles', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, from {a} to {b}', delTrip: 'Delete this trip',
-    confirmQuit: 'Leave without saving this trip?', confirmDel: 'Delete this trip from the history?',
+    confirmDel: 'Delete this trip from the history?',
     viewConvoy: 'Convoy view', followMe: 'Follow me',
     on: 'On', off: 'Off',
     haptics: 'Haptic feedback', hapOff: 'Off', hapLight: 'Light', hapNormal: 'Normal', hapStrong: 'Strong', hapFor: 'Use for',
@@ -298,7 +296,7 @@ const I18N = {
     quickNote: 'Jede Warnung geht mit einem Ton an den ganzen Konvoi. Eine Panne erscheint bei den anderen im Vollbild.',
     convoy: 'Konvoi', lang: 'Sprache', theme: 'Design', accent: 'Akzentfarbe', talkBtn: 'Funkgerät-Taste', hold: 'Halten', toggle: 'Antippen',
     map: 'Karte', night: 'Dunkel', day: 'Hell', lagAlert: 'Warnung, wenn ein Fahrzeug weit vom Konvoiführer entfernt ist',
-    endTrip: 'Fahrt beenden', quit: 'Ohne Speichern verlassen', yourTrip: 'Deine Fahrt',
+    endTrip: 'Fahrt beenden', yourTrip: 'Deine Fahrt',
     th_graphite: 'Graphit', th_light: 'Hell', th_oled: 'OLED', th_red: 'Rote Nacht',
     thn_graphite: 'Neutrale Grautöne, eine einzige kräftige Farbe für das Wichtigste.', thn_light: 'Zum Fahren bei Tageslicht.',
     thn_oled: 'Reines Schwarz: weniger Blendung und weniger Akkuverbrauch auf OLED-Bildschirmen.', thn_red: 'Alles in gedämpftem Rot, damit die Augen an die Dunkelheit gewöhnt bleiben. Die Akzentfarbe ist auf Rot festgelegt.',
@@ -308,7 +306,6 @@ const I18N = {
     q_pause: 'Ich mache eine Pause', q_essence: 'Ich halte zum Tanken an', q_perdu: 'Ich habe mich verfahren', q_ralentir: 'Achtung, langsamer fahren',
     q_ok: 'Alles gut, ich fahre weiter', q_sos: 'Panne oder Notfall', msgFrom: '{name}: {text}',
     errName: 'Wähle einen Namen, damit dich die anderen erkennen.', errLibs: 'Die Karte konnte nicht geladen werden. Prüfe deine Verbindung.',
-    tooShort: 'Fahrt zu kurz: Sie wurde nicht gespeichert.',
     micDenied: 'Mikrofon blockiert. Erlaube das Mikrofon für Safari in den iPhone-Einstellungen, um das Funkgerät zu testen.',
     planChanged: '{name} hat die Route geändert', joined: '{name} ist dem Konvoi beigetreten', leftConvoy: '{name} ist nicht mehr verbunden',
     youLeader: 'Du bist jetzt Konvoiführer', newLeader: '{name} ist der neue Konvoiführer',
@@ -328,12 +325,12 @@ const I18N = {
     you: ' (du)', see: 'Zeigen', makeLeader: 'Zum Führer machen', currentLeader: 'Aktueller Konvoiführer: {name}. Er wählt das Ziel und die Zwischenstopps.',
     youShort: 'du', nobody: 'niemand', car: 'Fahrzeug', distance: 'Distanz', driving: 'Fahrzeit', avgShort: 'Ø', max: 'Max',
     rankTitle: 'Der Konvoi, nach Distanz geordnet', drivingOf: 'Fahrzeit von {t}', drivingTime: 'Fahrzeit',
-    avgMoving: 'Durchschnitt während der Fahrt', maxSpeed: 'Höchstgeschwindigkeit', saveQuit: 'Speichern und verlassen', keepDriving: 'Weiterfahren',
+    avgMoving: 'Durchschnitt während der Fahrt', maxSpeed: 'Höchstgeschwindigkeit', keepDriving: 'Weiterfahren',
     lagYou: 'Du bist {d} vom Konvoiführer entfernt', lagOther: '{name} ist {d} vom Konvoiführer entfernt', leaderStopped: 'Konvoiführer {name} steht',
     heading: 'Richtung {d}', itsYou: 'Du', average: 'Durchschnitt', gapLeader: 'Abstand zum Führer', altitude: 'Höhe', carsOnline: 'Verbundene Fahrzeuge',
     noTrips: 'Noch keine gespeicherten Fahrten. Sie erscheinen hier, wenn du eine Fahrt beendest.', tripDefault: 'Fahrt',
     cars1: '1 Fahrzeug', carsN: '{n} Fahrzeuge', tripLine: '{dist} in {dur}, {cars}', fromTo: '{date}, von {a} bis {b}', delTrip: 'Diese Fahrt löschen',
-    confirmQuit: 'Ohne Speichern dieser Fahrt verlassen?', confirmDel: 'Diese Fahrt aus dem Verlauf löschen?',
+    confirmDel: 'Diese Fahrt aus dem Verlauf löschen?',
     viewConvoy: 'Konvoi-Ansicht', followMe: 'Mir folgen',
     on: 'An', off: 'Aus',
     haptics: 'Haptisches Feedback', hapOff: 'Aus', hapLight: 'Leicht', hapNormal: 'Normal', hapStrong: 'Stark', hapFor: 'Verwenden für',
@@ -1702,6 +1699,7 @@ function renderStrip() {
   </button>`).join('');
 }
 function renderMembers() {
+  $('#btnEndAll').hidden = !(isLeader() && S.online.size > 1);
   const list = [member(me.id), ...sortedOthers()];
   const lead = isLeader();
   const audio = m => {
@@ -1754,21 +1752,28 @@ function renderEnd() {
   const rows = statsRows();
   $('#endBody').innerHTML = bigStats(rows[0], T ? clock() - T.start : 0)
     + (rows.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(rows)}</div>` : '')
-    + `<button class="btn btn-primary" id="endSave">${esc(t('saveQuit'))}</button>`
+    + `<button class="btn btn-primary" id="endSave">${esc(t('endTrip'))}</button>`
     + (S.live && isLeader() && S.online.size > 1 ? `<button class="btn btn-ghost" id="endAll">${esc(t('endAll'))}</button>` : '')
     + `<button class="btn btn-ghost" data-close>${esc(t('keepDriving'))}</button>`;
 }
-async function finish() {
-  const T = S.trip, rows = statsRows();
-  let saved = false;
-  if (T && (rows[0].dist || 0) >= 300) {
-    try {
-      await DB.putTrip({ id: T.id, start: T.start, end: clock(), dest: T.dest || '', tracks: T.tracks, names: T.names, colors: T.colors, stats: rows });
-      saved = true;
-    } catch (e) { /* stockage indisponible */ }
-  }
+/* Le trajet s'enregistre quand on termine le convoi, sans question.
+   Seuls les essais de moins d'une minute et de moins de 100 m sont ignorés. */
+async function persistTrip() {
+  const T = S.trip;
+  if (!T) return false;
+  const rows = statsRows();
+  if (clock() - T.start < 60000 && (rows[0].dist || 0) < 100) return false;
+  try {
+    await DB.putTrip({ id: T.id, start: T.start, end: clock(), dest: T.dest || '', tracks: T.tracks, names: T.names, colors: T.colors, stats: rows });
+    return true;
+  } catch (e) { return false; }
+}
+async function finish(forAll) {
+  if (forAll) send('end', { by: me.id });
+  const id = S.trip && S.trip.id;
+  const saved = await persistTrip();
   leave();
-  if (saved) openHistory(); else homeErr(t('tooShort'));
+  if (saved) openTrip(id);
 }
 
 /* ---------- boucle périodique ---------- */
@@ -2113,9 +2118,9 @@ Object.assign(H, {
   },
   leader(d) { if (d.id) setLeader(d.id, false, d.seq || 0); },
   end(d) {
-    if (!d.by || d.by === me.id) return;
+    if (!d.by || d.by === me.id || !S.active) return;
     toast(t('endedAll', { name: member(d.by).name }), 'info', 7000);
-    openSheet('end');
+    finish(false);
   },
 });
 async function shareInvite() {
@@ -2797,11 +2802,11 @@ function bind() {
     if (l && isLeader()) { giveLeader(l.dataset.lead); renderMembers(); }
   });
 
-  $('#btnEndOpen').addEventListener('click', () => openSheet('end'));
-  $('#btnQuit').addEventListener('click', () => { if (confirm(t('confirmQuit'))) leave(); });
+  $('#btnEndOpen').addEventListener('click', () => finish(false));
+  $('#btnEndAll').addEventListener('click', () => finish(true));
   $('#endBody').addEventListener('click', e => {
-    if (e.target.closest('#endSave')) finish();
-    if (e.target.closest('#endAll')) { send('end', { by: me.id }); finish(); }
+    if (e.target.closest('#endSave')) finish(false);
+    if (e.target.closest('#endAll')) finish(true);
   });
 
   $('#histBack').addEventListener('click', () => { show('home'); renderHome(); });
