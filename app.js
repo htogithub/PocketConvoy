@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.2';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -404,6 +404,7 @@ const NAV = {
 const DIRS = { fr: ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'], en: ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'], de: ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'] };
 const OSM_LINK = (lat, lng) => `https://www.openstreetmap.org/?mlat=${lat.toFixed(5)}&mlon=${lng.toFixed(5)}#map=16/${lat.toFixed(5)}/${lng.toFixed(5)}`;
 /* ---------- utilitaires ---------- */
+function on(sel, ev, fn, opt) { const el = document.querySelector(sel); if (el) el.addEventListener(ev, fn, opt); }
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1699,7 +1700,8 @@ function renderStrip() {
   </button>`).join('');
 }
 function renderMembers() {
-  $('#btnEndAll').hidden = !(isLeader() && S.online.size > 1);
+  const endAll = $('#btnEndAll');
+  if (endAll) endAll.hidden = !(isLeader() && S.online.size > 1);
   const list = [member(me.id), ...sortedOthers()];
   const lead = isLeader();
   const audio = m => {
@@ -2627,43 +2629,43 @@ function bind() {
   document.addEventListener('click', e => {
     if (Date.now() < (S.ignoreClickUntil || 0)) { e.stopPropagation(); e.preventDefault(); }
   }, true);
-  $('#colorHue').addEventListener('input', e => { me.hue = +e.target.value; updateColorPreview(); });
-  $('#colorHue').addEventListener('change', () => { store.set('hue', me.hue); store.set('color', me.color); haptic('select'); });
-  $('#name').addEventListener('input', updateColorPreview);
-  $('#accentHue').addEventListener('input', e => { prefs.accentHue = +e.target.value; applyTheme(); });
-  $('#accentHue').addEventListener('change', () => { savePrefs(); haptic('select'); });
-  $('#btnScan').addEventListener('click', openScanner);
-  $('#scanClose').addEventListener('click', closeScanner);
-  $('#qrBig').addEventListener('click', () => { $('#qrBig').hidden = true; });
-  $('#tutoNext').addEventListener('click', () => tutoStep(1));
-  $('#tutoSkip').addEventListener('click', closeTuto);
-  $('#btnTuto').addEventListener('click', () => { closeSheets(); openTuto(); });
-  $('#btnExport').addEventListener('click', exportData);
-  $('#btnImport').addEventListener('click', () => { $('#importFile').value = ''; $('#importFile').click(); });
-  $('#importFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) importData(f); });
+  on('#colorHue', 'input', e => { me.hue = +e.target.value; updateColorPreview(); });
+  on('#colorHue', 'change', () => { store.set('hue', me.hue); store.set('color', me.color); haptic('select'); });
+  on('#name', 'input', updateColorPreview);
+  on('#accentHue', 'input', e => { prefs.accentHue = +e.target.value; applyTheme(); });
+  on('#accentHue', 'change', () => { savePrefs(); haptic('select'); });
+  on('#btnScan', 'click', openScanner);
+  on('#scanClose', 'click', closeScanner);
+  on('#qrBig', 'click', () => { $('#qrBig').hidden = true; });
+  on('#tutoNext', 'click', () => tutoStep(1));
+  on('#tutoSkip', 'click', closeTuto);
+  on('#btnTuto', 'click', () => { closeSheets(); openTuto(); });
+  on('#btnExport', 'click', exportData);
+  on('#btnImport', 'click', () => { $('#importFile').value = ''; $('#importFile').click(); });
+  on('#importFile', 'change', e => { const f = e.target.files && e.target.files[0]; if (f) importData(f); });
   let tx = null;
-  $('#tuto').addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
-  $('#tuto').addEventListener('touchend', e => {
+  on('#tuto', 'touchstart', e => { tx = e.touches[0].clientX; }, { passive: true });
+  on('#tuto', 'touchend', e => {
     if (tx == null) return;
     const dx = e.changedTouches[0].clientX - tx; tx = null;
     if (Math.abs(dx) > 50) tutoStep(dx < 0 ? 1 : -1);
   });
-  $('#name').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
-  $('#btnCreate').addEventListener('click', () => { if (!configOk()) { homeErr(t('cfgWarn')); return; } start({ creating: true, code: newCode() }); });
-  $('#btnJoin').addEventListener('click', () => {
+  on('#name', 'keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+  on('#btnCreate', 'click', () => { if (!configOk()) { homeErr(t('cfgWarn')); return; } start({ creating: true, code: newCode() }); });
+  on('#btnJoin', 'click', () => {
     if (!configOk()) { homeErr(t('cfgWarn')); return; }
     const c = $('#code').value.trim().toUpperCase();
     if (c.length !== 6) { homeErr(t('errCode')); $('#code').focus(); return; }
     start({ code: c });
   });
-  $('#code').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); });
-  $('#code').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); $('#btnJoin').click(); } });
-  $('#btnHistory').addEventListener('click', () => openHistory());
-  $('#btnHomeSettings').addEventListener('click', () => openSheet('settings'));
-  $('#btnChat').addEventListener('click', () => openSheet('chat'));
-  $('#chatSend').addEventListener('click', () => { const i = $('#chatInput'); sendChat(i.value); i.value = ''; });
-  $('#chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(e.target.value); e.target.value = ''; } });
-  $('#chatPos').addEventListener('click', shareMyPosition);
+  on('#code', 'input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6); });
+  on('#code', 'keydown', e => { if (e.key === 'Enter') { e.target.blur(); $('#btnJoin').click(); } });
+  on('#btnHistory', 'click', () => openHistory());
+  on('#btnHomeSettings', 'click', () => openSheet('settings'));
+  on('#btnChat', 'click', () => openSheet('chat'));
+  on('#chatSend', 'click', () => { const i = $('#chatInput'); sendChat(i.value); i.value = ''; });
+  on('#chatInput', 'keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendChat(e.target.value); e.target.value = ''; } });
+  on('#chatPos', 'click', shareMyPosition);
 
   document.addEventListener('click', e => {
     const segBtn = e.target.closest('.seg[data-pref] button');
@@ -2671,12 +2673,12 @@ function bind() {
     if (e.target.closest('[data-close]')) closeSheets();
   });
 
-  $('#main').addEventListener('pointerdown', () => { if ((S.ac && S.ac.state !== 'running') || [...RTC.peers.values()].some(p => p.audio && p.audio.paused)) unlockAudio(); }, { capture: true });
-  $('#viewTabs').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
-  $('#btnLocate').addEventListener('click', () => { if (S.follow) { setFollow(false); fitConvoy(); } else setFollow(true); });
-  $('#navCard').addEventListener('click', () => openSheet(S.arrived ? 'end' : 'route'));
+  on('#main', 'pointerdown', () => { if ((S.ac && S.ac.state !== 'running') || [...RTC.peers.values()].some(p => p.audio && p.audio.paused)) unlockAudio(); }, { capture: true });
+  on('#viewTabs', 'click', e => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
+  on('#btnLocate', 'click', () => { if (S.follow) { setFollow(false); fitConvoy(); } else setFollow(true); });
+  on('#navCard', 'click', () => openSheet(S.arrived ? 'end' : 'route'));
   $$('[data-sheet]').forEach(b => b.addEventListener('click', () => openSheet(b.dataset.sheet)));
-  $('#scrim').addEventListener('click', closeSheets);
+  on('#scrim', 'click', closeSheets);
   window.addEventListener('resize', () => setTimeout(() => { layoutSpeedo(); if (S.follow) setFollowPadding(); }, 120));
   if ('ResizeObserver' in window) { const ro = new ResizeObserver(() => layoutSpeedo()); ro.observe($('.hud-top')); ro.observe($('.controls')); }
 
@@ -2697,7 +2699,7 @@ function bind() {
   });
   ptt.addEventListener('pointercancel', () => { armed = false; if (prefs.talkMode === 'hold') talkStop(); });
 
-  $('#wpList').addEventListener('click', e => {
+  on('#wpList', 'click', e => {
     const b = e.target.closest('[data-act]');
     if (!b || !isLeader()) return;
     const i = +b.dataset.i, wps = [...S.plan.wps];
@@ -2706,13 +2708,13 @@ function bind() {
     if (b.dataset.act === 'down' && i < wps.length - 1) [wps[i + 1], wps[i]] = [wps[i], wps[i + 1]];
     setPlan(wps);
   });
-  $('#search').addEventListener('input', e => {
+  on('#search', 'input', e => {
     clearTimeout(searchT);
     const q = e.target.value.trim();
     if (q.length < 3) { $('#results').innerHTML = ''; return; }
     searchT = setTimeout(() => runSearch(q), 450);
   });
-  $('#results').addEventListener('click', e => {
+  on('#results', 'click', e => {
     const b = e.target.closest('[data-res]');
     if (!b) return;
     const f = $('#results')._features[+b.dataset.res];
@@ -2726,16 +2728,16 @@ function bind() {
     $('#pickBar').hidden = false;
     if (prefs.view === 'speed') setView('map');
   };
-  $('#btnPick').addEventListener('click', () => startPick('stop'));
-  $('#btnPinMap').addEventListener('click', () => startPick('pin'));
-  $('#btnPinHere').addEventListener('click', () => { if (S.pos) openPinNew(S.pos.lat, S.pos.lng); });
-  $('#pinList').addEventListener('click', e => {
+  on('#btnPick', 'click', () => startPick('stop'));
+  on('#btnPinMap', 'click', () => startPick('pin'));
+  on('#btnPinHere', 'click', () => { if (S.pos) openPinNew(S.pos.lat, S.pos.lng); });
+  on('#pinList', 'click', e => {
     const st = e.target.closest('[data-pinstop]');
     if (st) { pinToRoute(st.dataset.pinstop, false); renderRouteSheet(); return; }
     const b = e.target.closest('[data-pin]');
     if (b) openPin(b.dataset.pin);
   });
-  $('#pinBody').addEventListener('click', e => {
+  on('#pinBody', 'click', e => {
     const ty = e.target.closest('[data-ptype]');
     if (ty && S.pinDraft) { S.pinDraft.type = ty.dataset.ptype; $$('#pinBody [data-ptype]').forEach(x => x.setAttribute('aria-pressed', String(x === ty))); return; }
     if (e.target.closest('#pinSave')) { savePin(); return; }
@@ -2744,7 +2746,7 @@ function bind() {
     if (act.dataset.pinact === 'del') deletePin(S.pinOpen);
     else { pinToRoute(S.pinOpen, act.dataset.pinact === 'dest'); closeSheets(); }
   });
-  $('#hapCats').addEventListener('click', e => {
+  on('#hapCats', 'click', e => {
     const b = e.target.closest('[data-hcat]');
     if (b) {
       const c = b.dataset.hcat, set = new Set(prefs.hapticCats);
@@ -2754,7 +2756,7 @@ function bind() {
     }
     if (e.target.closest('#hapTest')) haptic('alert', true);
   });
-  $('#sndList').addEventListener('click', e => {
+  on('#sndList', 'click', e => {
     const b = e.target.closest('[data-snd]');
     if (!b) return;
     unlockAudio();
@@ -2787,14 +2789,14 @@ function bind() {
       if (!isField(document.activeElement)) { app.style.setProperty('--kb', '0px'); app.style.transform = ''; }
     }, 60));
   }
-  $('#pickCancel').addEventListener('click', () => { S.pick = false; $('#pickBar').hidden = true; });
+  on('#pickCancel', 'click', () => { S.pick = false; $('#pickBar').hidden = true; });
 
   $$('[data-q]').forEach(b => b.addEventListener('click', () => sendQuick(b.dataset.q)));
-  $('#sosShow').addEventListener('click', () => { $('#sos').classList.remove('on'); focusMember($('#sos').dataset.id); });
-  $('#sosClose').addEventListener('click', () => $('#sos').classList.remove('on'));
+  on('#sosShow', 'click', () => { $('#sos').classList.remove('on'); focusMember($('#sos').dataset.id); });
+  on('#sosClose', 'click', () => $('#sos').classList.remove('on'));
 
-  $('#strip').addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) focusMember(b.dataset.id); });
-  $('#membersList').addEventListener('click', e => {
+  on('#strip', 'click', e => { const b = e.target.closest('[data-id]'); if (b) focusMember(b.dataset.id); });
+  on('#membersList', 'click', e => {
     if (e.target.closest('#btnInvite')) { shareInvite(); return; }
     if (e.target.closest('#qrBox')) { showBigQr(); return; }
     const s = e.target.closest('[data-see]'), l = e.target.closest('[data-lead]');
@@ -2802,17 +2804,17 @@ function bind() {
     if (l && isLeader()) { giveLeader(l.dataset.lead); renderMembers(); }
   });
 
-  $('#btnEndOpen').addEventListener('click', () => finish(false));
-  $('#btnEndAll').addEventListener('click', () => finish(true));
-  $('#endBody').addEventListener('click', e => {
+  on('#btnEndOpen', 'click', () => finish(false));
+  on('#btnEndAll', 'click', () => finish(true));
+  on('#endBody', 'click', e => {
     if (e.target.closest('#endSave')) finish(false);
     if (e.target.closest('#endAll')) finish(true);
   });
 
-  $('#histBack').addEventListener('click', () => { show('home'); renderHome(); });
-  $('#histList').addEventListener('click', e => { const b = e.target.closest('[data-trip]'); if (b) openTrip(b.dataset.trip); });
-  $('#tripBack').addEventListener('click', closeTrip);
-  $('#tripStats').addEventListener('click', async e => {
+  on('#histBack', 'click', () => { show('home'); renderHome(); });
+  on('#histList', 'click', e => { const b = e.target.closest('[data-trip]'); if (b) openTrip(b.dataset.trip); });
+  on('#tripBack', 'click', closeTrip);
+  on('#tripStats', 'click', async e => {
     const sel = e.target.closest('[data-tsel]');
     if (sel) { selectTripMember(sel.dataset.tsel); return; }
     const b = e.target.closest('[data-deltrip]');
@@ -2820,15 +2822,15 @@ function bind() {
     await DB.delTrip(b.dataset.deltrip);
     closeTrip();
   });
-  $('#rpPlay').addEventListener('click', () => {
+  on('#rpPlay', 'click', () => {
     if (!RP) return;
     if (!RP.playing && RP.T >= RP.dur) setReplay(0);
     RP.playing = !RP.playing; RP.lastTs = 0;
     updatePlayBtn();
     if (RP.playing) RP.raf = requestAnimationFrame(rpLoop);
   });
-  $('#rpSlider').addEventListener('input', e => { if (RP) setReplay(+e.target.value); });
-  $('#rpSpeed').addEventListener('click', () => {
+  on('#rpSlider', 'input', e => { if (RP) setReplay(+e.target.value); });
+  on('#rpSpeed', 'click', () => {
     if (!RP) return;
     const i = RP.speeds.indexOf(RP.speed);
     RP.speed = RP.speeds[(i + 1) % RP.speeds.length];
