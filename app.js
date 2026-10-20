@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -185,6 +185,21 @@ const I18N = {
     importConfirm: 'Importer ce fichier ? Ton pseudo et tes réglages seront remplacés, et ses {n} trajets ajoutés à ton historique.',
     importDone: 'Import terminé : {n} trajets ajoutés ou mis à jour.', importNote: 'L’import reprend le pseudo et les réglages du fichier et ajoute ses trajets à ton historique, sans effacer les autres.',
     exportData: 'Exporter mes données', exportNote: 'Pseudo, réglages et historique des trajets, dans un fichier JSON.',
+    exploreBtn: 'Explorer les pistes', exploreTitle: 'Explorer les pistes', exLocate: 'Ma position', orSearchTitle: 'Rechercher des pistes', orSearchRoute: 'Rechercher une piste',
+    orTabSearch: 'Recherche', orTabSaved: 'Mes pistes', orWhere: 'Où', orWhereMe: 'Autour de moi', orWhereView: 'Zone affichée', orWherePlace: 'Un lieu',
+    orPlacePh: 'Village, col, région…', orRadius: 'Rayon', orVeh: 'Mon véhicule', vShort0: 'Voiture', vShort1: 'SUV', vShort2: '4×4', vShort3: 'Expert',
+    orAccF: 'Accès', orAccOk: 'Autorisées', orAccRestr: 'Avec restrictions', orAccAll: 'Toutes', orMinLen: 'Longueur minimale', orAnyLen: 'Toutes',
+    orUnknown: 'Inclure les pistes sans information', orNo: 'Non', orSort: 'Trier', orSortNear: 'Les plus proches', orSortLong: 'Les plus longues', orGo: 'Rechercher',
+    orProgress: 'Chargement des pistes : {a}/{b} zones', orResults: '{n} pistes trouvées', orResults1: '1 piste trouvée', orNoResult: 'Aucune piste ne correspond. Élargis le rayon ou les filtres.',
+    orMore: 'Et {n} autres : affine les filtres pour les voir.', orAway: 'à {d}', orTotalLen: 'Longueur totale', orSegments: 'Tronçons', orSurfaces: 'Revêtements',
+    orPartNo: 'Interdit sur une partie du tracé', orUnknownPart: 'Certaines portions n’ont pas d’information sur la difficulté.',
+    orRide: 'Rouler cette piste avec le convoi', orRideNote: 'Le guidage emmène le convoi jusqu’à l’entrée de la piste, puis la piste s’affiche pour tout le monde avec la distance restante.',
+    orRideLeader: 'Seul le leader peut lancer une piste pour tout le convoi.', orRideExplore: 'Enregistre-la dans Mes pistes pour la lancer pendant un convoi.',
+    orSave: 'Enregistrer dans Mes pistes', orUnsave: 'Retirer de Mes pistes', orSavedEmpty: 'Aucune piste enregistrée. Ouvre une piste puis « Enregistrer dans Mes pistes ».',
+    orWhole: 'Voir la piste entière', orChainNote: 'Calculé sur les pistes chargées : elle peut continuer au-delà de la zone.', orPickPlace: 'Choisis d’abord un lieu dans la liste.',
+    orViewTooBig: 'Zone trop grande : zoome un peu ou choisis un rayon.', orLastErr: 'Dernière erreur du serveur des pistes : {e}', exNoGps: 'Position GPS pas encore disponible : la recherche part du centre de la carte.',
+    trkEntry: 'Entrée : {name}', trkOn: 'Sur la piste', trkOff: 'Hors de la piste', trkBack: 'Reviens vers le tracé', trkTo: 'Rejoindre la piste', trkDone: 'Fin de la piste',
+    trkStart: 'Entrée de la piste atteinte : bonne route !', trkPlanned: 'Piste prévue', trkSet: 'Piste lancée pour le convoi : {name}',
     orPeriod: 'Période', yes: 'Oui', orOn: 'Activé', orOff: 'Désactivé', offroad: 'Mode off road', offroadNote: 'Thème baroudeur, relief sur la carte et pistes détaillées (type, difficulté, accès), touche une piste pour sa fiche. Données OpenStreetMap.',
     thn_offroad: 'Le mode off road impose son thème terre et kaki. Désactive-le pour revenir à ton thème.', orLegend: 'Légende des pistes',
     orZoom: 'Pistes : zoome pour les afficher', orLoading: 'Chargement des pistes…', orCount: '{n} pistes', orCount1: '1 piste', orNone: 'Aucune piste dans cette zone',
@@ -297,6 +312,21 @@ const I18N = {
     importConfirm: 'Import this file? Your nickname and settings will be replaced, and its {n} trips added to your history.',
     importDone: 'Import complete: {n} trips added or updated.', importNote: 'Importing takes the nickname and settings from the file and adds its trips to your history, without deleting the others.',
     exportData: 'Export my data', exportNote: 'Nickname, settings and trip history, in a JSON file.',
+    exploreBtn: 'Explore tracks', exploreTitle: 'Explore tracks', exLocate: 'My position', orSearchTitle: 'Search tracks', orSearchRoute: 'Search a track',
+    orTabSearch: 'Search', orTabSaved: 'My tracks', orWhere: 'Where', orWhereMe: 'Around me', orWhereView: 'Visible area', orWherePlace: 'A place',
+    orPlacePh: 'Village, pass, region…', orRadius: 'Radius', orVeh: 'My vehicle', vShort0: 'Car', vShort1: 'SUV', vShort2: '4×4', vShort3: 'Expert',
+    orAccF: 'Access', orAccOk: 'Allowed', orAccRestr: 'With restrictions', orAccAll: 'All', orMinLen: 'Minimum length', orAnyLen: 'Any',
+    orUnknown: 'Include tracks without information', orNo: 'No', orSort: 'Sort', orSortNear: 'Nearest', orSortLong: 'Longest', orGo: 'Search',
+    orProgress: 'Loading tracks: {a}/{b} areas', orResults: '{n} tracks found', orResults1: '1 track found', orNoResult: 'No matching track. Widen the radius or the filters.',
+    orMore: 'And {n} more: refine the filters to see them.', orAway: '{d} away', orTotalLen: 'Total length', orSegments: 'Sections', orSurfaces: 'Surfaces',
+    orPartNo: 'No motor vehicles on part of it', orUnknownPart: 'Some sections have no difficulty information.',
+    orRide: 'Drive this track with the convoy', orRideNote: 'Guidance takes the convoy to the start of the track, then the track appears for everyone with the distance left.',
+    orRideLeader: 'Only the leader can start a track for the whole convoy.', orRideExplore: 'Save it to My tracks to start it during a convoy.',
+    orSave: 'Save to My tracks', orUnsave: 'Remove from My tracks', orSavedEmpty: 'No saved track yet. Open a track, then “Save to My tracks”.',
+    orWhole: 'Show the whole track', orChainNote: 'Built from the loaded tracks: it may continue beyond this area.', orPickPlace: 'Pick a place from the list first.',
+    orViewTooBig: 'Area too large: zoom in a little or choose a radius.', orLastErr: 'Last track server error: {e}', exNoGps: 'GPS position not available yet: the search starts from the map centre.',
+    trkEntry: 'Start: {name}', trkOn: 'On the track', trkOff: 'Off the track', trkBack: 'Head back to the line', trkTo: 'Join the track', trkDone: 'End of the track',
+    trkStart: 'Start of the track reached: enjoy the ride!', trkPlanned: 'Planned track', trkSet: 'Track started for the convoy: {name}',
     orPeriod: 'Period', yes: 'Yes', orOn: 'On', orOff: 'Off', offroad: 'Off-road mode', offroadNote: 'Adventure theme, terrain relief on the map and detailed tracks (type, difficulty, access); tap a track for its details. OpenStreetMap data.',
     thn_offroad: 'Off-road mode uses its own earth and khaki theme. Turn it off to go back to your theme.', orLegend: 'Track legend',
     orZoom: 'Tracks: zoom in to show them', orLoading: 'Loading tracks…', orCount: '{n} tracks', orCount1: '1 track', orNone: 'No track in this area',
@@ -409,6 +439,21 @@ const I18N = {
     importConfirm: 'Diese Datei importieren? Dein Name und deine Einstellungen werden ersetzt, und ihre {n} Fahrten zu deinem Verlauf hinzugefügt.',
     importDone: 'Import abgeschlossen: {n} Fahrten hinzugefügt oder aktualisiert.', importNote: 'Der Import übernimmt Name und Einstellungen aus der Datei und fügt ihre Fahrten zu deinem Verlauf hinzu, ohne die anderen zu löschen.',
     exportData: 'Meine Daten exportieren', exportNote: 'Name, Einstellungen und Fahrtenverlauf in einer JSON-Datei.',
+    exploreBtn: 'Pisten erkunden', exploreTitle: 'Pisten erkunden', exLocate: 'Meine Position', orSearchTitle: 'Pisten suchen', orSearchRoute: 'Piste suchen',
+    orTabSearch: 'Suche', orTabSaved: 'Meine Pisten', orWhere: 'Wo', orWhereMe: 'In meiner Nähe', orWhereView: 'Sichtbarer Bereich', orWherePlace: 'Ein Ort',
+    orPlacePh: 'Dorf, Pass, Region…', orRadius: 'Umkreis', orVeh: 'Mein Fahrzeug', vShort0: 'Auto', vShort1: 'SUV', vShort2: '4×4', vShort3: 'Experte',
+    orAccF: 'Zufahrt', orAccOk: 'Erlaubt', orAccRestr: 'Mit Einschränkungen', orAccAll: 'Alle', orMinLen: 'Mindestlänge', orAnyLen: 'Alle',
+    orUnknown: 'Pisten ohne Angaben einbeziehen', orNo: 'Nein', orSort: 'Sortieren', orSortNear: 'Am nächsten', orSortLong: 'Am längsten', orGo: 'Suchen',
+    orProgress: 'Pisten werden geladen: {a}/{b} Gebiete', orResults: '{n} Pisten gefunden', orResults1: '1 Piste gefunden', orNoResult: 'Keine passende Piste. Vergrössere den Umkreis oder lockere die Filter.',
+    orMore: 'Und {n} weitere: verfeinere die Filter, um sie zu sehen.', orAway: 'in {d}', orTotalLen: 'Gesamtlänge', orSegments: 'Abschnitte', orSurfaces: 'Beläge',
+    orPartNo: 'Auf einem Teil für Motorfahrzeuge verboten', orUnknownPart: 'Zu manchen Abschnitten fehlen Angaben zur Schwierigkeit.',
+    orRide: 'Diese Piste mit dem Konvoi fahren', orRideNote: 'Die Navigation führt den Konvoi zum Anfang der Piste, danach sehen alle die Piste mit der Reststrecke.',
+    orRideLeader: 'Nur der Konvoiführer kann eine Piste für den ganzen Konvoi starten.', orRideExplore: 'Speichere sie unter Meine Pisten, um sie während eines Konvois zu starten.',
+    orSave: 'Unter Meine Pisten speichern', orUnsave: 'Aus Meine Pisten entfernen', orSavedEmpty: 'Noch keine gespeicherte Piste. Öffne eine Piste und tippe auf „Unter Meine Pisten speichern“.',
+    orWhole: 'Ganze Piste anzeigen', orChainNote: 'Aus den geladenen Pisten berechnet: sie kann über dieses Gebiet hinaus weitergehen.', orPickPlace: 'Wähle zuerst einen Ort aus der Liste.',
+    orViewTooBig: 'Gebiet zu gross: zoome etwas hinein oder wähle einen Umkreis.', orLastErr: 'Letzter Fehler des Pisten-Servers: {e}', exNoGps: 'GPS-Position noch nicht verfügbar: Die Suche startet in der Kartenmitte.',
+    trkEntry: 'Anfang: {name}', trkOn: 'Auf der Piste', trkOff: 'Neben der Piste', trkBack: 'Zurück zur Linie', trkTo: 'Zur Piste', trkDone: 'Ende der Piste',
+    trkStart: 'Anfang der Piste erreicht: gute Fahrt!', trkPlanned: 'Geplante Piste', trkSet: 'Piste für den Konvoi gestartet: {name}',
     orPeriod: 'Zeitraum', yes: 'Ja', orOn: 'Ein', orOff: 'Aus', offroad: 'Offroad-Modus', offroadNote: 'Abenteuer-Design, Relief auf der Karte und detaillierte Pisten (Art, Schwierigkeit, Zufahrt); tippe auf eine Piste für Details. Daten von OpenStreetMap.',
     thn_offroad: 'Der Offroad-Modus nutzt sein eigenes Erd- und Khaki-Design. Schalte ihn aus, um zu deinem Design zurückzukehren.', orLegend: 'Pisten-Legende',
     orZoom: 'Pisten: hineinzoomen, um sie anzuzeigen', orLoading: 'Pisten werden geladen…', orCount: '{n} Pisten', orCount1: '1 Piste', orNone: 'Keine Piste in diesem Gebiet',
@@ -512,6 +557,7 @@ function t(k, v) {
 }
 const locale = () => ({ en: 'en-GB', de: 'de-CH' }[prefs.lang] || 'fr-CH');
 
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 const DB = {
   _p: null,
   open() {
@@ -523,7 +569,7 @@ const DB = {
         if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
         if (!d.objectStoreNames.contains('osm')) d.createObjectStore('osm');
       };
-      r.onsuccess = () => res(r.result);
+      r.onsuccess = () => { r.result.onversionchange = () => r.result.close(); res(r.result); };
       r.onerror = () => rej(r.error);
     });
     return this._p;
@@ -540,8 +586,10 @@ const DB = {
   putTrip: tr => DB.run('trips', 'readwrite', s => s.put(tr)),
   allTrips: () => DB.run('trips', 'readonly', s => s.getAll()),
   delTrip: id => DB.run('trips', 'readwrite', s => s.delete(id)),
-  getOsm: k => DB.run('osm', 'readonly', s => s.get(k)),
-  putOsm: (k, v) => DB.run('osm', 'readwrite', s => s.put(v, k)),
+  getOsm: k => withTimeout(DB.run('osm', 'readonly', s => s.get(k)), 2500),
+  putOsm: (k, v) => withTimeout(DB.run('osm', 'readwrite', s => s.put(v, k)), 5000),
+  getKv: k => withTimeout(DB.run('kv', 'readonly', s => s.get(k)), 2500),
+  putKv: (k, v) => withTimeout(DB.run('kv', 'readwrite', s => s.put(v, k)), 5000),
 };
 
 /* géométrie : points [lat, lng], distances en mètres */
@@ -698,6 +746,7 @@ function applyLang() {
   if (S.sheet === 'track') renderTrackSheet();
   if (S.sheet === 'orlegend') renderOrLegend();
   orRender();
+  if (S.sheet === 'orsearch') renderOrSearch();
   syncSegs();
 }
 const offroadOn = () => prefs.offroad === 'on';
@@ -709,6 +758,8 @@ function applyTheme() {
   root.style.setProperty('--accent', acc);
   if (themeNow() === 'red' || themeNow() === 'offroad') root.style.removeProperty('--accent-ink');
   else root.style.setProperty('--accent-ink', luminance(acc) > 0.3 ? '#0F0F10' : '#FFFFFF');
+  const be = document.getElementById('btnExplore');
+  if (be) be.hidden = !offroadOn();
   const ah = document.getElementById('accentHue');
   if (ah) { ah.value = prefs.accentHue; ah.style.setProperty('--thumb', acc); }
   $('#metaTheme').setAttribute('content', THEMES[themeNow()].meta);
@@ -920,6 +971,7 @@ function start(opts) {
   if (!name) { homeErr(t('errName')); $('#name').focus(); return; }
   if (typeof maplibregl === 'undefined') { homeErr(t('errLibs')); return; }
   if (typeof supabase === 'undefined') { homeErr(t('errLive')); return; }
+  exitExplore();
   me.name = name.slice(0, 16);
   store.set('name', me.name); store.set('hue', me.hue); store.set('color', me.color);
   homeErr('');
@@ -929,7 +981,7 @@ function start(opts) {
   S.live = true; S.code = opts.code;
   S.chat = []; S.chatUnread = 0; updateChatBadge();
   S.trip = { id: 't' + Date.now(), start: clock(), dist: 0, moving: 0, max: 0, last: null, tracks: {}, names: {}, colors: {}, dest: '' };
-  S.plan = { v: 0, wps: [] }; S.passed = new Set(); S.arrived = false; S.route = null;
+  S.plan = { v: 0, wps: [], track: null }; S.passed = new Set(); S.arrived = false; S.route = null; S.trkGeo = null; S.trk = null; S.trackDone = false;
   S.leaderId = opts.creating ? me.id : null; S.leaderSeq = opts.creating ? 1 : 0;
   Object.assign(member(me.id), { name: me.name, color: me.color, online: true });
 
@@ -962,7 +1014,8 @@ function leave() {
   S.pinMarkers.forEach(mk => mk.remove()); S.pinMarkers = []; S.pins.clear();
   S.chat = []; S.chatUnread = 0; updateChatBadge();
   $('#alerts').innerHTML = '';
-  Object.assign(S, { active: false, trip: null, route: null, plan: { v: 0, wps: [] }, passed: new Set(), leaderId: null,
+  S.trkGeo = null; S.trk = null; S.trackDone = false;
+  Object.assign(S, { active: false, trip: null, route: null, plan: { v: 0, wps: [], track: null }, passed: new Set(), leaderId: null,
     pos: null, manual: '', arrived: false, alerts: { lag: {}, leaderStop: false }, pick: false, stoppedSince: null,
     live: false, code: null, leaderSeq: 0, leaderMissing: 0, lastSentT: 0, lastSent: null, audioHint: false });
   if (location.search) history.replaceState(null, '', location.pathname);
@@ -1091,6 +1144,7 @@ function onFix(p) {
   if (S.follow) followCamera();
   checkWaypoints();
   if (S.route) navigate();
+  if (S.trkGeo) { trackProgress(); if (!pendingWps().length) updateNavSign(); }
   else if (pendingWps().length && !S.routing && now - S.nav.last > 15000) computeRoute();
   updateSpeedo();
 }
@@ -1181,6 +1235,9 @@ function initMap() {
 }
 function addRouteLayers() {
   const m = S.map;
+  if (!m.getSource('ptrack')) m.addSource('ptrack', { type: 'geojson', data: trackGeoJSON() });
+  if (!m.getLayer('ptrack-casing')) m.addLayer({ id: 'ptrack-casing', type: 'line', source: 'ptrack', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--route-casing'), 'line-width': 11, 'line-opacity': 0.7 } });
+  if (!m.getLayer('ptrack-line')) m.addLayer({ id: 'ptrack-line', type: 'line', source: 'ptrack', layout: { 'line-join': 'round' }, paint: { 'line-color': cssVar('--accent'), 'line-width': 6, 'line-dasharray': [1.4, 0.9] } });
   if (!m.getSource('route')) m.addSource('route', { type: 'geojson', data: routeGeo() });
   if (!m.getLayer('route-casing')) m.addLayer({ id: 'route-casing', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--route-casing'), 'line-width': 10, 'line-opacity': 0.8 } });
   if (!m.getLayer('route-line')) m.addLayer({ id: 'route-line', type: 'line', source: 'route', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': cssVar('--accent'), 'line-width': 5 } });
@@ -1190,6 +1247,8 @@ function styleRouteLayers() {
   if (!m || !m.isStyleLoaded || !m.isStyleLoaded()) return;
   if (m.getLayer('route-casing')) m.setPaintProperty('route-casing', 'line-color', cssVar('--route-casing'));
   if (m.getLayer('route-line')) m.setPaintProperty('route-line', 'line-color', cssVar('--accent'));
+  if (m.getLayer('ptrack-line')) m.setPaintProperty('ptrack-line', 'line-color', cssVar('--accent'));
+  if (m.getLayer('or-pick-glow')) m.setPaintProperty('or-pick-glow', 'line-color', cssVar('--accent'));
 }
 function routeGeo() {
   const c = S.route ? S.route.coords.map(p => [p[1], p[0]]) : [];
@@ -1198,6 +1257,8 @@ function routeGeo() {
 function renderRoute() {
   const src = S.map && S.map.getSource && S.map.getSource('route');
   if (src) src.setData(routeGeo());
+  const ts = S.map && S.map.getSource && S.map.getSource('ptrack');
+  if (ts) ts.setData(trackGeoJSON());
 }
 function updateMarker(m) {
   if (!S.map || m.lat == null) return;
@@ -1343,18 +1404,21 @@ function renderWaypoints() {
 /* ---------- parcours et guidage ---------- */
 const pendingWps = () => S.plan.wps.filter(w => !S.passed.has(w.id));
 
-function setPlan(wps) {
-  S.plan = { v: S.plan.v + 1, wps };
+function setPlan(wps, track) {
+  S.plan = { v: S.plan.v + 1, wps, track: track === undefined ? (S.plan.track || null) : track };
   send('plan', { plan: S.plan, by: me.id });
   onPlanChanged();
 }
 function onPlanChanged() {
   S.arrived = false;
+  const tk = S.plan.track || null;
+  if (!tk || !S.trkGeo || S.trkGeo.coords !== tk.coords) { S.trkGeo = trackGeoOf(tk); S.trk = null; S.trackDone = false; trackProgress(); }
   const dest = S.plan.wps[S.plan.wps.length - 1];
   if (S.trip && dest) S.trip.dest = dest.label;
   renderWaypoints();
   if (S.sheet === 'route') renderRouteSheet();
   if (!pendingWps().length) { S.route = null; renderRoute(); updateNavSign(); return; }
+  renderRoute();
   computeRoute();
 }
 async function computeRoute() {
@@ -1468,7 +1532,10 @@ function checkWaypoints() {
   if (hav([S.pos.lat, S.pos.lng], [next.lat, next.lng]) > 100) return;
   S.passed.add(next.id);
   renderWaypoints();
-  if (!pendingWps().length) {
+  if (!pendingWps().length && S.plan.track) {
+    S.route = null; renderRoute();
+    toast(t('trkStart'), 'ok', 7000); sfx('arrive'); haptic('alert');
+  } else if (!pendingWps().length) {
     S.arrived = true; S.route = null; renderRoute();
     toast(t('arrivedToast'), 'ok', 9000);
     sfx('arrive'); haptic('alert');
@@ -1481,13 +1548,25 @@ function checkWaypoints() {
 function updateNavSign() { updateNavSignInner(); layoutSpeedo(); }
 function updateNavSignInner() {
   const card = $('#navCard'), eta = $('#navEta'), rt = S.route;
-  if (!S.plan.wps.length) { card.hidden = true; eta.hidden = true; return; }
+  if (!S.plan.wps.length && !S.plan.track) { card.hidden = true; eta.hidden = true; return; }
   card.hidden = false;
   const set = (icon, dist, text, road) => {
     $('.nav-ico', card).innerHTML = icon; $('.nav-dist', card).textContent = dist;
     $('.nav-text', card).textContent = text; $('.nav-road', card).textContent = road;
     $('.nav-dist', card).hidden = !dist;
   };
+  if (S.plan.track && !pendingWps().length) {
+    const tk = S.plan.track, g = S.trkGeo, tr = S.trk, icon = ic(TRAIL_ICON, 34);
+    eta.hidden = true;
+    if (S.trackDone) { set(arrowSVG(null), '', t('trkDone'), tk.name); return; }
+    if (!tr || !g) { set(icon, '', S.pos ? tk.name : t('gpsWait'), tk.name); return; }
+    if (tr.on) set(icon, fmtDist(Math.max(0, g.total - tr.prog)), t('trkOn'), tk.name);
+    else set(ic('<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.01"/>', 34), fmtDist(tr.d), t(tr.started ? 'trkOff' : 'trkTo'), tr.started ? t('trkBack') : tk.name);
+    $('#etaTime').textContent = '';
+    $('#etaLeft').textContent = t('remaining', { dist: fmtDist(Math.max(0, g.total - (tr.on ? tr.prog : 0))) });
+    eta.hidden = false;
+    return;
+  }
   if (S.arrived) { set(arrowSVG(null), '', t('arrived'), t('tapStats')); eta.hidden = true; return; }
   if (!rt) {
     set(arrowSVG({ type: 'turn', mod: 'straight' }), '', S.routing ? t('computing') : (S.pos ? t('routeWait') : t('gpsWait')), S.plan.wps[S.plan.wps.length - 1].label);
@@ -1525,8 +1604,13 @@ function renderRouteSheet() {
       </div>`;
     }).join('') + '</div>';
   }
+  const tk = S.plan.track;
+  if (tk) h += `<div class="list"><div class="item"><span class="wp dest">${ic(TRAIL_ICON, 14)}</span>
+    <div class="grow"><div class="t">${esc(tk.name)}</div><div class="s">${esc(t('trkPlanned') + ' · ' + fmtDist(tk.len))}</div></div>
+    ${lead ? `<button class="mini" data-act="untrack" aria-label="${esc(t('del'))}">✕</button>` : ''}</div></div>`;
   $('#wpList').innerHTML = h;
   $('#wpEdit').hidden = !lead;
+  $('#btnOrRoute').hidden = !offroadOn();
   let note = lead ? t('noteLead') : t('noteMember', { name: leaderName() });
   if (S.route) note += t('yourRoute', { dist: fmtDist(S.route.total - (S.route.progress || 0)) });
   $('#wpNote').textContent = note;
@@ -1578,10 +1662,10 @@ async function onMapClick(e) {
    Les pistes de la zone affichée sont demandées à l'API Overpass par carrés (tuiles de niveau 12, environ 10 km),
    gardées 14 jours dans le téléphone, puis classées selon le véhicule capable de les emprunter et leur accès. */
 const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-const OR_Z = 12, OR_MINZOOM = 11.6, OR_MAXTILES = 12, OR_TTL = 14 * 864e5;
+const OR_Z = 12, OR_MINZOOM = 12, OR_MAXTILES = 24, OR_TTL = 14 * 864e5, OR_CACHE_V = 'v2:';
 const OR_COLORS = ['#6FCF7F', '#F2C94C', '#F2994A', '#EB5757', '#B07CFF'];
 const OR_UNKNOWN = '#C9C2A3';
-const OR = { tiles: new Map(), busy: 0, queue: [], sel: null, state: '', timer: null };
+const OR = { tiles: new Map(), busy: 0, queue: [], sel: null, chain: null, state: '', timer: null, sig: '', lastErr: '', saved: [], results: null, searching: false, place: null };
 const OR_VAL = {
   fr: {
     surface: { asphalt: 'asphalte', paved: 'revêtu', concrete: 'béton', paving_stones: 'pavés', sett: 'pavés', compacted: 'gravier compacté', fine_gravel: 'gravier fin',
@@ -1643,7 +1727,7 @@ function orTileBBox(x, y, z) {
 }
 function orQuery(b) {
   const bb = `${b.s.toFixed(5)},${b.w.toFixed(5)},${b.n.toFixed(5)},${b.e.toFixed(5)}`;
-  return `[out:json][timeout:25];(way["highway"="track"](${bb});way["highway"~"^(unclassified|service|road)$"]["surface"~"^(unpaved|gravel|fine_gravel|compacted|dirt|ground|earth|grass|sand|mud|rock|pebblestone)$"](${bb});way["4wd_only"~"^(yes|recommended)$"](${bb}););out tags geom qt;`;
+  return `[out:json][timeout:25];(way["highway"="track"](${bb});way["highway"~"^(unclassified|service|road)$"]["surface"~"^(unpaved|gravel|fine_gravel|compacted|dirt|ground|earth|grass|sand|mud|rock|pebblestone)$"](${bb});way["4wd_only"~"^(yes|recommended)$"](${bb}););out body geom qt;`;
 }
 const OR_KEEP = ['name', 'ref', 'highway', 'tracktype', 'surface', 'smoothness', 'width', 'incline', '4wd_only', 'seasonal', 'description', 'note', 'access', 'vehicle',
   'motor_vehicle', 'motorcar', 'access:conditional', 'vehicle:conditional', 'motor_vehicle:conditional', 'motorcar:conditional', 'maxweight', 'maxwidth'];
@@ -1654,7 +1738,8 @@ function orFeatures(json) {
     const tg = {};
     for (const k of OR_KEEP) if (el.tags && el.tags[k] != null) tg[k] = String(el.tags[k]).slice(0, 200);
     const a = orAccess(tg);
-    out.push({ type: 'Feature', properties: { id: el.id, d: orDifficulty(tg), acc: a.acc, t: JSON.stringify(tg) },
+    const nd = el.nodes || [];
+    out.push({ type: 'Feature', properties: { id: el.id, d: orDifficulty(tg), acc: a.acc, t: JSON.stringify(tg), a: nd.length ? nd[0] : null, b: nd.length ? nd[nd.length - 1] : null },
       geometry: { type: 'LineString', coordinates: el.geometry.map(p => [+p.lon.toFixed(6), +p.lat.toFixed(6)]) } });
   }
   return out;
@@ -1665,40 +1750,55 @@ async function orFetch(key, x, y) {
   for (const url of OVERPASS) {
     try {
       const r = await fetch(url + '?data=' + encodeURIComponent(q));
-      if (!r.ok) throw new Error('http ' + r.status);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
       return orFeatures(await r.json());
     } catch (e) { lastErr = e; }
   }
+  OR.lastErr = (lastErr && lastErr.message) || 'Overpass';
   throw lastErr || new Error('overpass');
 }
-async function orLoadTile(key, x, y) {
-  const tile = OR.tiles.get(key);
+function orLoadTile(key, x, y) {
+  let tile = OR.tiles.get(key);
+  if (!tile) { tile = { state: 'queued', feats: [] }; OR.tiles.set(key, tile); }
   tile.state = 'loading';
-  try {
-    const cached = await DB.getOsm(key).catch(() => null);
-    if (cached && Date.now() - cached.t < OR_TTL) tile.feats = cached.feats;
-    else {
-      tile.feats = await orFetch(key, x, y);
-      DB.putOsm(key, { t: Date.now(), feats: tile.feats }).catch(() => {});
+  tile.p = (async () => {
+    const ck = OR_CACHE_V + key;
+    let cached = null;
+    try {
+      cached = await DB.getOsm(ck).catch(() => null);
+      if (cached && Date.now() - cached.t < OR_TTL) tile.feats = cached.feats;
+      else {
+        tile.feats = await orFetch(key, x, y);
+        DB.putOsm(ck, { t: Date.now(), feats: tile.feats }).catch(() => {});
+      }
+      tile.state = 'ok';
+    } catch (e) {
+      if (cached) { tile.feats = cached.feats; tile.state = 'ok'; }
+      else { tile.state = 'err'; tile.retry = Date.now() + 30000; }
     }
-    tile.state = 'ok';
-  } catch (e) {
-    const cached = await DB.getOsm(key).catch(() => null);
-    if (cached) { tile.feats = cached.feats; tile.state = 'ok'; }
-    else { tile.state = 'err'; tile.retry = Date.now() + 30000; }
-  }
-  orRender();
+    orRender();
+  })();
+  return tile.p;
+}
+function orEnsureTile(key, x, y) {
+  const tile = OR.tiles.get(key);
+  if (tile && tile.state === 'ok') return Promise.resolve();
+  if (tile && tile.state === 'loading' && tile.p) return tile.p;
+  return orLoadTile(key, x, y);
 }
 function orPump() {
   while (OR.busy < 2 && OR.queue.length) {
     const [key, x, y] = OR.queue.shift();
+    const tile = OR.tiles.get(key);
+    if (!tile || tile.state !== 'queued') continue;
     OR.busy++;
     orLoadTile(key, x, y).finally(() => { OR.busy--; orPump(); });
   }
 }
+/* Pendant le suivi GPS la carte bouge à chaque image : on rafraîchit au plus toutes les 0,6 s, sans attendre l'arrêt. */
 function orRefresh() {
-  clearTimeout(OR.timer);
-  OR.timer = setTimeout(orUpdate, 350);
+  if (OR.timer) return;
+  OR.timer = setTimeout(() => { OR.timer = null; orUpdate(); }, 600);
 }
 function orUpdate() {
   const m = S.map;
@@ -1736,7 +1836,9 @@ function orRender() {
     if (tile.state === 'err') err = true;
     for (const f of tile.feats || []) seen.set(f.properties.id, f);
   }
-  if (src) src.setData({ type: 'FeatureCollection', features: offroadOn() && m.getZoom() >= OR_MINZOOM ? [...seen.values()] : [] });
+  const show = offroadOn() && m.getZoom() >= OR_MINZOOM;
+  const sig = (show ? 1 : 0) + '|' + view.join(',') + '|' + view.map(k => (OR.tiles.get(k) || {}).state).join('') + '|' + seen.size;
+  if (src && (sig !== OR.sig || OR.forceRender)) { OR.sig = sig; OR.forceRender = false; src.setData({ type: 'FeatureCollection', features: show ? [...seen.values()] : [] }); }
   if (!offroadOn()) return orStatus('');
   if (m.getZoom() < OR_MINZOOM) return orStatus('zoom');
   orStatus(loading ? 'loading' : err && !seen.size ? 'err' : 'count', seen.size);
@@ -1758,12 +1860,24 @@ function orAddLayers() {
   const width = ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 17, 7];
   const lay = { 'line-cap': 'round', 'line-join': 'round' };
   const add = l => { if (!m.getLayer(l.id)) m.addLayer(l); };
+  if (!m.getSource('or-pick')) m.addSource('or-pick', { type: 'geojson', data: orPickGeo() });
+  add({ id: 'or-pick-glow', type: 'line', source: 'or-pick', layout: lay, paint: { 'line-color': cssVar('--accent'), 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 8, 17, 20], 'line-opacity': 0.4, 'line-blur': 2 } });
   add({ id: 'or-sel', type: 'line', source: 'or', layout: lay, filter: ['==', ['get', 'id'], -1], paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 9, 17, 16], 'line-opacity': 0.45 } });
   add({ id: 'or-casing', type: 'line', source: 'or', layout: lay, filter: ['!=', ['get', 'acc'], 'no'], paint: { 'line-color': '#000000', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 7, 17, 11], 'line-opacity': 0.35 } });
   add({ id: 'or-no', type: 'line', source: 'or', layout: { 'line-join': 'round' }, filter: ['==', ['get', 'acc'], 'no'], paint: { 'line-color': '#9A7B72', 'line-width': width, 'line-opacity': 0.75, 'line-dasharray': [1.2, 1.6] } });
   add({ id: 'or-restr', type: 'line', source: 'or', layout: { 'line-join': 'round' }, filter: ['in', ['get', 'acc'], ['literal', ['dest', 'season']]], paint: { 'line-color': color, 'line-width': width, 'line-dasharray': [2.2, 1.2] } });
   add({ id: 'or-line', type: 'line', source: 'or', layout: lay, filter: ['==', ['get', 'acc'], 'ok'], paint: { 'line-color': color, 'line-width': width } });
+  OR.forceRender = true;
   orRender();
+}
+function orPickGeo() {
+  const c = OR.pickCoords;
+  return { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c && c.length > 1 ? c : [] } };
+}
+function orSetPick(coords) {
+  OR.pickCoords = coords || null;
+  const src = S.map && S.map.getSource && S.map.getSource('or-pick');
+  if (src) src.setData(orPickGeo());
 }
 function orSelect(f) {
   OR.sel = f;
@@ -1782,13 +1896,17 @@ function orClick(e) {
   for (const k of OR.view || []) { const tile = OR.tiles.get(k); f = tile && (tile.feats || []).find(x => x.properties.id === id); if (f) break; }
   if (!f) return;
   OR.at = e.lngLat;
+  OR.chain = null; orSetPick(null);
+  S.keepTrack = true;
   orSelect(f);
   haptic('select');
   openSheet('track');
+  S.keepTrack = false;
 }
 function lineLength(coords) { let d = 0; for (let i = 1; i < coords.length; i++) d += hav([coords[i - 1][1], coords[i - 1][0]], [coords[i][1], coords[i][0]]); return d; }
 function orName(tg) { return tg.name || tg.ref || t('orTrack'); }
 function renderTrackSheet() {
+  if (OR.chain) { renderChainSheet(); return; }
   const f = OR.sel;
   if (!f) return;
   const tg = JSON.parse(f.properties.t || '{}'), d = f.properties.d, a = orAccess(tg);
@@ -1818,10 +1936,366 @@ function renderTrackSheet() {
       ${row(t('orLength'), fmtDist(lineLength(f.geometry.coordinates)))}
       ${row(t('orNoteTag'), tg.description || tg.note || '')}
     </div>
+    <button class="btn btn-primary" data-oract="whole">${esc(t('orWhole'))}</button>
     ${S.active ? `<button class="btn btn-ghost" id="orPinBtn">${esc(t('orPin'))}</button>` : ''}
     <a class="btn btn-ghost" href="https://www.openstreetmap.org/way/${encodeURIComponent(f.properties.id)}" target="_blank" rel="noopener">${esc(t('orOsm'))}</a>
     <p class="s">${esc(t('orDisclaimer'))}</p>`;
 }
+/* ---------- exploration des pistes sans convoi ---------- */
+const EX = { watch: null, mk: null, first: true };
+function openExplore() {
+  if (typeof maplibregl === 'undefined') { homeErr(t('errLibs')); return; }
+  S.explore = true; EX.first = true;
+  $('#main').classList.add('explore');
+  closeSheets();
+  show('main');
+  initMap();
+  setView('map');
+  if (navigator.geolocation) EX.watch = navigator.geolocation.watchPosition(exFix, () => {}, { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
+  orLoadSaved();
+  setTimeout(() => orUpdate(), 400);
+}
+function exFix(pos) {
+  const c = pos.coords;
+  S.exPos = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
+  if (!S.map) return;
+  if (!EX.mk) {
+    const el = document.createElement('div');
+    el.className = 'ex-me';
+    EX.mk = new maplibregl.Marker({ element: el }).setLngLat([c.longitude, c.latitude]).addTo(S.map);
+  } else EX.mk.setLngLat([c.longitude, c.latitude]);
+  if (EX.first) { EX.first = false; S.map.jumpTo({ center: [c.longitude, c.latitude], zoom: Math.max(S.map.getZoom(), 12.6) }); orRefresh(); }
+}
+function exitExplore() {
+  if (!S.explore) return;
+  S.explore = false;
+  if (EX.watch != null && navigator.geolocation) navigator.geolocation.clearWatch(EX.watch);
+  EX.watch = null;
+  if (EX.mk) { EX.mk.remove(); EX.mk = null; }
+  S.exPos = null;
+  $('#main').classList.remove('explore');
+}
+function closeExplore() {
+  closeSheets(); orSetPick(null); exitExplore();
+  show('home'); renderHome();
+}
+
+/* ---------- étape 2 : pistes entières, recherche, Mes pistes ---------- */
+const ACC_RANK = { ok: 0, season: 1, dest: 2, no: 3 };
+const orColor = d => (d >= 0 ? OR_COLORS[d] : OR_UNKNOWN);
+function decimate(arr, max) {
+  if (arr.length <= max) return arr.slice();
+  const k = Math.ceil(arr.length / max), out = [];
+  for (let i = 0; i < arr.length; i += k) out.push(arr[i]);
+  if (out[out.length - 1] !== arr[arr.length - 1]) out.push(arr[arr.length - 1]);
+  return out;
+}
+function bboxOf(coords) {
+  let w = 180, so = 90, e = -180, n = -90;
+  for (const p of coords) { w = Math.min(w, p[0]); e = Math.max(e, p[0]); so = Math.min(so, p[1]); n = Math.max(n, p[1]); }
+  return [[w, so], [e, n]];
+}
+/* Dans OpenStreetMap une piste est découpée en tronçons : on raccorde ceux qui se suivent bout à bout
+   (point de jonction partagé par exactement deux tronçons), et on coupe aux carrefours. */
+function orChains(feats) {
+  const ends = new Map();
+  const add = (n, i) => { if (n == null) return; let l = ends.get(n); if (!l) ends.set(n, l = []); l.push(i); };
+  feats.forEach((f, i) => { add(f.properties.a, i); add(f.properties.b, i); });
+  const used = new Uint8Array(feats.length), chains = [];
+  const nextAt = (node, cur) => {
+    const l = ends.get(node);
+    if (!l || l.length !== 2) return -1;
+    const j = l[0] === cur ? l[1] : l[0];
+    return j === cur || used[j] ? -1 : j;
+  };
+  for (let i = 0; i < feats.length; i++) {
+    if (used[i]) continue;
+    used[i] = 1;
+    const f0 = feats[i];
+    let coords = f0.geometry.coordinates.slice();
+    const segs = [f0];
+    let cur = i, node = f0.properties.b;
+    for (let g = 0; g < 2000; g++) {
+      const j = nextAt(node, cur);
+      if (j < 0) break;
+      used[j] = 1;
+      const fj = feats[j], fwd = fj.properties.a === node;
+      const cj = fwd ? fj.geometry.coordinates : fj.geometry.coordinates.slice().reverse();
+      coords = coords.concat(cj.slice(1)); segs.push(fj);
+      node = fwd ? fj.properties.b : fj.properties.a; cur = j;
+    }
+    cur = i; node = f0.properties.a;
+    for (let g = 0; g < 2000; g++) {
+      const j = nextAt(node, cur);
+      if (j < 0) break;
+      used[j] = 1;
+      const fj = feats[j], fwd = fj.properties.b === node;
+      const cj = fwd ? fj.geometry.coordinates : fj.geometry.coordinates.slice().reverse();
+      coords = cj.slice(0, -1).concat(coords); segs.unshift(fj);
+      node = fwd ? fj.properties.a : fj.properties.b; cur = j;
+    }
+    chains.push({ segs, coords });
+  }
+  return chains;
+}
+function orChainInfo(ch, c) {
+  let d = -1, unk = 0, len = 0;
+  const accLen = { ok: 0, season: 0, dest: 0, no: 0 }, surf = new Set(), names = {}, ids = [];
+  for (const f of ch.segs) {
+    const p = f.properties, tg = JSON.parse(p.t || '{}'), l = lineLength(f.geometry.coordinates);
+    len += l; ids.push(p.id);
+    if (p.d >= 0) d = Math.max(d, p.d); else unk += l;
+    accLen[p.acc] = (accLen[p.acc] || 0) + l;
+    if (tg.surface) surf.add(tg.surface);
+    const nm = tg.name || tg.ref;
+    if (nm) names[nm] = (names[nm] || 0) + l;
+  }
+  const acc = Object.keys(accLen).filter(k => accLen[k] > 0).sort((x, y) => ACC_RANK[y] - ACC_RANK[x])[0] || 'ok';
+  let near = null, entryFirst = true;
+  if (c) {
+    near = Infinity;
+    for (const p of ch.coords) near = Math.min(near, hav([c.lat, c.lng], [p[1], p[0]]));
+    const a = ch.coords[0], z = ch.coords[ch.coords.length - 1];
+    entryFirst = hav([c.lat, c.lng], [a[1], a[0]]) <= hav([c.lat, c.lng], [z[1], z[0]]);
+  }
+  return { ids, coords: ch.coords, len, d, unkShare: len ? unk / len : 1, acc, accPart: accLen.no > 0 && accLen.no < len * 0.98,
+    name: Object.keys(names).sort((x, y) => names[y] - names[x])[0] || '', near, entryFirst, surf: [...surf], segs: ch.segs.length, bbox: bboxOf(ch.coords) };
+}
+const myPos = () => (S.pos ? { lat: S.pos.lat, lng: S.pos.lng } : S.exPos ? { lat: S.exPos.lat, lng: S.exPos.lng } : null);
+const orAccLabel = r => (r.accPart ? t('orPartNo') : t('acc_' + r.acc));
+const orKey = r => 'c' + Math.min(...r.ids);
+const orIsSaved = r => (OR.saved || []).some(x => x.key === orKey(r));
+function orShowChain(r) {
+  OR.chain = r; OR.sel = null;
+  orSelect(null);
+  orSetPick(r.coords);
+  if (S.active) setFollow(false);
+  if (S.map && S.map.fitBounds) S.map.fitBounds(r.bbox, { padding: { top: 90, bottom: Math.round(window.innerHeight * 0.5), left: 40, right: 40 }, duration: 600, maxZoom: 15 });
+  S.keepTrack = true;
+  openSheet('track');
+  S.keepTrack = false;
+}
+function orWholeTrack() {
+  const f = OR.sel;
+  if (!f) return;
+  const feats = new Map();
+  for (const k of OR.view || []) for (const x of (OR.tiles.get(k) || {}).feats || []) feats.set(x.properties.id, x);
+  const ch = orChains([...feats.values()]).find(c => c.segs.some(x => x.properties.id === f.properties.id));
+  if (!ch) return;
+  const r = orChainInfo(ch, OR.at ? { lat: OR.at.lat, lng: OR.at.lng } : myPos());
+  r.partial = true;
+  orShowChain(r);
+}
+function renderChainSheet() {
+  const r = OR.chain;
+  $('#trackTitle').textContent = r.name || t('orTrack');
+  const row = (k, v) => v ? `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>` : '';
+  const lead = S.active && isLeader();
+  const saved = orIsSaved(r);
+  $('#trackBody').innerHTML = `<div class="or-badges"><span class="or-badge" style="--c:${orColor(r.d)}">${esc(t(r.d >= 0 ? 'd' + r.d : 'd_unk'))}</span>
+      <span class="or-badge acc-${esc(r.accPart ? 'no' : r.acc)}">${esc(orAccLabel(r))}</span></div>
+    <div class="kvs">
+      ${row(t('orTotalLen'), fmtDist(r.len))}
+      ${row(t('orVehicle'), t(r.d >= 0 ? 'd' + r.d : 'd_unk'))}
+      ${row(t('orAccess'), orAccLabel(r))}
+      ${row(t('orSurfaces'), r.surf && r.surf.length ? r.surf.map(x => orVal('surface', x)).join(', ') : '')}
+      ${row(t('orSegments'), String(r.segs || 1))}
+    </div>
+    ${r.unkShare > 0.05 && r.d >= 0 ? `<p class="s">${esc(t('orUnknownPart'))}</p>` : ''}
+    ${r.partial ? `<p class="s">${esc(t('orChainNote'))}</p>` : ''}
+    ${lead ? `<button class="btn btn-primary" data-oract="ride">${esc(t('orRide'))}</button><p class="s">${esc(t('orRideNote'))}</p>`
+      : `<p class="s">${esc(t(S.active ? 'orRideLeader' : 'orRideExplore'))}</p>`}
+    <button class="btn btn-ghost" data-oract="${saved ? 'unsave' : 'save'}">${esc(t(saved ? 'orUnsave' : 'orSave'))}</button>
+    ${r.ids && r.ids.length ? `<a class="btn btn-ghost" href="https://www.openstreetmap.org/way/${encodeURIComponent(r.ids[0])}" target="_blank" rel="noopener">${esc(t('orOsm'))}</a>` : ''}
+    <p class="s">${esc(t('orDisclaimer'))}</p>`;
+}
+async function orLoadSaved() {
+  try { OR.saved = (await DB.getKv('orSaved')) || []; } catch (e) { OR.saved = OR.saved || []; }
+}
+function orToggleSave(r) {
+  const key = orKey(r);
+  if (orIsSaved(r)) OR.saved = OR.saved.filter(x => x.key !== key);
+  else OR.saved.unshift({ key, name: r.name, len: Math.round(r.len), d: r.d, acc: r.acc, accPart: r.accPart, unkShare: r.unkShare, surf: r.surf, segs: r.segs,
+    ids: r.ids.slice(0, 500), coords: decimate(r.coords, 800).map(p => [+p[0].toFixed(5), +p[1].toFixed(5)]), at: Date.now() });
+  DB.putKv('orSaved', OR.saved).catch(() => {});
+  haptic('select');
+}
+function savedToChain(x) {
+  const c = myPos();
+  const r = Object.assign({}, x, { bbox: bboxOf(x.coords), near: null, entryFirst: true });
+  if (c) {
+    r.near = Math.min(...x.coords.map(p => hav([c.lat, c.lng], [p[1], p[0]])));
+    const a = x.coords[0], z = x.coords[x.coords.length - 1];
+    r.entryFirst = hav([c.lat, c.lng], [a[1], a[0]]) <= hav([c.lat, c.lng], [z[1], z[0]]);
+  }
+  return r;
+}
+OR.q = Object.assign({ tab: 'search', where: 'me', radius: 10, veh: 1, acc: 'restr', minLen: 1000, unknown: 'yes', sort: 'near' }, store.get('orQuery', {}));
+function renderOrSearch() {
+  const q = OR.q;
+  const seg = (k, opts, cls) => `<div class="seg${cls ? ' ' + cls : ''}" data-oq="${k}">${opts.map(([v, l]) => `<button data-v="${v}" aria-pressed="${String(q[k]) === String(v)}">${esc(l)}</button>`).join('')}</div>`;
+  const field = (label, inner) => `<div class="field"><span class="field-label">${esc(label)}</span>${inner}</div>`;
+  let h = seg('tab', [['search', t('orTabSearch')], ['saved', t('orTabSaved')]]);
+  if (q.tab === 'saved') {
+    const list = OR.saved || [];
+    h += list.length ? `<div class="list">${list.map((x, i) => `<div class="item or-res"><button class="or-open" data-osaved="${i}"><span class="or-dot" style="--c:${orColor(x.d)}"></span>
+        <span class="grow"><span class="t">${esc(x.name || t('orTrack'))}</span><span class="s">${esc([fmtDist(x.len), t(x.d >= 0 ? 'd' + x.d : 'd_unk'), orAccLabel(x)].join(' · '))}</span></span></button>
+        <button class="mini" data-osdel="${i}" aria-label="${esc(t('del'))}">✕</button></div>`).join('')}</div>`
+      : `<p class="empty">${esc(t('orSavedEmpty'))}</p>`;
+  } else {
+    h += field(t('orWhere'), seg('where', [['me', t('orWhereMe')], ['view', t('orWhereView')], ['place', t('orWherePlace')]])
+      + (q.where === 'place' ? `<input id="orPlace" class="text" type="search" placeholder="${esc(t('orPlacePh'))}" value="${esc(OR.place ? OR.place.label : '')}" autocomplete="off" enterkeyhint="search"><div id="orPlaceRes" class="list"></div>` : ''));
+    if (q.where !== 'view') h += field(t('orRadius'), seg('radius', [5, 10, 20].map(v => [v, fmtDist(v * 1000)])));
+    h += field(t('orVeh'), seg('veh', [0, 1, 2, 3].map(v => [v, t('vShort' + v)])));
+    h += field(t('orAccF'), seg('acc', [['ok', t('orAccOk')], ['restr', t('orAccRestr')], ['all', t('orAccAll')]]));
+    h += field(t('orMinLen'), seg('minLen', [[0, t('orAnyLen')], ...[1000, 3000, 5000, 10000].map(v => [v, fmtDist(v)])], 'grid5'));
+    h += field(t('orUnknown'), seg('unknown', [['yes', t('yes')], ['no', t('orNo')]]));
+    h += field(t('orSort'), seg('sort', [['near', t('orSortNear')], ['long', t('orSortLong')]]));
+    h += `<button class="btn btn-primary" id="orGo" ${OR.searching ? 'disabled' : ''}>${esc(OR.searching ? t('orProgress', { a: OR.prog[0], b: OR.prog[1] }) : t('orGo'))}</button>`;
+    if (OR.searchMsg) h += `<p class="s or-msg">${esc(OR.searchMsg)}</p>`;
+    if (OR.results) {
+      const R = OR.results;
+      h += `<div class="field"><span class="field-label">${esc(R.total === 1 ? t('orResults1') : t('orResults', { n: R.total }))}</span>`
+        + (R.list.length ? `<div class="list">${R.list.map((r, i) => `<button class="item or-res or-open" data-ores="${i}"><span class="or-dot" style="--c:${orColor(r.d)}"></span>
+          <span class="grow"><span class="t">${esc(r.name || t('orTrack'))}</span><span class="s">${esc([fmtDist(r.len), t(r.d >= 0 ? 'd' + r.d : 'd_unk'), orAccLabel(r), r.near != null ? t('orAway', { d: fmtDist(r.near) }) : ''].filter(Boolean).join(' · '))}</span></span></button>`).join('')}</div>`
+          : `<p class="empty">${esc(t('orNoResult'))}</p>`)
+        + (R.total > R.list.length ? `<p class="s">${esc(t('orMore', { n: R.total - R.list.length }))}</p>` : '') + '</div>';
+    }
+  }
+  h += `<button class="btn btn-ghost" id="orLegendOpen">${esc(t('orLegend'))}</button>`;
+  if (OR.lastErr) h += `<p class="s">${esc(t('orLastErr', { e: OR.lastErr }))}</p>`;
+  $('#orSearchBody').innerHTML = h;
+}
+function orSearchCenter() {
+  const q = OR.q;
+  if (q.where === 'place') return OR.place ? { lat: OR.place.lat, lng: OR.place.lng } : null;
+  const mp = myPos();
+  if (q.where === 'me' && mp) return mp;
+  if (q.where === 'me') OR.searchMsg = t('exNoGps');
+  const c = S.map.getCenter();
+  return { lat: c.lat, lng: c.lng };
+}
+async function orSearch() {
+  if (OR.searching || !S.map) return;
+  const q = OR.q;
+  OR.searchMsg = '';
+  const c = orSearchCenter();
+  if (!c) { OR.searchMsg = t('orPickPlace'); renderOrSearch(); return; }
+  let bb;
+  if (q.where === 'view') { const b = S.map.getBounds(); bb = { w: b.getWest(), e: b.getEast(), s: b.getSouth(), n: b.getNorth() }; }
+  else { const R = q.radius * 1000, dl = R / 111320, dg = R / (111320 * Math.cos(c.lat * RAD)); bb = { w: c.lng - dg, e: c.lng + dg, s: c.lat - dl, n: c.lat + dl }; }
+  const [x0, y0] = orTileXY(bb.w, bb.n, OR_Z), [x1, y1] = orTileXY(bb.e, bb.s, OR_Z);
+  const keys = [];
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) keys.push([OR_Z + '/' + x + '/' + y, x, y]);
+  if (keys.length > 64) { OR.searchMsg = t('orViewTooBig'); renderOrSearch(); return; }
+  OR.searching = true; OR.prog = [0, keys.length]; OR.results = null;
+  renderOrSearch();
+  let i = 0;
+  const worker = async () => {
+    while (i < keys.length) {
+      const [key, x, y] = keys[i++];
+      await orEnsureTile(key, x, y).catch(() => {});
+      OR.prog[0]++;
+      const go = $('#orGo');
+      if (go) go.textContent = t('orProgress', { a: OR.prog[0], b: OR.prog[1] });
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+  const feats = new Map();
+  for (const [key] of keys) for (const f of (OR.tiles.get(key) || {}).feats || []) feats.set(f.properties.id, f);
+  const R = q.where === 'view' ? Infinity : q.radius * 1000;
+  const accOk = r => q.acc === 'all' || (q.acc === 'ok' ? r.acc === 'ok' : r.acc !== 'no');
+  let list = orChains([...feats.values()]).map(ch => orChainInfo(ch, c))
+    .filter(r => r.len >= Math.max(200, q.minLen) && r.near <= R && accOk(r) && (r.d >= 0 ? r.d <= q.veh : q.unknown === 'yes'));
+  list.sort((a, b) => (q.sort === 'long' ? b.len - a.len : a.near - b.near));
+  OR.results = { total: list.length, list: list.slice(0, 50) };
+  OR.searching = false;
+  renderOrSearch();
+  if (S.active) setFollow(false);
+  S.map.fitBounds([[bb.w, bb.s], [bb.e, bb.n]], { padding: 20, duration: 600 });
+}
+let orPlaceT = null;
+function orPlaceInput(v) {
+  clearTimeout(orPlaceT);
+  const box = $('#orPlaceRes');
+  if (!box) return;
+  if (v.trim().length < 3) { box.innerHTML = ''; return; }
+  orPlaceT = setTimeout(async () => {
+    try {
+      const j = await photon('/api', 'q=' + encodeURIComponent(v.trim()) + '&limit=6');
+      OR.placeFeats = j.features || [];
+      const el = $('#orPlaceRes');
+      if (el) el.innerHTML = OR.placeFeats.map((f, i) => { const l = placeLabel(f.properties || {}); return `<button class="item" data-oplace="${i}"><span class="grow"><span class="t">${esc(l.title)}</span><span class="s">${esc(l.sub)}</span></span></button>`; }).join('');
+    } catch (e) { /* hors ligne */ }
+  }, 450);
+}
+function orSearchClick(e) {
+  const segB = e.target.closest('[data-oq] button');
+  if (segB) {
+    const k = segB.closest('[data-oq]').dataset.oq, v = segB.dataset.v;
+    OR.q[k] = ['radius', 'veh', 'minLen'].includes(k) ? +v : v;
+    const keep = Object.assign({}, OR.q); delete keep.tab;
+    store.set('orQuery', keep);
+    renderOrSearch(); return;
+  }
+  if (e.target.closest('#orGo')) { orSearch(); return; }
+  if (e.target.closest('#orLegendOpen')) { openSheet('orlegend'); return; }
+  const pl = e.target.closest('[data-oplace]');
+  if (pl) {
+    const f = OR.placeFeats[+pl.dataset.oplace], [lng, lat] = f.geometry.coordinates;
+    OR.place = { lat, lng, label: placeLabel(f.properties || {}).title };
+    renderOrSearch(); return;
+  }
+  const rb = e.target.closest('[data-ores]');
+  if (rb && OR.results) { orShowChain(OR.results.list[+rb.dataset.ores]); return; }
+  const sv = e.target.closest('[data-osaved]');
+  if (sv) { orShowChain(savedToChain(OR.saved[+sv.dataset.osaved])); return; }
+  const del = e.target.closest('[data-osdel]');
+  if (del) { OR.saved.splice(+del.dataset.osdel, 1); DB.putKv('orSaved', OR.saved).catch(() => {}); renderOrSearch(); }
+}
+
+/* ---------- piste roulée par le convoi ---------- */
+const TRAIL_ICON = '<path d="M5 21c1.5-3 4-4 6-6s1-5 3.5-7S19 5 19 3"/><circle cx="5" cy="21" r="1.2"/><circle cx="19" cy="3" r="1.2"/>';
+function orRide(r) {
+  if (!S.active || !isLeader()) return;
+  let coords = r.coords.map(p => [p[1], p[0]]);
+  if (S.pos) {
+    const here = [S.pos.lat, S.pos.lng];
+    if (hav(here, coords[coords.length - 1]) < hav(here, coords[0])) coords.reverse();
+  } else if (!r.entryFirst) coords.reverse();
+  coords = decimate(coords, 600).map(p => [+p[0].toFixed(5), +p[1].toFixed(5)]);
+  const name = r.name || t('orTrack');
+  setPlan([{ id: rid(), lat: coords[0][0], lng: coords[0][1], label: t('trkEntry', { name }), entry: true }], { name, coords, len: Math.round(r.len), d: r.d });
+  closeSheets();
+  setFollow(true);
+  toast(t('trkSet', { name }), 'ok', 6000);
+}
+function trackGeoOf(tk) {
+  if (!tk || !tk.coords || tk.coords.length < 2) return null;
+  const cum = [0];
+  for (let i = 1; i < tk.coords.length; i++) cum.push(cum[i - 1] + hav(tk.coords[i - 1], tk.coords[i]));
+  return { coords: tk.coords, cum, total: cum[cum.length - 1] };
+}
+function trackProgress() {
+  const g = S.trkGeo;
+  if (!g || !S.pos) return;
+  const p = [S.pos.lat, S.pos.lng];
+  let best = { d: Infinity, i: 0, t: 0 };
+  for (let i = 0; i < g.coords.length - 1; i++) { const pr = projectOnSeg(p, g.coords[i], g.coords[i + 1]); if (pr.d < best.d) best = { d: pr.d, i, t: pr.t }; }
+  const prog = g.cum[best.i] + best.t * (g.cum[best.i + 1] - g.cum[best.i]);
+  const on = best.d <= Math.max(80, Math.min(150, (S.pos.acc || 20) * 2));
+  S.trk = { d: best.d, prog, on, started: !!(S.trk && S.trk.started) || on };
+  if (S.trk.started && !S.trackDone && g.total - prog < 80) {
+    S.trackDone = true;
+    toast(t('trkDone'), 'ok', 8000); sfx('arrive'); haptic('alert');
+  }
+}
+function trackGeoJSON() {
+  const tk = S.plan && S.plan.track;
+  const c = tk && tk.coords ? tk.coords.map(p => [p[1], p[0]]) : [];
+  return { type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: c.length > 1 ? c : [] } };
+}
+
 function renderOrLegend() {
   $('#orLegendBody').innerHTML = `<div class="legend">${[0, 1, 2, 3, 4].map(i => `<div class="lg"><i style="--c:${OR_COLORS[i]}"></i><span>${esc(t('d' + i))}</span><b></b></div>`).join('')}
       <div class="lg"><i style="--c:${OR_UNKNOWN}"></i><span>${esc(t('d_unk'))}</span><b></b></div></div>
@@ -2321,6 +2795,7 @@ function openSheet(id) {
   if (id === 'chat') renderChat();
   if (id === 'track') renderTrackSheet();
   if (id === 'orlegend') renderOrLegend();
+  if (id === 'orsearch') { renderOrSearch(); orLoadSaved().then(() => { if (S.sheet === 'orsearch') renderOrSearch(); }); }
   if (id === 'settings') DB.allTrips().then(tr => { S.tripsCache = tr; }).catch(() => { S.tripsCache = []; });
   syncSegs();
   $('#scrim').classList.add('open');
@@ -2328,7 +2803,7 @@ function openSheet(id) {
   S.sheet = id;
 }
 function closeSheets() {
-  if (S.sheet === 'track') orSelect(null);
+  if (S.sheet === 'track' && !S.keepTrack) { orSelect(null); OR.chain = null; orSetPick(null); }
   $$('.sheet.open').forEach(s => s.classList.remove('open'));
   $('#scrim').classList.remove('open');
   S.sheet = null;
@@ -3450,9 +3925,24 @@ function bind() {
   on('#tutoSkip', 'click', closeTuto);
   on('#btnTuto', 'click', () => { closeSheets(); openTuto(); });
   on('#btnExport', 'click', exportData);
-  on('#orStatus', 'click', () => openSheet('orlegend'));
+  on('#orStatus', 'click', () => openSheet('orsearch'));
+  on('#orSearchBody', 'click', orSearchClick);
+  on('#orSearchBody', 'input', e => { if (e.target.id === 'orPlace') orPlaceInput(e.target.value); });
+  on('#btnExplore', 'click', openExplore);
+  on('#exClose', 'click', closeExplore);
+  on('#exSearch', 'click', () => openSheet('orsearch'));
+  on('#exLocate', 'click', () => { const p = myPos(); if (p && S.map) S.map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(S.map.getZoom(), 13.5) }); });
+  on('#btnOrRoute', 'click', () => openSheet('orsearch'));
   on('#btnOrLegend', 'click', () => openSheet('orlegend'));
   on('#trackBody', 'click', e => {
+    const act = e.target.closest('[data-oract]');
+    if (act) {
+      const a = act.dataset.oract;
+      if (a === 'whole') orWholeTrack();
+      if (a === 'ride' && OR.chain) orRide(OR.chain);
+      if ((a === 'save' || a === 'unsave') && OR.chain) { orToggleSave(OR.chain); renderChainSheet(); }
+      return;
+    }
     if (!e.target.closest('#orPinBtn') || !OR.sel || !OR.at) return;
     const tg = JSON.parse(OR.sel.properties.t || '{}'), label = t('orPinLabel', { name: orName(tg) }).slice(0, 40);
     const at = OR.at;
@@ -3522,6 +4012,7 @@ function bind() {
   on('#wpList', 'click', e => {
     const b = e.target.closest('[data-act]');
     if (!b || !isLeader()) return;
+    if (b.dataset.act === 'untrack') { setPlan(S.plan.wps.filter(w => !w.entry), null); return; }
     const i = +b.dataset.i, wps = [...S.plan.wps];
     if (b.dataset.act === 'del') wps.splice(i, 1);
     if (b.dataset.act === 'up' && i > 0) [wps[i - 1], wps[i]] = [wps[i], wps[i - 1]];
@@ -3677,6 +4168,7 @@ function bind() {
 applyTheme();
 buildGauge();
 bind();
+orLoadSaved();
 renderHome();
 applyLang();
 if (sharedLinkInUrl()) loadSharedTrip();

@@ -39,6 +39,7 @@ Shared trips get a random, unguessable name. Anyone with the link can see the tr
 - French, English and German interface; metric or imperial units.
 - Animated launch screen and a short tutorial on first launch.
 - Off-road mode (Settings): earth and khaki theme, terrain relief, and OpenStreetMap tracks loaded for the area on screen (zoom in), coloured by the vehicle that can use them (car, SUV, 4×4, experienced 4×4, impassable) with solid, dashed or grey lines for access. Tap a track for its details (surface, condition, smoothness, width, incline, seasonal or permanent restrictions). Tracks are kept on the phone for 14 days. OpenStreetMap data comes without guarantee: signs on site and local rules prevail.
+- Off-road step 2: "Explore tracks" from the home screen (no convoy needed), track search around you, around a place or in the visible area with filters (vehicle, access, minimum length, tracks without information), whole tracks rebuilt from their OpenStreetMap sections, "My tracks" favourites, and "Drive this track with the convoy" for the leader: guidance to the start, then the track is shown to everyone with the distance left and an off-track warning.
 - Trip history: per-member view with speed colours, share link, and story image or timelapse video (1080 × 1920).
 - Built-in QR code scanner to join a convoy, continuous colour pickers for your car and the accent colour.
 - Four themes (Graphite, Light, OLED, Red night) and five accent colours.
