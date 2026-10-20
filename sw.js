@@ -1,5 +1,5 @@
 /* PocketConvoy service worker: app shell offline, always fresh when online */
-const CACHE = 'pocketconvoy-1.7.0';
+const CACHE = 'pocketconvoy-1.8.0';
 const SHELL = ['./', './index.html', './app.js', './config.js', './manifest.webmanifest',
   './icons/icon.svg', './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN = ['cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];

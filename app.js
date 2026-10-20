@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -11,6 +11,7 @@ function configOk() {
 }
 /* fond de carte : tuiles OpenFreeMap restylées aux couleurs de l'app (CARTO en secours) */
 const MAP_BASE_URL = 'https://tiles.openfreemap.org/styles/positron';
+const DEM_TILES = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
 const FALLBACK_STYLES = {
   night: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   day: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
@@ -20,6 +21,10 @@ const MAP_PAL = {
     motorway: '#4C4C55', casing: '#141416', rail: '#2A2A30', boundary: '#45454E', label: '#8E8E97', labelStrong: '#E4E4E8', labelRoad: '#7C7C85', labelWater: '#4F7A96', halo: '#141416' },
   oled: { bg: '#000000', land: '#060607', park: '#08100A', water: '#04090E', waterway: '#10202B', building: '#111113', minor: '#202024', major: '#2E2E34',
     motorway: '#3E3E46', casing: '#000000', rail: '#1E1E22', boundary: '#3A3A42', label: '#85858E', labelStrong: '#E4E4E8', labelRoad: '#6E6E77', labelWater: '#456B84', halo: '#000000' },
+  offroad: { bg: '#191A14', land: '#1D1F17', park: '#1F2919', water: '#11202A', waterway: '#1E3A4A', building: '#26271F', minor: '#3B3929', major: '#4C4833',
+    motorway: '#5B553A', casing: '#15160F', rail: '#302F25', boundary: '#57533F', label: '#ABA78E', labelStrong: '#F0ECDC', labelRoad: '#918D75', labelWater: '#5E8BA4', halo: '#15160F' },
+  offroadDay: { bg: '#EEEADC', land: '#EBE6D4', park: '#DAE2C5', water: '#C4D7DF', waterway: '#A7C4D2', building: '#DFD9C8', minor: '#FFFFFF', major: '#FFF7E3',
+    motorway: '#FBEDC8', casing: '#CDC4AB', rail: '#C9C2AD', boundary: '#B1A78B', label: '#5C5643', labelStrong: '#25221A', labelRoad: '#6C6650', labelWater: '#4E7990', halo: '#EEEADC' },
   light: { bg: '#F3F3F1', land: '#EEEEEB', park: '#E2EADD', water: '#CBD9E4', waterway: '#B4C8D8', building: '#E3E3DF', minor: '#FFFFFF', major: '#FFFFFF',
     motorway: '#FFFFFF', casing: '#D2D2CC', rail: '#CFCFCA', boundary: '#B5B5AF', label: '#5F5F66', labelStrong: '#18181B', labelRoad: '#6B6B72', labelWater: '#5A7F99', halo: '#F3F3F1' },
 };
@@ -47,7 +52,7 @@ function luminance(hex) {
 }
 const memberColor = h => hslHex(h, 85, 62);
 const accentColor = h => hslHex(h, 100, 56);
-const THEMES = { graphite: { map: 'night', meta: '#0F0F10' }, light: { map: 'day', meta: '#F4F4F2' }, oled: { map: 'night', meta: '#000000' }, red: { map: 'night', meta: '#050000' } };
+const THEMES = { offroad: { map: 'night', meta: '#12130E' }, graphite: { map: 'night', meta: '#0F0F10' }, light: { map: 'day', meta: '#F4F4F2' }, oled: { map: 'night', meta: '#000000' }, red: { map: 'night', meta: '#050000' } };
 const STATUSES = ['route', 'arret', 'pause', 'essence', 'perdu', 'panne'];
 const QUICK = {
   pause:    { status: 'pause', sound: 'msg', kind: 'info' },
@@ -180,6 +185,17 @@ const I18N = {
     importConfirm: 'Importer ce fichier ? Ton pseudo et tes réglages seront remplacés, et ses {n} trajets ajoutés à ton historique.',
     importDone: 'Import terminé : {n} trajets ajoutés ou mis à jour.', importNote: 'L’import reprend le pseudo et les réglages du fichier et ajoute ses trajets à ton historique, sans effacer les autres.',
     exportData: 'Exporter mes données', exportNote: 'Pseudo, réglages et historique des trajets, dans un fichier JSON.',
+    orPeriod: 'Période', yes: 'Oui', orOn: 'Activé', orOff: 'Désactivé', offroad: 'Mode off road', offroadNote: 'Thème baroudeur, relief sur la carte et pistes détaillées (type, difficulté, accès), touche une piste pour sa fiche. Données OpenStreetMap.',
+    thn_offroad: 'Le mode off road impose son thème terre et kaki. Désactive-le pour revenir à ton thème.', orLegend: 'Légende des pistes',
+    orZoom: 'Pistes : zoome pour les afficher', orLoading: 'Chargement des pistes…', orCount: '{n} pistes', orCount1: '1 piste', orNone: 'Aucune piste dans cette zone',
+    orErr: 'Serveur des pistes saturé, nouvel essai bientôt', orTrack: 'Piste sans nom', orVehicle: 'Véhicule conseillé',
+    d_unk: 'Inconnu (pas d’information)', d0: 'Voiture', d1: 'SUV ou bonne garde au sol', d2: '4×4', d3: '4×4 et pilote expérimenté', d4: 'Impraticable',
+    acc_ok: 'Aucune restriction indiquée', acc_no: 'Interdit aux véhicules à moteur', acc_dest: 'Réservé (riverains, ayants droit ou autorisation)', acc_season: 'Restriction selon la période',
+    orAccess: 'Accès', orSurface: 'Revêtement', orGrade: 'État de la piste', orSmooth: 'Régularité', orWidth: 'Largeur', or4wd: '4×4 uniquement', orIncline: 'Pente',
+    orLength: 'Longueur de ce tronçon', orSeasonal: 'Praticable', orNoteTag: 'Remarque', orOsm: 'Voir ou corriger sur OpenStreetMap', orPin: 'Poser un pin ici pour le convoi',
+    orDisclaimer: 'Données OpenStreetMap, sans garantie : la signalisation sur place et la réglementation locale font foi. Vérifie aussi les interdictions temporaires (risque d’incendie, travaux, chasse).',
+    orLines: 'Trait plein : aucune restriction indiquée. Tirets de couleur : accès réservé ou selon la période. Tirets gris : interdit aux véhicules à moteur.',
+    orRecommended: 'Recommandé', orPinLabel: 'Piste : {name}',
     shareTitle: 'Partager ce trajet', shareTripLink: 'Créer un lien de partage', sharePreparing: 'Préparation du lien…',
     shareSend: 'Envoyer', copyBtn: 'Copier', copied: 'Copié', shareFail: 'Impossible de créer le lien. Réessaie avec une connexion.',
     shareWho: 'Le lien montre ce trajet pour tout le convoi : noms, tracés et statistiques.',
@@ -202,7 +218,7 @@ const I18N = {
     waiting: 'En attente des autres véhicules. Code {code}', endAll: 'Terminer pour tout le convoi', endedAll: '{name} a terminé le trajet pour tout le convoi',
     audioOk: 'Talkie connecté', audioFail: 'Talkie en échec', audioWait: 'Talkie en connexion', tapForSound: 'Touche l’écran pour entendre le talkie de tes amis.',
     chat: 'Chat', chatPh: 'Message ou lien', chatEmpty: 'Aucun message pour l’instant. Le chat repart à zéro à chaque nouveau convoi.',
-    chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot.',
+    chatPos: 'Partager ma position', myPosition: 'Ma position :', sendAria: 'Envoyer', creditsHtml: 'Carte : © <a href="https://www.openstreetmap.org/copyright">les contributeurs d’OpenStreetMap</a>, tuiles <a href="https://openfreemap.org">OpenFreeMap</a> et <a href="https://openmaptiles.org">OpenMapTiles</a>. Itinéraires : <a href="https://project-osrm.org">OSRM</a>. Recherche d’adresses : <a href="https://photon.komoot.io">Photon</a> par komoot. Pistes : OpenStreetMap via <a href="https://overpass-api.de">Overpass API</a>. Relief : <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (AWS Open Data).',
   },
   en: {
     tagline: 'Drive together, never lose each other',
@@ -281,6 +297,17 @@ const I18N = {
     importConfirm: 'Import this file? Your nickname and settings will be replaced, and its {n} trips added to your history.',
     importDone: 'Import complete: {n} trips added or updated.', importNote: 'Importing takes the nickname and settings from the file and adds its trips to your history, without deleting the others.',
     exportData: 'Export my data', exportNote: 'Nickname, settings and trip history, in a JSON file.',
+    orPeriod: 'Period', yes: 'Yes', orOn: 'On', orOff: 'Off', offroad: 'Off-road mode', offroadNote: 'Adventure theme, terrain relief on the map and detailed tracks (type, difficulty, access); tap a track for its details. OpenStreetMap data.',
+    thn_offroad: 'Off-road mode uses its own earth and khaki theme. Turn it off to go back to your theme.', orLegend: 'Track legend',
+    orZoom: 'Tracks: zoom in to show them', orLoading: 'Loading tracks…', orCount: '{n} tracks', orCount1: '1 track', orNone: 'No track in this area',
+    orErr: 'Track server busy, retrying soon', orTrack: 'Unnamed track', orVehicle: 'Suitable vehicle',
+    d_unk: 'Unknown (no information)', d0: 'Car', d1: 'SUV or good ground clearance', d2: '4×4', d3: '4×4 and experienced driver', d4: 'Impassable',
+    acc_ok: 'No restriction indicated', acc_no: 'No motor vehicles', acc_dest: 'Restricted (residents, authorised users or permit)', acc_season: 'Restriction depending on the period',
+    orAccess: 'Access', orSurface: 'Surface', orGrade: 'Track condition', orSmooth: 'Smoothness', orWidth: 'Width', or4wd: '4×4 only', orIncline: 'Incline',
+    orLength: 'Length of this section', orSeasonal: 'Usable', orNoteTag: 'Note', orOsm: 'View or fix on OpenStreetMap', orPin: 'Drop a pin here for the convoy',
+    orDisclaimer: 'OpenStreetMap data, without guarantee: signs on site and local rules prevail. Also check temporary bans (fire risk, works, hunting).',
+    orLines: 'Solid line: no restriction indicated. Coloured dashes: restricted access or depending on the period. Grey dashes: no motor vehicles.',
+    orRecommended: 'Recommended', orPinLabel: 'Track: {name}',
     shareTitle: 'Share this trip', shareTripLink: 'Create a share link', sharePreparing: 'Preparing the link…',
     shareSend: 'Send', copyBtn: 'Copy', copied: 'Copied', shareFail: 'Could not create the link. Try again with a connection.',
     shareWho: 'The link shows this trip for the whole convoy: names, tracks and statistics.',
@@ -303,7 +330,7 @@ const I18N = {
     waiting: 'Waiting for the other vehicles. Code {code}', endAll: 'End for the whole convoy', endedAll: '{name} ended the trip for the whole convoy',
     audioOk: 'Walkie-talkie connected', audioFail: 'Walkie-talkie failed', audioWait: 'Walkie-talkie connecting', tapForSound: 'Tap the screen to hear your friends on the walkie-talkie.',
     chat: 'Chat', chatPh: 'Message or link', chatEmpty: 'No messages yet. The chat starts fresh with every new convoy.',
-    chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot.',
+    chatPos: 'Share my position', myPosition: 'My position:', sendAria: 'Send', creditsHtml: 'Map: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>, <a href="https://openfreemap.org">OpenFreeMap</a> and <a href="https://openmaptiles.org">OpenMapTiles</a> tiles. Routing: <a href="https://project-osrm.org">OSRM</a>. Address search: <a href="https://photon.komoot.io">Photon</a> by komoot. Tracks: OpenStreetMap via <a href="https://overpass-api.de">Overpass API</a>. Relief: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (AWS Open Data).',
   },
   de: {
     tagline: 'Gemeinsam fahren, ohne sich zu verlieren',
@@ -382,6 +409,17 @@ const I18N = {
     importConfirm: 'Diese Datei importieren? Dein Name und deine Einstellungen werden ersetzt, und ihre {n} Fahrten zu deinem Verlauf hinzugefügt.',
     importDone: 'Import abgeschlossen: {n} Fahrten hinzugefügt oder aktualisiert.', importNote: 'Der Import übernimmt Name und Einstellungen aus der Datei und fügt ihre Fahrten zu deinem Verlauf hinzu, ohne die anderen zu löschen.',
     exportData: 'Meine Daten exportieren', exportNote: 'Name, Einstellungen und Fahrtenverlauf in einer JSON-Datei.',
+    orPeriod: 'Zeitraum', yes: 'Ja', orOn: 'Ein', orOff: 'Aus', offroad: 'Offroad-Modus', offroadNote: 'Abenteuer-Design, Relief auf der Karte und detaillierte Pisten (Art, Schwierigkeit, Zufahrt); tippe auf eine Piste für Details. Daten von OpenStreetMap.',
+    thn_offroad: 'Der Offroad-Modus nutzt sein eigenes Erd- und Khaki-Design. Schalte ihn aus, um zu deinem Design zurückzukehren.', orLegend: 'Pisten-Legende',
+    orZoom: 'Pisten: hineinzoomen, um sie anzuzeigen', orLoading: 'Pisten werden geladen…', orCount: '{n} Pisten', orCount1: '1 Piste', orNone: 'Keine Piste in diesem Gebiet',
+    orErr: 'Pisten-Server ausgelastet, neuer Versuch bald', orTrack: 'Piste ohne Namen', orVehicle: 'Geeignetes Fahrzeug',
+    d_unk: 'Unbekannt (keine Angaben)', d0: 'Auto', d1: 'SUV oder gute Bodenfreiheit', d2: '4×4', d3: '4×4 und erfahrener Fahrer', d4: 'Unpassierbar',
+    acc_ok: 'Keine Einschränkung angegeben', acc_no: 'Für Motorfahrzeuge verboten', acc_dest: 'Eingeschränkt (Anlieger, Berechtigte oder Bewilligung)', acc_season: 'Einschränkung je nach Zeitraum',
+    orAccess: 'Zufahrt', orSurface: 'Belag', orGrade: 'Zustand der Piste', orSmooth: 'Ebenheit', orWidth: 'Breite', or4wd: 'Nur 4×4', orIncline: 'Steigung',
+    orLength: 'Länge dieses Abschnitts', orSeasonal: 'Befahrbar', orNoteTag: 'Hinweis', orOsm: 'Auf OpenStreetMap ansehen oder korrigieren', orPin: 'Hier einen Pin für den Konvoi setzen',
+    orDisclaimer: 'Daten von OpenStreetMap, ohne Gewähr: Signalisation vor Ort und lokale Vorschriften gehen vor. Prüfe auch vorübergehende Verbote (Brandgefahr, Bauarbeiten, Jagd).',
+    orLines: 'Durchgezogene Linie: keine Einschränkung angegeben. Farbige Striche: eingeschränkte Zufahrt oder je nach Zeitraum. Graue Striche: für Motorfahrzeuge verboten.',
+    orRecommended: 'Empfohlen', orPinLabel: 'Piste: {name}',
     shareTitle: 'Diese Fahrt teilen', shareTripLink: 'Link zum Teilen erstellen', sharePreparing: 'Link wird vorbereitet…',
     shareSend: 'Senden', copyBtn: 'Kopieren', copied: 'Kopiert', shareFail: 'Der Link konnte nicht erstellt werden. Versuche es mit Verbindung erneut.',
     shareWho: 'Der Link zeigt diese Fahrt für den ganzen Konvoi: Namen, Strecken und Statistiken.',
@@ -404,7 +442,7 @@ const I18N = {
     waiting: 'Warte auf die anderen Fahrzeuge. Code {code}', endAll: 'Für den ganzen Konvoi beenden', endedAll: '{name} hat die Fahrt für den ganzen Konvoi beendet',
     audioOk: 'Funkgerät verbunden', audioFail: 'Funkgerät-Fehler', audioWait: 'Funkgerät verbindet', tapForSound: 'Tippe auf den Bildschirm, um deine Freunde im Funkgerät zu hören.',
     chat: 'Chat', chatPh: 'Nachricht oder Link', chatEmpty: 'Noch keine Nachrichten. Der Chat beginnt bei jedem neuen Konvoi von vorn.',
-    chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot.',
+    chatPos: 'Meine Position teilen', myPosition: 'Meine Position:', sendAria: 'Senden', creditsHtml: 'Karte: © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap-Mitwirkende</a>, Kacheln von <a href="https://openfreemap.org">OpenFreeMap</a> und <a href="https://openmaptiles.org">OpenMapTiles</a>. Routen: <a href="https://project-osrm.org">OSRM</a>. Adresssuche: <a href="https://photon.komoot.io">Photon</a> von komoot. Pisten: OpenStreetMap über <a href="https://overpass-api.de">Overpass API</a>. Relief: <a href="https://registry.opendata.aws/terrain-tiles/">Terrain Tiles</a> (AWS Open Data).',
   },
 };
 const NAV = {
@@ -459,7 +497,7 @@ const store = {
   get(k, d) { try { const v = localStorage.getItem('pc_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem('pc_' + k, JSON.stringify(v)); } catch (e) { /* plein */ } },
 };
-const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', haptics: 'normal', hapticCats: ['ui', 'talk', 'alerts'], sound: 'on', distUnit: 'km', speedUnit: 'kmh', gaugeStyle: 'dial', gaugeIdx: 5, speedWarn: 0 }, store.get('prefs', {}));
+const prefs = Object.assign({ talkMode: 'hold', mapTheme: 'night', lagKm: 3, view: 'map', lang: 'fr', theme: 'graphite', accent: 'orange', haptics: 'normal', hapticCats: ['ui', 'talk', 'alerts'], sound: 'on', distUnit: 'km', speedUnit: 'kmh', gaugeStyle: 'dial', gaugeIdx: 5, speedWarn: 0, offroad: 'off' }, store.get('prefs', {}));
 if (!I18N[prefs.lang]) prefs.lang = 'fr';
 if (!THEMES[prefs.theme]) prefs.theme = 'graphite';
 if (prefs.accentHue == null) prefs.accentHue = ACCENT_HUES[prefs.accent] != null ? ACCENT_HUES[prefs.accent] : 15;
@@ -478,8 +516,13 @@ const DB = {
   _p: null,
   open() {
     if (!this._p) this._p = new Promise((res, rej) => {
-      const r = indexedDB.open('pocketconvoy', 1);
-      r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('trips', { keyPath: 'id' }); d.createObjectStore('kv'); };
+      const r = indexedDB.open('pocketconvoy', 2);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if (!d.objectStoreNames.contains('trips')) d.createObjectStore('trips', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('kv')) d.createObjectStore('kv');
+        if (!d.objectStoreNames.contains('osm')) d.createObjectStore('osm');
+      };
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
     });
@@ -497,6 +540,8 @@ const DB = {
   putTrip: tr => DB.run('trips', 'readwrite', s => s.put(tr)),
   allTrips: () => DB.run('trips', 'readonly', s => s.getAll()),
   delTrip: id => DB.run('trips', 'readwrite', s => s.delete(id)),
+  getOsm: k => DB.run('osm', 'readonly', s => s.get(k)),
+  putOsm: (k, v) => DB.run('osm', 'readwrite', s => s.put(v, k)),
 };
 
 /* géométrie : points [lat, lng], distances en mètres */
@@ -650,23 +695,31 @@ function applyLang() {
   }
   if ($('#history').classList.contains('on')) openHistory();
   if (!$('#tuto').hidden) renderTuto();
+  if (S.sheet === 'track') renderTrackSheet();
+  if (S.sheet === 'orlegend') renderOrLegend();
+  orRender();
   syncSegs();
 }
+const offroadOn = () => prefs.offroad === 'on';
+const themeNow = () => (offroadOn() ? 'offroad' : prefs.theme);
 function applyTheme() {
   const root = document.documentElement;
-  root.dataset.theme = prefs.theme;
+  root.dataset.theme = themeNow();
   const acc = accentColor(prefs.accentHue);
   root.style.setProperty('--accent', acc);
-  if (prefs.theme === 'red') root.style.removeProperty('--accent-ink');
+  if (themeNow() === 'red' || themeNow() === 'offroad') root.style.removeProperty('--accent-ink');
   else root.style.setProperty('--accent-ink', luminance(acc) > 0.3 ? '#0F0F10' : '#FFFFFF');
   const ah = document.getElementById('accentHue');
   if (ah) { ah.value = prefs.accentHue; ah.style.setProperty('--thumb', acc); }
-  $('#metaTheme').setAttribute('content', THEMES[prefs.theme].meta);
+  $('#metaTheme').setAttribute('content', THEMES[themeNow()].meta);
   styleRouteLayers();
 }
 /* ---------- fond de carte ---------- */
 let mapBasePromise = null;
-function mapPalette() { return prefs.mapTheme === 'day' ? MAP_PAL.light : (prefs.theme === 'oled' ? MAP_PAL.oled : MAP_PAL.dark); }
+function mapPalette() {
+  if (offroadOn()) return prefs.mapTheme === 'day' ? MAP_PAL.offroadDay : MAP_PAL.offroad;
+  return prefs.mapTheme === 'day' ? MAP_PAL.light : (prefs.theme === 'oled' ? MAP_PAL.oled : MAP_PAL.dark);
+}
 function mapPlaceholder() { return { version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': mapPalette().bg } }] }; }
 function styleFor(base) {
   const P = mapPalette();
@@ -701,6 +754,18 @@ function styleFor(base) {
         : /road|highway|street|transportation/.test(id) ? P.labelRoad : P.label;
       p['text-halo-color'] = P.halo; p['text-halo-width'] = 1.4; p['text-halo-blur'] = 0.4;
     }
+  }
+  if (offroadOn()) {
+    st.sources.dem = { type: 'raster-dem', tiles: [DEM_TILES], tileSize: 256, maxzoom: 14, encoding: 'terrarium' };
+    const day = prefs.mapTheme === 'day';
+    const hill = { id: 'or-hillshade', type: 'hillshade', source: 'dem', paint: {
+      'hillshade-exaggeration': day ? 0.45 : 0.55,
+      'hillshade-shadow-color': day ? 'rgba(70,58,35,0.45)' : 'rgba(0,0,0,0.6)',
+      'hillshade-highlight-color': day ? 'rgba(255,255,255,0.45)' : 'rgba(255,245,215,0.12)',
+      'hillshade-accent-color': day ? 'rgba(70,58,35,0.2)' : 'rgba(0,0,0,0.25)' } };
+    let at = st.layers.findIndex(l => l.type === 'fill' && /water/i.test(l.id));
+    if (at < 0) at = st.layers.findIndex(l => l.type === 'line' || l.type === 'symbol');
+    st.layers.splice(at < 0 ? st.layers.length : at, 0, hill);
   }
   return st;
 }
@@ -1077,7 +1142,8 @@ function initMap() {
     attributionControl: false, dragRotate: false, touchPitch: false, pitchWithRotate: false, maxPitch: 60,
   });
   m.touchZoomRotate.disableRotation();
-  m.on('style.load', () => { addRouteLayers(); renderRoute(); });
+  m.on('style.load', () => { orAddLayers(); addRouteLayers(); renderRoute(); });
+  m.on('moveend', () => orRefresh());
   applyMapStyle(m);
   m.on('dragstart', () => setFollow(false));
   m.on('zoomstart', e => { if (e && e.originalEvent) S.gesture = true; });
@@ -1493,7 +1559,7 @@ async function runSearch(q) {
   }
 }
 async function onMapClick(e) {
-  if (!S.pick) return;
+  if (!S.pick) { if (offroadOn()) orClick(e); return; }
   const mode = S.pick;
   S.pick = false; $('#pickBar').hidden = true;
   const { lat, lng } = e.lngLat;
@@ -1506,6 +1572,260 @@ async function onMapClick(e) {
   } catch (err) { /* garde le libellé par défaut */ }
   addWp({ id: rid(), lat, lng, label }, false);
   openSheet('route');
+}
+
+/* ---------- mode off road : pistes OpenStreetMap ----------
+   Les pistes de la zone affichée sont demandées à l'API Overpass par carrés (tuiles de niveau 12, environ 10 km),
+   gardées 14 jours dans le téléphone, puis classées selon le véhicule capable de les emprunter et leur accès. */
+const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
+const OR_Z = 12, OR_MINZOOM = 11.6, OR_MAXTILES = 12, OR_TTL = 14 * 864e5;
+const OR_COLORS = ['#6FCF7F', '#F2C94C', '#F2994A', '#EB5757', '#B07CFF'];
+const OR_UNKNOWN = '#C9C2A3';
+const OR = { tiles: new Map(), busy: 0, queue: [], sel: null, state: '', timer: null };
+const OR_VAL = {
+  fr: {
+    surface: { asphalt: 'asphalte', paved: 'revêtu', concrete: 'béton', paving_stones: 'pavés', sett: 'pavés', compacted: 'gravier compacté', fine_gravel: 'gravier fin',
+      gravel: 'gravier', pebblestone: 'galets', unpaved: 'non revêtu', ground: 'terre', dirt: 'terre', earth: 'terre', grass: 'herbe', sand: 'sable', mud: 'boue', rock: 'roche', wood: 'bois' },
+    smoothness: { excellent: 'excellente', good: 'bonne', intermediate: 'moyenne', bad: 'mauvaise (garde au sol conseillée)', very_bad: 'très mauvaise (véhicule surélevé)',
+      horrible: 'horrible (4×4)', very_horrible: 'extrême (4×4 spécialisé)', impassable: 'impraticable' },
+    tracktype: { grade1: 'grade 1 : revêtu ou très compact', grade2: 'grade 2 : gravier compact', grade3: 'grade 3 : mélange terre et gravier', grade4: 'grade 4 : surtout terre ou herbe', grade5: 'grade 5 : terre meuble ou herbe' },
+    seasonal: { yes: 'selon la saison', summer: 'en été', winter: 'en hiver', spring: 'au printemps', autumn: 'en automne', wet_season: 'à la saison des pluies', dry_season: 'à la saison sèche' },
+  },
+  en: {
+    surface: { asphalt: 'asphalt', paved: 'paved', concrete: 'concrete', paving_stones: 'paving stones', sett: 'cobbles', compacted: 'compacted gravel', fine_gravel: 'fine gravel',
+      gravel: 'gravel', pebblestone: 'pebbles', unpaved: 'unpaved', ground: 'dirt', dirt: 'dirt', earth: 'dirt', grass: 'grass', sand: 'sand', mud: 'mud', rock: 'rock', wood: 'wood' },
+    smoothness: { excellent: 'excellent', good: 'good', intermediate: 'average', bad: 'bad (ground clearance advised)', very_bad: 'very bad (raised vehicle)',
+      horrible: 'horrible (4×4)', very_horrible: 'extreme (specialised 4×4)', impassable: 'impassable' },
+    tracktype: { grade1: 'grade 1: paved or very compact', grade2: 'grade 2: compacted gravel', grade3: 'grade 3: mix of dirt and gravel', grade4: 'grade 4: mostly dirt or grass', grade5: 'grade 5: soft dirt or grass' },
+    seasonal: { yes: 'depending on the season', summer: 'in summer', winter: 'in winter', spring: 'in spring', autumn: 'in autumn', wet_season: 'in the wet season', dry_season: 'in the dry season' },
+  },
+  de: {
+    surface: { asphalt: 'Asphalt', paved: 'befestigt', concrete: 'Beton', paving_stones: 'Pflaster', sett: 'Kopfsteinpflaster', compacted: 'verdichteter Kies', fine_gravel: 'Feinkies',
+      gravel: 'Kies', pebblestone: 'Kieselsteine', unpaved: 'unbefestigt', ground: 'Erde', dirt: 'Erde', earth: 'Erde', grass: 'Gras', sand: 'Sand', mud: 'Schlamm', rock: 'Fels', wood: 'Holz' },
+    smoothness: { excellent: 'ausgezeichnet', good: 'gut', intermediate: 'mittel', bad: 'schlecht (Bodenfreiheit empfohlen)', very_bad: 'sehr schlecht (höhergelegtes Fahrzeug)',
+      horrible: 'katastrophal (4×4)', very_horrible: 'extrem (spezieller 4×4)', impassable: 'unpassierbar' },
+    tracktype: { grade1: 'Grad 1: befestigt oder sehr kompakt', grade2: 'Grad 2: verdichteter Kies', grade3: 'Grad 3: Erde und Kies gemischt', grade4: 'Grad 4: meist Erde oder Gras', grade5: 'Grad 5: weiche Erde oder Gras' },
+    seasonal: { yes: 'je nach Jahreszeit', summer: 'im Sommer', winter: 'im Winter', spring: 'im Frühling', autumn: 'im Herbst', wet_season: 'in der Regenzeit', dry_season: 'in der Trockenzeit' },
+  },
+};
+const orVal = (group, v) => ((OR_VAL[prefs.lang] || OR_VAL.fr)[group] || {})[v] || String(v).replace(/_/g, ' ');
+const ACC_NO = /^(no|private|forestry|agricultural|agricultural;forestry|forestry;agricultural|military|emergency|delivery|discouraged)$/;
+const ACC_DEST = /^(destination|customers|permit|residents|delivery;destination)$/;
+const ACC_KEYS = ['motorcar', 'motor_vehicle', 'vehicle', 'access'];
+function orAccess(tg) {
+  const k = ACC_KEYS.find(x => tg[x] != null);
+  const v = k ? String(tg[k]).toLowerCase() : '';
+  const base = !v ? 'ok' : ACC_NO.test(v) ? 'no' : ACC_DEST.test(v) ? 'dest' : 'ok';
+  const cond = ACC_KEYS.map(x => tg[x + ':conditional']).filter(Boolean);
+  return { acc: base === 'ok' && (cond.length || tg.seasonal) ? 'season' : base, key: k, val: v, cond };
+}
+function orDifficulty(tg) {
+  const prim = [];
+  const sm = { excellent: 0, good: 0, intermediate: 0, bad: 1, very_bad: 2, horrible: 3, very_horrible: 3, impassable: 4 }[tg.smoothness];
+  const tt = { grade1: 0, grade2: 0, grade3: 1, grade4: 2, grade5: 2 }[tg.tracktype];
+  const fw = { yes: 2, recommended: 1 }[tg['4wd_only']];
+  [sm, tt, fw].forEach(v => { if (v != null) prim.push(v); });
+  if (prim.length) return Math.max(...prim);
+  const su = tg.surface;
+  if (/^(asphalt|paved|concrete|paving_stones|sett|compacted|fine_gravel|gravel)$/.test(su || '')) return 0;
+  if (/^(unpaved|pebblestone|ground|dirt|earth|grass|wood)$/.test(su || '')) return 1;
+  if (/^(sand|mud|rock)$/.test(su || '')) return 2;
+  return -1;
+}
+function orTileXY(lng, lat, z) {
+  const n = 2 ** z, x = Math.floor((lng + 180) / 360 * n);
+  const r = lat * RAD, y = Math.floor((1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n);
+  return [Math.max(0, Math.min(n - 1, x)), Math.max(0, Math.min(n - 1, y))];
+}
+function orTileBBox(x, y, z) {
+  const n = 2 ** z, lng = v => v / n * 360 - 180, lat = v => Math.atan(Math.sinh(Math.PI * (1 - 2 * v / n))) / RAD;
+  return { w: lng(x), e: lng(x + 1), n: lat(y), s: lat(y + 1) };
+}
+function orQuery(b) {
+  const bb = `${b.s.toFixed(5)},${b.w.toFixed(5)},${b.n.toFixed(5)},${b.e.toFixed(5)}`;
+  return `[out:json][timeout:25];(way["highway"="track"](${bb});way["highway"~"^(unclassified|service|road)$"]["surface"~"^(unpaved|gravel|fine_gravel|compacted|dirt|ground|earth|grass|sand|mud|rock|pebblestone)$"](${bb});way["4wd_only"~"^(yes|recommended)$"](${bb}););out tags geom qt;`;
+}
+const OR_KEEP = ['name', 'ref', 'highway', 'tracktype', 'surface', 'smoothness', 'width', 'incline', '4wd_only', 'seasonal', 'description', 'note', 'access', 'vehicle',
+  'motor_vehicle', 'motorcar', 'access:conditional', 'vehicle:conditional', 'motor_vehicle:conditional', 'motorcar:conditional', 'maxweight', 'maxwidth'];
+function orFeatures(json) {
+  const out = [];
+  for (const el of json.elements || []) {
+    if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) continue;
+    const tg = {};
+    for (const k of OR_KEEP) if (el.tags && el.tags[k] != null) tg[k] = String(el.tags[k]).slice(0, 200);
+    const a = orAccess(tg);
+    out.push({ type: 'Feature', properties: { id: el.id, d: orDifficulty(tg), acc: a.acc, t: JSON.stringify(tg) },
+      geometry: { type: 'LineString', coordinates: el.geometry.map(p => [+p.lon.toFixed(6), +p.lat.toFixed(6)]) } });
+  }
+  return out;
+}
+async function orFetch(key, x, y) {
+  const b = orTileBBox(x, y, OR_Z), q = orQuery(b);
+  let lastErr = null;
+  for (const url of OVERPASS) {
+    try {
+      const r = await fetch(url + '?data=' + encodeURIComponent(q));
+      if (!r.ok) throw new Error('http ' + r.status);
+      return orFeatures(await r.json());
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('overpass');
+}
+async function orLoadTile(key, x, y) {
+  const tile = OR.tiles.get(key);
+  tile.state = 'loading';
+  try {
+    const cached = await DB.getOsm(key).catch(() => null);
+    if (cached && Date.now() - cached.t < OR_TTL) tile.feats = cached.feats;
+    else {
+      tile.feats = await orFetch(key, x, y);
+      DB.putOsm(key, { t: Date.now(), feats: tile.feats }).catch(() => {});
+    }
+    tile.state = 'ok';
+  } catch (e) {
+    const cached = await DB.getOsm(key).catch(() => null);
+    if (cached) { tile.feats = cached.feats; tile.state = 'ok'; }
+    else { tile.state = 'err'; tile.retry = Date.now() + 30000; }
+  }
+  orRender();
+}
+function orPump() {
+  while (OR.busy < 2 && OR.queue.length) {
+    const [key, x, y] = OR.queue.shift();
+    OR.busy++;
+    orLoadTile(key, x, y).finally(() => { OR.busy--; orPump(); });
+  }
+}
+function orRefresh() {
+  clearTimeout(OR.timer);
+  OR.timer = setTimeout(orUpdate, 350);
+}
+function orUpdate() {
+  const m = S.map;
+  if (!m || !m.getBounds) return;
+  if (!offroadOn()) { orStatus(''); return; }
+  if (m.getZoom() < OR_MINZOOM) { orStatus('zoom'); orRender(); return; }
+  const b = m.getBounds();
+  const [x0, y0] = orTileXY(b.getWest(), b.getNorth(), OR_Z), [x1, y1] = orTileXY(b.getEast(), b.getSouth(), OR_Z);
+  const keys = [];
+  for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) keys.push([OR_Z + '/' + x + '/' + y, x, y]);
+  if (keys.length > OR_MAXTILES) { orStatus('zoom'); return; }
+  OR.view = keys.map(k => k[0]);
+  for (const [key, x, y] of keys) {
+    const tile = OR.tiles.get(key);
+    if (tile && (tile.state === 'ok' || tile.state === 'loading' || tile.state === 'queued')) continue;
+    if (tile && tile.state === 'err' && Date.now() < tile.retry) continue;
+    OR.tiles.set(key, { state: 'queued', feats: [] });
+    OR.queue.push([key, x, y]);
+  }
+  if (OR.tiles.size > 80) for (const k of [...OR.tiles.keys()].slice(0, OR.tiles.size - 80)) if (!OR.view.includes(k)) OR.tiles.delete(k);
+  orPump();
+  orRender();
+}
+function orRender() {
+  const m = S.map;
+  if (!m || !m.getSource) return;
+  const src = m.getSource('or');
+  const view = OR.view || [];
+  const seen = new Map();
+  let loading = false, err = false;
+  for (const k of view) {
+    const tile = OR.tiles.get(k);
+    if (!tile) continue;
+    if (tile.state === 'loading' || tile.state === 'queued') loading = true;
+    if (tile.state === 'err') err = true;
+    for (const f of tile.feats || []) seen.set(f.properties.id, f);
+  }
+  if (src) src.setData({ type: 'FeatureCollection', features: offroadOn() && m.getZoom() >= OR_MINZOOM ? [...seen.values()] : [] });
+  if (!offroadOn()) return orStatus('');
+  if (m.getZoom() < OR_MINZOOM) return orStatus('zoom');
+  orStatus(loading ? 'loading' : err && !seen.size ? 'err' : 'count', seen.size);
+}
+function orStatus(kind, n) {
+  const el = $('#orStatus');
+  if (!el) return;
+  el.hidden = !kind;
+  if (!kind) return;
+  el.dataset.kind = kind;
+  el.querySelector('span').textContent = kind === 'zoom' ? t('orZoom') : kind === 'loading' ? t('orLoading') : kind === 'err' ? t('orErr')
+    : n ? (n === 1 ? t('orCount1') : t('orCount', { n })) : t('orNone');
+}
+function orAddLayers() {
+  const m = S.map;
+  if (!m || !offroadOn()) return;
+  if (!m.getSource('or')) m.addSource('or', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, promoteId: 'id' });
+  const color = ['match', ['get', 'd'], 0, OR_COLORS[0], 1, OR_COLORS[1], 2, OR_COLORS[2], 3, OR_COLORS[3], 4, OR_COLORS[4], OR_UNKNOWN];
+  const width = ['interpolate', ['linear'], ['zoom'], 11, 2, 14, 4, 17, 7];
+  const lay = { 'line-cap': 'round', 'line-join': 'round' };
+  const add = l => { if (!m.getLayer(l.id)) m.addLayer(l); };
+  add({ id: 'or-sel', type: 'line', source: 'or', layout: lay, filter: ['==', ['get', 'id'], -1], paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 9, 17, 16], 'line-opacity': 0.45 } });
+  add({ id: 'or-casing', type: 'line', source: 'or', layout: lay, filter: ['!=', ['get', 'acc'], 'no'], paint: { 'line-color': '#000000', 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 4, 14, 7, 17, 11], 'line-opacity': 0.35 } });
+  add({ id: 'or-no', type: 'line', source: 'or', layout: { 'line-join': 'round' }, filter: ['==', ['get', 'acc'], 'no'], paint: { 'line-color': '#9A7B72', 'line-width': width, 'line-opacity': 0.75, 'line-dasharray': [1.2, 1.6] } });
+  add({ id: 'or-restr', type: 'line', source: 'or', layout: { 'line-join': 'round' }, filter: ['in', ['get', 'acc'], ['literal', ['dest', 'season']]], paint: { 'line-color': color, 'line-width': width, 'line-dasharray': [2.2, 1.2] } });
+  add({ id: 'or-line', type: 'line', source: 'or', layout: lay, filter: ['==', ['get', 'acc'], 'ok'], paint: { 'line-color': color, 'line-width': width } });
+  orRender();
+}
+function orSelect(f) {
+  OR.sel = f;
+  const m = S.map;
+  if (m && m.getLayer && m.getLayer('or-sel')) m.setFilter('or-sel', ['==', ['get', 'id'], f ? f.properties.id : -1]);
+}
+function orClick(e) {
+  const m = S.map;
+  if (!m || !m.queryRenderedFeatures || m.getZoom() < OR_MINZOOM) return;
+  const p = e.point, r = 14;
+  const layers = ['or-line', 'or-restr', 'or-no'].filter(id => m.getLayer(id));
+  const hits = m.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers });
+  if (!hits.length) return;
+  const id = hits[0].properties.id;
+  let f = null;
+  for (const k of OR.view || []) { const tile = OR.tiles.get(k); f = tile && (tile.feats || []).find(x => x.properties.id === id); if (f) break; }
+  if (!f) return;
+  OR.at = e.lngLat;
+  orSelect(f);
+  haptic('select');
+  openSheet('track');
+}
+function lineLength(coords) { let d = 0; for (let i = 1; i < coords.length; i++) d += hav([coords[i - 1][1], coords[i - 1][0]], [coords[i][1], coords[i][0]]); return d; }
+function orName(tg) { return tg.name || tg.ref || t('orTrack'); }
+function renderTrackSheet() {
+  const f = OR.sel;
+  if (!f) return;
+  const tg = JSON.parse(f.properties.t || '{}'), d = f.properties.d, a = orAccess(tg);
+  $('#trackTitle').textContent = orName(tg);
+  const row = (k, v) => v ? `<div class="kv"><span>${esc(k)}</span><b>${esc(v)}</b></div>` : '';
+  const condTxt = a.cond.map(c => c.split(';').map(part => {
+    const m2 = /^\s*([^@]+?)\s*@\s*\(?(.+?)\)?\s*$/.exec(part);
+    if (!m2) return part.trim();
+    const v = m2[1].toLowerCase();
+    return `${ACC_NO.test(v) ? t('acc_no') : ACC_DEST.test(v) ? t('acc_dest') : t('acc_ok')} : ${m2[2]}`;
+  }).join(' ; ')).join(' ; ');
+  const accTxt = t('acc_' + a.acc) + (a.val ? ` (${a.key}=${a.val})` : '');
+  const dc = d >= 0 ? OR_COLORS[d] : OR_UNKNOWN;
+  $('#trackBody').innerHTML = `<div class="or-badges"><span class="or-badge" style="--c:${dc}">${esc(t(d >= 0 ? 'd' + d : 'd_unk'))}</span>
+      <span class="or-badge acc-${esc(a.acc)}">${esc(t('acc_' + a.acc))}</span></div>
+    <div class="kvs">
+      ${row(t('orVehicle'), t(d >= 0 ? 'd' + d : 'd_unk'))}
+      ${row(t('orAccess'), accTxt)}
+      ${condTxt ? row(t('orPeriod'), condTxt) : ''}
+      ${row(t('orSeasonal'), tg.seasonal ? orVal('seasonal', tg.seasonal) : '')}
+      ${row(t('orSurface'), tg.surface ? orVal('surface', tg.surface) : '')}
+      ${row(t('orGrade'), tg.tracktype ? orVal('tracktype', tg.tracktype) : '')}
+      ${row(t('orSmooth'), tg.smoothness ? orVal('smoothness', tg.smoothness) : '')}
+      ${row(t('or4wd'), tg['4wd_only'] ? (tg['4wd_only'] === 'yes' ? t('yes') : t('orRecommended')) : '')}
+      ${row(t('orWidth'), tg.width ? tg.width.replace(/\s*m$/, '') + ' m' : (tg.maxwidth ? tg.maxwidth + ' m' : ''))}
+      ${row(t('orIncline'), tg.incline && /\d/.test(tg.incline) ? tg.incline : '')}
+      ${row(t('orLength'), fmtDist(lineLength(f.geometry.coordinates)))}
+      ${row(t('orNoteTag'), tg.description || tg.note || '')}
+    </div>
+    ${S.active ? `<button class="btn btn-ghost" id="orPinBtn">${esc(t('orPin'))}</button>` : ''}
+    <a class="btn btn-ghost" href="https://www.openstreetmap.org/way/${encodeURIComponent(f.properties.id)}" target="_blank" rel="noopener">${esc(t('orOsm'))}</a>
+    <p class="s">${esc(t('orDisclaimer'))}</p>`;
+}
+function renderOrLegend() {
+  $('#orLegendBody').innerHTML = `<div class="legend">${[0, 1, 2, 3, 4].map(i => `<div class="lg"><i style="--c:${OR_COLORS[i]}"></i><span>${esc(t('d' + i))}</span><b></b></div>`).join('')}
+      <div class="lg"><i style="--c:${OR_UNKNOWN}"></i><span>${esc(t('d_unk'))}</span><b></b></div></div>
+    <p class="s">${esc(t('orLines'))}</p><p class="s">${esc(t('orDisclaimer'))}</p>`;
 }
 
 /* ---------- épingles partagées ---------- */
@@ -1999,6 +2319,8 @@ function openSheet(id) {
   if (id === 'end') renderEnd();
   if (id === 'pin') renderPinSheet();
   if (id === 'chat') renderChat();
+  if (id === 'track') renderTrackSheet();
+  if (id === 'orlegend') renderOrLegend();
   if (id === 'settings') DB.allTrips().then(tr => { S.tripsCache = tr; }).catch(() => { S.tripsCache = []; });
   syncSegs();
   $('#scrim').classList.add('open');
@@ -2006,6 +2328,7 @@ function openSheet(id) {
   S.sheet = id;
 }
 function closeSheets() {
+  if (S.sheet === 'track') orSelect(null);
   $$('.sheet.open').forEach(s => s.classList.remove('open'));
   $('#scrim').classList.remove('open');
   S.sheet = null;
@@ -2020,8 +2343,9 @@ function syncSegs() {
     const k = seg.dataset.pref;
     $$('button', seg).forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(prefs[k]))));
   });
-  $('#accentField').hidden = prefs.theme === 'red';
-  $('#themeNote').textContent = t('thn_' + prefs.theme);
+  $('#accentField').hidden = themeNow() === 'red' || themeNow() === 'offroad';
+  $('#themeNote').textContent = t(offroadOn() ? 'thn_offroad' : 'thn_' + prefs.theme);
+  $('#btnOrLegend').hidden = !offroadOn();
   $('#creditsText').innerHTML = t('creditsHtml');
   $$('#creditsText a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
   $('#versionText').textContent = t('version', { v: APP_VERSION });
@@ -2038,6 +2362,7 @@ function setPref(k, v) {
   if (k === 'speedUnit' || k === 'distUnit') applyLang();
   if (k === 'lang') { applyLang(); applyMapStyle(S.map); }
   if (k === 'accent') applyTheme();
+  if (k === 'offroad') { applyTheme(); applyMapStyle(S.map); orUpdate(); }
   if (k === 'theme') {
     applyTheme();
     const m = THEMES[v].map;
@@ -3125,6 +3450,15 @@ function bind() {
   on('#tutoSkip', 'click', closeTuto);
   on('#btnTuto', 'click', () => { closeSheets(); openTuto(); });
   on('#btnExport', 'click', exportData);
+  on('#orStatus', 'click', () => openSheet('orlegend'));
+  on('#btnOrLegend', 'click', () => openSheet('orlegend'));
+  on('#trackBody', 'click', e => {
+    if (!e.target.closest('#orPinBtn') || !OR.sel || !OR.at) return;
+    const tg = JSON.parse(OR.sel.properties.t || '{}'), label = t('orPinLabel', { name: orName(tg) }).slice(0, 40);
+    const at = OR.at;
+    openPinNew(at.lat, at.lng);
+    if (S.pinDraft) { S.pinDraft.type = 'other'; renderPinSheet(); const inp = $('#pinLabel'); if (inp) inp.value = label; }
+  });
   on('#storyShare', 'click', shareStory);
   on('#storyClose', 'click', closeStory);
   on('#btnImport', 'click', () => { $('#importFile').value = ''; $('#importFile').click(); });

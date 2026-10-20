@@ -38,6 +38,7 @@ Shared trips get a random, unguessable name. Anyone with the link can see the tr
 - Trip statistics and a convoy table at the end of the trip; trips are saved on the device with an animated replay of every car.
 - French, English and German interface; metric or imperial units.
 - Animated launch screen and a short tutorial on first launch.
+- Off-road mode (Settings): earth and khaki theme, terrain relief, and OpenStreetMap tracks loaded for the area on screen (zoom in), coloured by the vehicle that can use them (car, SUV, 4×4, experienced 4×4, impassable) with solid, dashed or grey lines for access. Tap a track for its details (surface, condition, smoothness, width, incline, seasonal or permanent restrictions). Tracks are kept on the phone for 14 days. OpenStreetMap data comes without guarantee: signs on site and local rules prevail.
 - Trip history: per-member view with speed colours, share link, and story image or timelapse video (1080 × 1920).
 - Built-in QR code scanner to join a convoy, continuous colour pickers for your car and the accent colour.
 - Four themes (Graphite, Light, OLED, Red night) and five accent colours.
