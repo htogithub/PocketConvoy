@@ -10,6 +10,23 @@ Create a convoy, share the invite link, the QR code or the 6-character code, and
 2. For the walkie-talkie on mobile data, create a free Metered account (Open Relay TURN) and paste its `iceServers` list into `config.js`.
 3. Push the files to the repository and enable GitHub Pages.
 
+## Short links for shared trips (optional, one-time setup)
+
+A trip from the history can be shared as a link. Without this step the app still works: it puts the whole trip inside a longer link.
+For short links (`…/?trip=abc123`), open your Supabase project, go to **SQL Editor**, paste this and press **Run**:
+
+```sql
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('trips', 'trips', true, 2097152, array['application/json'])
+on conflict (id) do nothing;
+
+create policy "PocketConvoy shared trips upload"
+on storage.objects for insert to anon
+with check (bucket_id = 'trips');
+```
+
+Shared trips get a random, unguessable name. Anyone with the link can see the trip (names, tracks and statistics of the whole convoy); the list of shared trips cannot be read. To remove a shared trip, delete its file in **Storage → trips** in the Supabase dashboard.
+
 ## Features
 
 - Full-screen live map with every car's speed and status. Dark and light map styles.
@@ -21,6 +38,7 @@ Create a convoy, share the invite link, the QR code or the 6-character code, and
 - Trip statistics and a convoy table at the end of the trip; trips are saved on the device with an animated replay of every car.
 - French, English and German interface; metric or imperial units.
 - Animated launch screen and a short tutorial on first launch.
+- Trip history: per-member view with speed colours, share link, and story image or timelapse video (1080 × 1920).
 - Built-in QR code scanner to join a convoy, continuous colour pickers for your car and the accent colour.
 - Four themes (Graphite, Light, OLED, Red night) and five accent colours.
 - Installable on the iPhone home screen, opens full screen.

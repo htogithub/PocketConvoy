@@ -1,5 +1,5 @@
 'use strict';
-const APP_VERSION = '1.6.2';
+const APP_VERSION = '1.7.0';
 /* PocketConvoy : convoi routier entre amis (carte en direct, talkie, parcours commun, pins, chat). */
 
 const CFG = { routingUrl: 'https://router.project-osrm.org', geocodeUrl: 'https://photon.komoot.io' };
@@ -180,6 +180,17 @@ const I18N = {
     importConfirm: 'Importer ce fichier ? Ton pseudo et tes réglages seront remplacés, et ses {n} trajets ajoutés à ton historique.',
     importDone: 'Import terminé : {n} trajets ajoutés ou mis à jour.', importNote: 'L’import reprend le pseudo et les réglages du fichier et ajoute ses trajets à ton historique, sans effacer les autres.',
     exportData: 'Exporter mes données', exportNote: 'Pseudo, réglages et historique des trajets, dans un fichier JSON.',
+    shareTitle: 'Partager ce trajet', shareTripLink: 'Créer un lien de partage', sharePreparing: 'Préparation du lien…',
+    shareSend: 'Envoyer', copyBtn: 'Copier', copied: 'Copié', shareFail: 'Impossible de créer le lien. Réessaie avec une connexion.',
+    shareWho: 'Le lien montre ce trajet pour tout le convoi : noms, tracés et statistiques.',
+    shareLongNote: 'Lien long : les liens courts ne sont pas encore activés dans Supabase (voir le README).',
+    shareText: 'Mon trajet {dest} sur PocketConvoy', sharedBy: 'Partagé par {name}', loading: 'Chargement…',
+    sharedGone: 'Trajet introuvable', sharedGoneText: 'Ce lien de trajet n’est plus valable ou il est incomplet.', openApp: 'Découvrir PocketConvoy',
+    storyTitle: 'Récap en story', storyImage: 'Image', storyVideo: 'Vidéo',
+    storyNote: 'Format vertical 1080 × 1920 pour les stories, avec la carte et les statistiques de la vue choisie ci-dessus. La vidéo est un timelapse de 10 secondes du trajet.',
+    storyMaking: 'Création de l’image…', storyRecording: 'Enregistrement de la vidéo : {p} %', storyMap: 'Préparation de la carte…',
+    storyShare: 'Partager ou enregistrer', storyNoVideo: 'Ce navigateur ne peut pas enregistrer de vidéo. L’image fonctionne toujours.',
+    storyFail: 'Impossible de créer le récapitulatif.', storyKicker: 'TRAJET', storyOf: 'Trajet de {name}',
     tripAll: 'Tous', tripWho: 'Afficher le trajet de', speedLegend: 'Vitesse sur le trajet (part du temps)', gapLegend: 'Signal perdu',
     units: 'Unités', miles: 'miles', gauge: 'Compteur', gDial: 'Cadran', gDigital: 'Numérique', gMax: 'Graduation maximale',
     gWarn: 'Seuil de vitesse', warnOff: 'Aucun', gWarnNote: 'Au-delà du seuil choisi, la vitesse et l’aiguille passent au rouge.',
@@ -270,6 +281,17 @@ const I18N = {
     importConfirm: 'Import this file? Your nickname and settings will be replaced, and its {n} trips added to your history.',
     importDone: 'Import complete: {n} trips added or updated.', importNote: 'Importing takes the nickname and settings from the file and adds its trips to your history, without deleting the others.',
     exportData: 'Export my data', exportNote: 'Nickname, settings and trip history, in a JSON file.',
+    shareTitle: 'Share this trip', shareTripLink: 'Create a share link', sharePreparing: 'Preparing the link…',
+    shareSend: 'Send', copyBtn: 'Copy', copied: 'Copied', shareFail: 'Could not create the link. Try again with a connection.',
+    shareWho: 'The link shows this trip for the whole convoy: names, tracks and statistics.',
+    shareLongNote: 'Long link: short links are not enabled in Supabase yet (see the README).',
+    shareText: 'My trip {dest} on PocketConvoy', sharedBy: 'Shared by {name}', loading: 'Loading…',
+    sharedGone: 'Trip not found', sharedGoneText: 'This trip link is no longer valid or is incomplete.', openApp: 'Discover PocketConvoy',
+    storyTitle: 'Story recap', storyImage: 'Image', storyVideo: 'Video',
+    storyNote: 'Vertical 1080 × 1920 format for stories, with the map and the statistics of the view chosen above. The video is a 10-second timelapse of the trip.',
+    storyMaking: 'Creating the image…', storyRecording: 'Recording the video: {p} %', storyMap: 'Preparing the map…',
+    storyShare: 'Share or save', storyNoVideo: 'This browser cannot record video. The image always works.',
+    storyFail: 'Could not create the recap.', storyKicker: 'TRIP', storyOf: 'Trip of {name}',
     tripAll: 'All', tripWho: 'Show the trip of', speedLegend: 'Speed along the trip (share of time)', gapLegend: 'Signal lost',
     units: 'Units', miles: 'miles', gauge: 'Speedometer', gDial: 'Dial', gDigital: 'Digital', gMax: 'Maximum on the dial',
     gWarn: 'Speed threshold', warnOff: 'None', gWarnNote: 'Above the chosen threshold, the speed and the needle turn red.',
@@ -360,6 +382,17 @@ const I18N = {
     importConfirm: 'Diese Datei importieren? Dein Name und deine Einstellungen werden ersetzt, und ihre {n} Fahrten zu deinem Verlauf hinzugefügt.',
     importDone: 'Import abgeschlossen: {n} Fahrten hinzugefügt oder aktualisiert.', importNote: 'Der Import übernimmt Name und Einstellungen aus der Datei und fügt ihre Fahrten zu deinem Verlauf hinzu, ohne die anderen zu löschen.',
     exportData: 'Meine Daten exportieren', exportNote: 'Name, Einstellungen und Fahrtenverlauf in einer JSON-Datei.',
+    shareTitle: 'Diese Fahrt teilen', shareTripLink: 'Link zum Teilen erstellen', sharePreparing: 'Link wird vorbereitet…',
+    shareSend: 'Senden', copyBtn: 'Kopieren', copied: 'Kopiert', shareFail: 'Der Link konnte nicht erstellt werden. Versuche es mit Verbindung erneut.',
+    shareWho: 'Der Link zeigt diese Fahrt für den ganzen Konvoi: Namen, Strecken und Statistiken.',
+    shareLongNote: 'Langer Link: Kurze Links sind in Supabase noch nicht aktiviert (siehe README).',
+    shareText: 'Meine Fahrt {dest} mit PocketConvoy', sharedBy: 'Geteilt von {name}', loading: 'Wird geladen…',
+    sharedGone: 'Fahrt nicht gefunden', sharedGoneText: 'Dieser Fahrtlink ist nicht mehr gültig oder unvollständig.', openApp: 'PocketConvoy entdecken',
+    storyTitle: 'Rückblick als Story', storyImage: 'Bild', storyVideo: 'Video',
+    storyNote: 'Hochformat 1080 × 1920 für Stories, mit der Karte und den Statistiken der oben gewählten Ansicht. Das Video ist ein 10-sekündiger Zeitraffer der Fahrt.',
+    storyMaking: 'Bild wird erstellt…', storyRecording: 'Video wird aufgenommen: {p} %', storyMap: 'Karte wird vorbereitet…',
+    storyShare: 'Teilen oder sichern', storyNoVideo: 'Dieser Browser kann kein Video aufnehmen. Das Bild funktioniert immer.',
+    storyFail: 'Der Rückblick konnte nicht erstellt werden.', storyKicker: 'FAHRT', storyOf: 'Fahrt von {name}',
     tripAll: 'Alle', tripWho: 'Fahrt anzeigen von', speedLegend: 'Tempo entlang der Fahrt (Zeitanteil)', gapLegend: 'Signal verloren',
     units: 'Einheiten', miles: 'Meilen', gauge: 'Tacho', gDial: 'Zifferblatt', gDigital: 'Digital', gMax: 'Höchstwert der Skala',
     gWarn: 'Tempogrenze', warnOff: 'Keine', gWarnNote: 'Über der gewählten Grenze werden Tempo und Zeiger rot.',
@@ -2418,6 +2451,443 @@ async function importData(file) {
   msg.textContent = t(n === 1 ? 'importDone1' : 'importDone', { n }); msg.hidden = false;
 }
 
+/* ---------- partage d'un trajet par lien ----------
+   Lien court : le trajet (allégé) est déposé dans le stockage Supabase, dossier public « trips », sous un nom aléatoire.
+   Si ce stockage n'est pas activé, le trajet compressé est mis directement dans le lien (lien plus long). */
+const SHARE_BUCKET = 'trips';
+const HEX_RE = /^#[0-9a-f]{6}$/i;
+function shareableTrip(tr, maxPts) {
+  const tracks = {};
+  for (const mid of Object.keys(tr.tracks || {})) {
+    const tk = tr.tracks[mid] || [];
+    if (tk.length < 2) continue;
+    const k = Math.max(1, Math.ceil(tk.length / maxPts)), out = [];
+    for (let i = 0; i < tk.length; i += k) out.push(tk[i]);
+    if (out[out.length - 1] !== tk[tk.length - 1]) out.push(tk[tk.length - 1]);
+    tracks[mid] = out.map(p => [Math.round(p[0]), +(+p[1]).toFixed(5), +(+p[2]).toFixed(5)]);
+  }
+  return { v: 1, id: tr.id, start: tr.start, end: tr.end, dest: tr.dest || '', tracks, names: tr.names, colors: tr.colors,
+    stats: tr.stats.map(r => ({ id: r.id, me: !!r.me, name: r.name, color: r.color, dist: Math.round(r.dist || 0), mv: Math.round(r.mv || 0), mx: +(r.mx || 0).toFixed(2) })) };
+}
+function cleanSharedTrip(d) {
+  if (!d || typeof d !== 'object' || !d.tracks || !Array.isArray(d.stats)) throw new Error('data');
+  const str = (x, n) => String(x == null ? '' : x).slice(0, n);
+  const num = x => (Number.isFinite(+x) ? +x : 0);
+  const col = c => (HEX_RE.test(c) ? c : '#8B8B93');
+  const tr = { id: 'shared-' + str(d.id, 40), shared: true, start: num(d.start), end: num(d.end), dest: str(d.dest, 80), tracks: {}, names: {}, colors: {} };
+  for (const mid of Object.keys(d.tracks).slice(0, 12)) {
+    const tk = Array.isArray(d.tracks[mid]) ? d.tracks[mid].filter(p => Array.isArray(p) && p.length >= 3).map(p => [num(p[0]), num(p[1]), num(p[2])]) : [];
+    if (tk.length < 2) continue;
+    const key = str(mid, 64);
+    tr.tracks[key] = tk;
+    tr.names[key] = str((d.names || {})[mid] || '?', 24);
+    tr.colors[key] = col((d.colors || {})[mid]);
+  }
+  tr.stats = d.stats.slice(0, 12).map(r => ({ id: str(r.id, 64), me: !!r.me, name: str(r.name || '?', 24), color: col(r.color), dist: num(r.dist), mv: num(r.mv), mx: num(r.mx) }));
+  if (!(tr.end > tr.start)) tr.end = tr.start + 1000;
+  return tr;
+}
+function b64urlEncode(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecode(str) {
+  const bin = atob(str.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((str.length + 3) % 4));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+async function packTrip(obj) {
+  const bytes = new TextEncoder().encode(JSON.stringify(obj));
+  if (typeof CompressionStream === 'undefined') return 'j' + b64urlEncode(bytes);
+  const buf = await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate'))).arrayBuffer();
+  return 'z' + b64urlEncode(new Uint8Array(buf));
+}
+async function unpackTrip(str) {
+  let bytes = b64urlDecode(str.slice(1));
+  if (str[0] === 'z') bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+const supabaseBase = () => NET.supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+let shareClient = null;
+async function uploadTrip(obj) {
+  if (!configOk() || typeof supabase === 'undefined') throw new Error('config');
+  if (!shareClient) shareClient = supabase.createClient(supabaseBase(), NET.supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const id = Array.from(crypto.getRandomValues(new Uint8Array(14)), b => 'abcdefghijklmnopqrstuvwxyz0123456789'[b % 36]).join('');
+  const body = new Blob([JSON.stringify(obj)], { type: 'application/json' });
+  const { error } = await shareClient.storage.from(SHARE_BUCKET).upload(id + '.json', body, { contentType: 'application/json', upsert: false });
+  if (error) throw error;
+  return location.origin + location.pathname + '?trip=' + id;
+}
+async function prepareShareLink() {
+  if (!RP || RP.sharing) return;
+  const tr = RP.t, btn = $('#btnShareTrip');
+  if (!RP.shareUrl) {
+    RP.sharing = true;
+    if (btn) { btn.disabled = true; btn.textContent = t('sharePreparing'); }
+    try { RP.shareUrl = await uploadTrip(shareableTrip(tr, 800)); RP.shareLong = false; }
+    catch (e) {
+      try { RP.shareUrl = location.origin + location.pathname + '#t=' + await packTrip(shareableTrip(tr, 150)); RP.shareLong = true; }
+      catch (e2) { RP.shareUrl = null; }
+    }
+    RP.sharing = false;
+    if (RP.shareUrl && !RP.shareLong) { tr.shareUrl = RP.shareUrl; DB.putTrip(tr).catch(() => {}); }
+  }
+  renderShareBox();
+}
+function renderShareBox() {
+  const box = $('#shareBox'), btn = $('#btnShareTrip');
+  if (!box || !btn) return;
+  box.hidden = false;
+  if (!RP.shareUrl) {
+    btn.disabled = false; btn.textContent = t('shareTripLink');
+    box.innerHTML = `<p class="s">${esc(t('shareFail'))}</p>`;
+    return;
+  }
+  btn.hidden = true;
+  const shown = RP.shareUrl.length > 64 ? RP.shareUrl.slice(0, 60) + '…' : RP.shareUrl;
+  box.innerHTML = `<div class="share-url">${esc(shown)}</div>
+    <div class="home-row"><button class="btn btn-primary" id="shareSend">${esc(t('shareSend'))}</button><button class="btn btn-ghost" id="shareCopy">${esc(t('copyBtn'))}</button></div>
+    <p class="s">${esc(t('shareWho'))}</p>${RP.shareLong ? `<p class="s">${esc(t('shareLongNote'))}</p>` : ''}`;
+}
+function sendShareLink() {
+  if (!RP || !RP.shareUrl) return;
+  const text = t('shareText', { dest: RP.t.dest ? '→ ' + RP.t.dest : '' }).replace(/\s+/g, ' ');
+  if (navigator.share) navigator.share({ title: 'PocketConvoy', text, url: RP.shareUrl }).catch(() => {});
+  else copyShareLink($('#shareCopy'));
+}
+function copyShareLink(btn) {
+  if (!RP || !RP.shareUrl) return;
+  const done = () => { if (btn) { btn.textContent = t('copied'); setTimeout(() => { if (btn.isConnected) btn.textContent = t('copyBtn'); }, 2000); } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(RP.shareUrl).then(done).catch(() => prompt('', RP.shareUrl));
+  else prompt('', RP.shareUrl);
+}
+function appFooter() {
+  return `<div class="app-foot"><img src="icons/icon-192.png" alt=""><b>PocketConvoy</b>
+    <button class="btn btn-ghost" id="openApp">${esc(t('openApp'))}</button></div>`;
+}
+function sharedLinkInUrl() {
+  return new URLSearchParams(location.search).has('trip') || location.hash.startsWith('#t=');
+}
+async function loadSharedTrip() {
+  S.sharedView = true;
+  const id = new URLSearchParams(location.search).get('trip');
+  const packed = location.hash.startsWith('#t=') ? location.hash.slice(3) : null;
+  show('trip');
+  $('#trip').classList.add('shared');
+  $('#tripTitle').textContent = t('loading');
+  $('#tripStats').innerHTML = '';
+  try {
+    let data;
+    if (packed) data = await unpackTrip(packed);
+    else {
+      if (!/^[a-z0-9]{8,40}$/.test(id || '') || !NET.supabaseUrl) throw new Error('id');
+      const r = await fetch(`${supabaseBase()}/storage/v1/object/public/${SHARE_BUCKET}/${id}.json`, { cache: 'no-cache' });
+      if (!r.ok) throw new Error('http ' + r.status);
+      data = await r.json();
+    }
+    openTripData(cleanSharedTrip(data));
+  } catch (e) {
+    $('#tripTitle').textContent = t('sharedGone');
+    $('#tripStats').innerHTML = `<p class="s">${esc(t('sharedGoneText'))}</p>` + appFooter();
+  }
+}
+
+/* ---------- récap en story : image ou vidéo verticale 1080 × 1920 ---------- */
+const STORY = { W: 1080, H: 1920, M: { x: 60, y: 450, w: 960, h: 780 } };
+let storyFile = null, storyUrl = null, storyBusy = false;
+function loadImage(src) {
+  return new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+}
+function tripBounds(tr, ids) {
+  let w = 180, so = 90, e = -180, n = -90;
+  for (const mid of ids) for (const p of tr.tracks[mid] || []) { w = Math.min(w, p[2]); e = Math.max(e, p[2]); so = Math.min(so, p[1]); n = Math.max(n, p[1]); }
+  if (e - w < 0.002) { w -= 0.001; e += 0.001; }
+  if (n - so < 0.002) { so -= 0.001; n += 0.001; }
+  return [[w, so], [e, n]];
+}
+function mercatorProjector(bb, w, h, pad) {
+  const mx = lng => (lng + 180) / 360;
+  const my = lat => { const sn = Math.sin(lat * RAD); return 0.5 - Math.log((1 + sn) / (1 - sn)) / (4 * Math.PI); };
+  const x0 = mx(bb[0][0]), x1 = mx(bb[1][0]), y0 = my(bb[1][1]), y1 = my(bb[0][1]);
+  const sc = Math.min((w - 2 * pad) / Math.max(x1 - x0, 1e-12), (h - 2 * pad) / Math.max(y1 - y0, 1e-12));
+  const ox = (w - (x1 - x0) * sc) / 2, oy = (h - (y1 - y0) * sc) / 2;
+  return (lng, lat) => [ox + (mx(lng) - x0) * sc, oy + (my(lat) - y0) * sc];
+}
+/* Carte réelle rendue hors écran (deux fois la taille pour des noms lisibles), copiée en image, puis supprimée. */
+async function captureStoryMap(tr, ids, w, h) {
+  if (typeof maplibregl === 'undefined') return null;
+  const box = document.createElement('div');
+  box.style.cssText = `position:fixed;left:-5000px;top:0;width:${w / 2}px;height:${h / 2}px;pointer-events:none`;
+  document.body.appendChild(box);
+  let map = null;
+  try {
+    const bb = tripBounds(tr, ids);
+    map = new maplibregl.Map({ container: box, style: mapPlaceholder(), bounds: bb, fitBoundsOptions: { padding: 40, maxZoom: 15 },
+      interactive: false, attributionControl: false, preserveDrawingBuffer: true, pixelRatio: 2, fadeDuration: 0 });
+    const ready = await new Promise(res => {
+      let styled = false;
+      const timer = setTimeout(() => res(false), 12000);
+      map.on('style.load', () => { styled = map.getStyle().layers.length > 2; });
+      map.on('idle', () => { if (styled) { clearTimeout(timer); res(true); } });
+      applyMapStyle(map);
+    });
+    if (!ready) throw new Error('map');
+    const img = document.createElement('canvas');
+    img.width = w; img.height = h;
+    const cx = img.getContext('2d');
+    cx.drawImage(map.getCanvas(), 0, 0, w, h);
+    cx.getImageData(0, 0, 1, 1);
+    const k = w / (w / 2);
+    return { img, project: (lng, lat) => { const p = map.project([lng, lat]); return [p.x * k, p.y * k]; }, map, box };
+  } catch (e) {
+    if (map) map.remove();
+    box.remove();
+    return null;
+  }
+}
+async function buildStoryData() {
+  const tr = RP.t, sel = RP.sel, ids = sel === 'all' ? RP.ids : [sel];
+  const { M } = STORY;
+  await Promise.all(['600 76px Sora', '600 58px Sora', '600 46px Sora', '500 34px Manrope', '600 28px Manrope'].map(f => document.fonts.load(f).catch(() => {})));
+  const logo = await loadImage('icons/icon-192.png').catch(() => null);
+  const cap = await captureStoryMap(tr, ids, M.w, M.h);
+  const project = cap ? cap.project : mercatorProjector(tripBounds(tr, ids), M.w, M.h, 60);
+  const lines = ids.map(mid => {
+    const tk = tr.tracks[mid];
+    const pts = tk.map(p => { const [x, y] = project(p[2], p[1]); return [x + M.x, y + M.y, p[0]]; });
+    const bands = tk.map((p, i) => {
+      if (!i) return -1;
+      const a = tk[i - 1], dt = p[0] - a[0];
+      return dt <= 0 || dt > 120 ? -1 : bandOf(hav([a[1], a[2]], [p[1], p[2]]) / dt * 3.6);
+    });
+    const cum = [0];
+    for (let i = 1; i < tk.length; i++) cum.push(cum[i - 1] + hav([tk[i - 1][1], tk[i - 1][2]], [tk[i][1], tk[i][2]]));
+    return { mid, pts, bands, cum, color: tr.colors[mid] || '#8B8B93', name: tr.names[mid] || '?' };
+  });
+  if (cap) { cap.map.remove(); cap.box.remove(); }
+  const row = sel === 'all' ? (tr.stats.find(r => r.me) || tr.stats[0] || { dist: 0, mv: 0, mx: 0 }) : tripRow(sel);
+  const focus = lines.find(l => l.mid === (row.id || '')) || lines[0];
+  const maxT = Math.max(1, ...lines.map(l => l.pts[l.pts.length - 1][2]));
+  return {
+    tr, sel, lines, row, focus, maxT, logo, mapImg: cap ? cap.img : null,
+    accent: accentColor(prefs.accentHue),
+    title: tr.dest || t('tripDefault'),
+    date: `${fmtDate(tr.start)} · ${fmtClock(tr.start)} – ${fmtClock(tr.end)}`,
+    who: sel === 'all' ? '' : t('storyOf', { name: tr.names[sel] || '?' }),
+    whoColor: sel === 'all' ? '' : tr.colors[sel],
+  };
+}
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function fitText(ctx, text, x, y, maxW, size, weight, family) {
+  let s = size;
+  ctx.font = `${weight} ${s}px ${family}`;
+  while (ctx.measureText(text).width > maxW && s > size * 0.6) { s -= 2; ctx.font = `${weight} ${s}px ${family}`; }
+  let out = text;
+  while (ctx.measureText(out).width > maxW && out.length > 1) out = out.slice(0, -2) + '…';
+  ctx.fillText(out, x, y);
+}
+function trackUntil(line, T) {
+  const p = line.pts;
+  let i = 0;
+  while (i < p.length - 1 && p[i + 1][2] <= T) i++;
+  if (i >= p.length - 1) return { n: p.length, head: p[p.length - 1], dist: line.cum[line.cum.length - 1] };
+  const a = p[i], b = p[i + 1], k = b[2] > a[2] ? Math.max(0, Math.min(1, (T - a[2]) / (b[2] - a[2]))) : 0;
+  const head = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+  return { n: i + 1, head, dist: line.cum[i] + (line.cum[i + 1] - line.cum[i]) * k };
+}
+const FONT_UI = 'Manrope, system-ui, sans-serif', FONT_NUM = 'Sora, Manrope, system-ui, sans-serif';
+function drawStory(ctx, D, f) {
+  const { W, H, M } = STORY;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#1A1A1E'); g.addColorStop(1, '#0B0B0C');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  // en-tête
+  ctx.fillStyle = D.accent; ctx.font = `600 28px ${FONT_UI}`;
+  ctx.fillText(t('storyKicker').split('').join(String.fromCharCode(8202)), 72, 250);
+  ctx.fillStyle = '#F4F4F5'; fitText(ctx, D.title, 72, 330, 936, 76, 600, FONT_NUM);
+  ctx.fillStyle = '#A1A1AA'; fitText(ctx, D.date, 72, 384, 936, 34, 500, FONT_UI);
+  if (D.who) {
+    ctx.fillStyle = D.whoColor; ctx.beginPath(); ctx.arc(84, 420, 11, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#F4F4F5'; fitText(ctx, D.who, 106, 431, 900, 32, 600, FONT_UI);
+  }
+  // carte
+  ctx.save();
+  rrect(ctx, M.x, M.y, M.w, M.h, 40); ctx.clip();
+  if (D.mapImg) ctx.drawImage(D.mapImg, M.x, M.y, M.w, M.h);
+  else {
+    ctx.fillStyle = '#1C1C20'; ctx.fillRect(M.x, M.y, M.w, M.h);
+    ctx.strokeStyle = 'rgba(255,255,255,.05)'; ctx.lineWidth = 2;
+    for (let x = M.x; x < M.x + M.w; x += 80) { ctx.beginPath(); ctx.moveTo(x, M.y); ctx.lineTo(x, M.y + M.h); ctx.stroke(); }
+    for (let y = M.y; y < M.y + M.h; y += 80) { ctx.beginPath(); ctx.moveTo(M.x, y); ctx.lineTo(M.x + M.w, y); ctx.stroke(); }
+  }
+  const T = f * D.maxT, heads = [];
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const L of D.lines) {
+    const u = trackUntil(L, T), p = L.pts;
+    if (u.n < 1) continue;
+    const path = () => { ctx.beginPath(); ctx.moveTo(p[0][0], p[0][1]); for (let i = 1; i < u.n; i++) ctx.lineTo(p[i][0], p[i][1]); ctx.lineTo(u.head[0], u.head[1]); };
+    ctx.strokeStyle = 'rgba(0,0,0,.55)'; ctx.lineWidth = 18; path(); ctx.stroke();
+    if (D.sel === 'all') { ctx.strokeStyle = L.color; ctx.lineWidth = 10; path(); ctx.stroke(); }
+    else {
+      ctx.lineWidth = 11;
+      for (let i = 1; i <= u.n; i++) {
+        const a = p[i - 1], b = i < u.n ? p[i] : u.head;
+        if (!a || !b || i >= p.length + 1) break;
+        const band = L.bands[Math.min(i, p.length - 1)];
+        ctx.strokeStyle = band < 0 ? GAP_COLOR : BAND_COLORS[band];
+        ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke();
+      }
+      ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#0F0F10'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(p[0][0], p[0][1], 12, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    heads.push([u.head, L]);
+  }
+  for (const [h, L] of heads) {
+    ctx.fillStyle = L.color; ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(h[0], h[1], 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#0F0F10'; ctx.font = `700 22px ${FONT_UI}`; ctx.textAlign = 'center';
+    ctx.fillText(initial(L.name), h[0], h[1] + 8); ctx.textAlign = 'left';
+  }
+  if (f < 1) {
+    const clockTxt = fmtClock(D.tr.start + T * 1000);
+    ctx.font = `600 34px ${FONT_NUM}`;
+    const w = ctx.measureText(clockTxt).width + 44;
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; rrect(ctx, M.x + 24, M.y + 24, w, 60, 30); ctx.fill();
+    ctx.fillStyle = '#FFFFFF'; ctx.fillText(clockTxt, M.x + 46, M.y + 66);
+  }
+  if (D.mapImg) {
+    ctx.font = `500 20px ${FONT_UI}`; ctx.textAlign = 'right'; ctx.fillStyle = 'rgba(255,255,255,.75)';
+    ctx.shadowColor = 'rgba(0,0,0,.8)'; ctx.shadowBlur = 4;
+    ctx.fillText('© OpenStreetMap · OpenFreeMap', M.x + M.w - 22, M.y + M.h - 18);
+    ctx.shadowBlur = 0; ctx.textAlign = 'left';
+  }
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 2; rrect(ctx, M.x, M.y, M.w, M.h, 40); ctx.stroke();
+  // légende
+  const ly = M.y + M.h + 50;
+  ctx.font = `600 26px ${FONT_UI}`;
+  if (D.sel === 'all') {
+    let x = 72;
+    for (const L of D.lines) {
+      const label = L.name.length > 12 ? L.name.slice(0, 11) + '…' : L.name;
+      const w = ctx.measureText(label).width + 44;
+      if (x + w > 1008) break;
+      ctx.fillStyle = L.color; ctx.beginPath(); ctx.arc(x + 10, ly - 9, 10, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#D4D4D8'; ctx.fillText(label, x + 28, ly); x += w + 18;
+    }
+  } else {
+    const cw = 936 / BAND_COLORS.length;
+    BAND_COLORS.forEach((c, i) => {
+      const x = 72 + i * cw;
+      ctx.fillStyle = c; rrect(ctx, x, ly - 18, 34, 12, 6); ctx.fill();
+      ctx.fillStyle = '#D4D4D8'; ctx.font = `600 22px ${FONT_UI}`;
+      ctx.fillText(bandLabel(i) + (i === BAND_COLORS.length - 1 ? ' ' + spdUnit() : ''), x + 42, ly - 6);
+    });
+  }
+  // statistiques (la distance et le temps de conduite avancent pendant la vidéo)
+  const r = D.row, frac = D.focus ? Math.min(1, trackUntil(D.focus, T).dist / Math.max(1, D.focus.cum[D.focus.cum.length - 1])) : 1;
+  const k = f >= 1 ? 1 : frac;
+  const tiles = [
+    [fmtDist((r.dist || 0) * k), t('distance')],
+    [fmtDur((r.mv || 0) * k), t('drivingTime')],
+    [avgOf(r) ? fmtKmh(avgOf(r)) : '–', t('avgMoving')],
+    [r.mx ? fmtKmh(r.mx) : '–', t('maxSpeed')],
+  ];
+  tiles.forEach(([v, l], i) => {
+    const x = 60 + (i % 2) * 490, y = ly + 34 + Math.floor(i / 2) * 166;
+    ctx.fillStyle = 'rgba(255,255,255,.06)'; rrect(ctx, x, y, 470, 150, 30); ctx.fill();
+    ctx.fillStyle = '#F4F4F5'; fitText(ctx, v, x + 32, y + 78, 410, 58, 600, FONT_NUM);
+    ctx.fillStyle = '#A1A1AA'; fitText(ctx, l, x + 32, y + 122, 410, 28, 500, FONT_UI);
+  });
+  // pied : logo et nom de l'application
+  const fy = ly + 34 + 2 * 166 + 40;
+  ctx.font = `600 46px ${FONT_NUM}`;
+  const name = 'PocketConvoy', nw = ctx.measureText(name).width, lw = 72, gap = 22, tot = lw + gap + nw, x0 = (W - tot) / 2;
+  if (D.logo) { ctx.save(); rrect(ctx, x0, fy, lw, lw, 18); ctx.clip(); ctx.drawImage(D.logo, x0, fy, lw, lw); ctx.restore(); }
+  ctx.fillStyle = '#F4F4F5'; ctx.fillText(name, x0 + lw + gap, fy + 52);
+}
+function storyMsg(txt) { $('#storyMsg').textContent = txt || ''; }
+function closeStory() {
+  if (storyBusy) return;
+  $('#story').hidden = true;
+  $('#storyStage').innerHTML = '';
+  if (storyUrl) { URL.revokeObjectURL(storyUrl); storyUrl = null; }
+  storyFile = null;
+}
+async function makeStory(kind) {
+  if (!RP || storyBusy) return;
+  storyBusy = true; storyFile = null;
+  $('#story').hidden = false;
+  $('#storyShare').hidden = true; $('#storyClose').disabled = true;
+  $('#storyStage').innerHTML = '';
+  storyMsg(t('storyMap'));
+  try {
+    const D = await buildStoryData();
+    const c = document.createElement('canvas');
+    c.width = STORY.W; c.height = STORY.H;
+    $('#storyStage').appendChild(c);
+    const ctx = c.getContext('2d');
+    if (kind === 'video') {
+      if (!c.captureStream || typeof MediaRecorder === 'undefined') throw new Error('novideo');
+      storyFile = await recordStory(c, ctx, D);
+      storyUrl = URL.createObjectURL(storyFile);
+      $('#storyStage').innerHTML = `<video src="${storyUrl}" autoplay loop muted playsinline></video>`;
+    } else {
+      storyMsg(t('storyMaking'));
+      drawStory(ctx, D, 1);
+      const blob = await new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('blob'))), 'image/png'));
+      storyFile = new File([blob], 'pocketconvoy-' + new Date(D.tr.start).toISOString().slice(0, 10) + '.png', { type: 'image/png' });
+      storyUrl = URL.createObjectURL(storyFile);
+      $('#storyStage').innerHTML = `<img src="${storyUrl}" alt="">`;
+    }
+    storyMsg('');
+    $('#storyShare').hidden = false;
+  } catch (e) {
+    storyMsg(e && e.message === 'novideo' ? t('storyNoVideo') : t('storyFail'));
+  }
+  storyBusy = false;
+  $('#storyClose').disabled = false;
+}
+async function recordStory(c, ctx, D) {
+  const types = ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const mime = types.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) || '';
+  drawStory(ctx, D, 0);
+  const stream = c.captureStream(30);
+  const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8000000 } : undefined);
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(res => { rec.onstop = res; });
+  const ANIM = 8000, HOLD = 2000;
+  rec.start(500);
+  const t0 = performance.now();
+  await new Promise(res => {
+    const step = now => {
+      const el = now - t0;
+      drawStory(ctx, D, Math.min(1, el / ANIM));
+      storyMsg(t('storyRecording', { p: Math.min(100, Math.round(el / (ANIM + HOLD) * 100)) }));
+      if (el < ANIM + HOLD) requestAnimationFrame(step); else res();
+    };
+    requestAnimationFrame(step);
+  });
+  rec.stop();
+  await stopped;
+  stream.getTracks().forEach(x => x.stop());
+  const type = (rec.mimeType || mime || 'video/webm').split(';')[0];
+  return new File([new Blob(chunks, { type })], 'pocketconvoy-' + new Date(D.tr.start).toISOString().slice(0, 10) + (type.includes('mp4') ? '.mp4' : '.webm'), { type });
+}
+function shareStory() {
+  if (!storyFile) return;
+  if (navigator.canShare && navigator.canShare({ files: [storyFile] })) navigator.share({ files: [storyFile] }).catch(err => { if (!err || err.name !== 'AbortError') downloadFile(storyFile); });
+  else downloadFile(storyFile);
+}
+
 /* ---------- tutoriel de la première utilisation ---------- */
 const TUTO_ICONS = [
   '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v6M19.6 9.2l-5.6 2.1M16.8 18.9l-3.4-5M7.2 18.9l3.4-5M4.4 9.2l5.6 2.1"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/>',
@@ -2499,7 +2969,11 @@ async function openTrip(id) {
   let tr = null;
   try { tr = (await DB.allTrips()).find(x => x.id === id); } catch (e) { /* ignoré */ }
   if (!tr) return;
+  openTripData(tr);
+}
+function openTripData(tr) {
   show('trip');
+  $('#trip').classList.toggle('shared', !!tr.shared);
   $('#tripTitle').textContent = tr.dest || t('tripDefault');
   if (RP && RP.map) RP.map.remove();
   const dur = Math.max(1, Math.round((tr.end - tr.start) / 1000));
@@ -2509,7 +2983,7 @@ async function openTrip(id) {
   const map = new maplibregl.Map({ container: 'tripMap', style: mapPlaceholder(), center: [MAP_HOME[1], MAP_HOME[0]], zoom: 7, attributionControl: false, dragRotate: false });
   map.touchZoomRotate.disableRotation();
   const ids = Object.keys(tr.tracks).filter(mid => tr.tracks[mid] && tr.tracks[mid].length >= 2);
-  RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0, ids, sel: 'all', segs: {} };
+  RP = { map, t: tr, T: 0, dur, playing: false, markers: {}, speed, speeds, raf: null, lastTs: 0, ids, sel: 'all', segs: {}, shareUrl: tr.shareUrl || null };
   for (const mid of ids) RP.segs[mid] = speedSegments(tr.tracks[mid]);
   $('#rpSlider').max = dur; $('#rpSlider').value = 0;
   updatePlayBtn();
@@ -2554,12 +3028,20 @@ function renderTripPanel() {
       + `<div class="lg"><i class="gap" style="--c:${GAP_COLOR}"></i><span>${esc(t('gapLegend'))}</span><b></b></div></div></div>`;
   }
   const mine = sel === 'all' ? (tr.stats.find(r => r.me) || { dist: 0, mv: 0, mx: 0 }) : tripRow(sel);
-  $('#tripStats').innerHTML = `<p class="s">${esc(t('fromTo', { date: fmtDate(tr.start), a: fmtClock(tr.start), b: fmtClock(tr.end) }))}</p>`
+  const sharer = tr.shared ? (tr.stats.find(r => r.me) || {}).name : '';
+  $('#tripStats').innerHTML = (sharer ? `<p class="s shared-by">${esc(t('sharedBy', { name: sharer }))}</p>` : '')
+    + `<p class="s">${esc(t('fromTo', { date: fmtDate(tr.start), a: fmtClock(tr.start), b: fmtClock(tr.end) }))}</p>`
     + (RP.ids.length ? `<div class="field"><span class="field-label">${esc(t('tripWho'))}</span><div class="toggles trip-chips">${chips.join('')}</div></div>` : '')
     + legend
     + bigStats(mine, 0)
     + (tr.stats.length > 1 ? `<div class="field"><span class="field-label">${esc(t('rankTitle'))}</span>${rankTable(tr.stats)}</div>` : '')
-    + `<button class="btn btn-danger" data-deltrip="${esc(tr.id)}">${esc(t('delTrip'))}</button>`;
+    + (tr.shared ? '' : `<div class="field"><span class="field-label">${esc(t('shareTitle'))}</span>
+        <button class="btn btn-primary" id="btnShareTrip">${esc(t('shareTripLink'))}</button><div id="shareBox" class="share-box" hidden></div></div>`)
+    + `<div class="field"><span class="field-label">${esc(t('storyTitle'))}</span>
+        <div class="home-row"><button class="btn btn-ghost" data-story="image">${esc(t('storyImage'))}</button><button class="btn btn-ghost" data-story="video">${esc(t('storyVideo'))}</button></div>
+        <p class="s">${esc(t('storyNote'))}</p></div>`
+    + (tr.shared ? appFooter() : `<button class="btn btn-danger" data-deltrip="${esc(tr.id)}">${esc(t('delTrip'))}</button>`);
+  if (RP.shareUrl && !tr.shared) renderShareBox();
 }
 function applyTripSelection(fit) {
   if (!RP) return;
@@ -2620,7 +3102,9 @@ function updatePlayBtn() {
   $('#rpSpeed').textContent = '×' + RP.speed;
 }
 function closeTrip() {
+  const shared = RP && RP.t && RP.t.shared;
   if (RP) { RP.playing = false; cancelAnimationFrame(RP.raf); if (RP.map) RP.map.remove(); RP = null; }
+  if (shared || S.sharedView) { S.sharedView = false; history.replaceState(null, '', location.pathname); show('home'); return; }
   openHistory();
 }
 
@@ -2641,6 +3125,8 @@ function bind() {
   on('#tutoSkip', 'click', closeTuto);
   on('#btnTuto', 'click', () => { closeSheets(); openTuto(); });
   on('#btnExport', 'click', exportData);
+  on('#storyShare', 'click', shareStory);
+  on('#storyClose', 'click', closeStory);
   on('#btnImport', 'click', () => { $('#importFile').value = ''; $('#importFile').click(); });
   on('#importFile', 'change', e => { const f = e.target.files && e.target.files[0]; if (f) importData(f); });
   let tx = null;
@@ -2817,6 +3303,12 @@ function bind() {
   on('#tripStats', 'click', async e => {
     const sel = e.target.closest('[data-tsel]');
     if (sel) { selectTripMember(sel.dataset.tsel); return; }
+    if (e.target.closest('#btnShareTrip')) { prepareShareLink(); return; }
+    if (e.target.closest('#shareSend')) { sendShareLink(); return; }
+    if (e.target.closest('#shareCopy')) { copyShareLink(e.target.closest('#shareCopy')); return; }
+    const st = e.target.closest('[data-story]');
+    if (st) { makeStory(st.dataset.story); return; }
+    if (e.target.closest('#openApp')) { closeTrip(); return; }
     const b = e.target.closest('[data-deltrip]');
     if (!b || !confirm(t('confirmDel'))) return;
     await DB.delTrip(b.dataset.deltrip);
@@ -2853,6 +3345,7 @@ buildGauge();
 bind();
 renderHome();
 applyLang();
-if (!store.get('tutoDone', false)) openTuto();
+if (sharedLinkInUrl()) loadSharedTrip();
+else if (!store.get('tutoDone', false)) openTuto();
 setFollow(true, true);
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
